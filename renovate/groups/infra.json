@@ -1,0 +1,48 @@
+{
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["(^|/)Dockerfile$"],
+      "matchStrings": ["ENV TINI_VERSION=v(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "krallin/tini",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Terraform Google provider",
+      "groupName": "infra-terraform",
+      "matchManagers": ["terraform"],
+      "matchPackagePatterns": ["^hashicorp/google"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Terraform major requires review",
+      "matchManagers": ["terraform"],
+      "matchUpdateTypes": ["major"],
+      "labels": ["terraform", "major-update", "requires-review"],
+      "automerge": false
+    },
+    {
+      "description": "Docker Node.js images",
+      "groupName": "infra-docker-node",
+      "matchDatasources": ["docker"],
+      "matchPackagePatterns": ["^node$", "^gcr.io/distroless/nodejs"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Docker Playwright images",
+      "groupName": "infra-docker-playwright",
+      "matchDatasources": ["docker"],
+      "matchPackagePatterns": ["playwright"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "GitHub Actions",
+      "groupName": "infra-github-actions",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    }
+  ]
+}

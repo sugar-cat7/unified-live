@@ -1,0 +1,9 @@
+pre-commit:
+  parallel: true
+  commands:
+    type-check:
+      run: pnpm type-check
+    biome:
+      run: pnpm biome
+    knip:
+      run: pnpm knip

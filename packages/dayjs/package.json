@@ -1,0 +1,36 @@
+{
+  "name": "@my-app/dayjs",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "./dist/**"
+  ],
+  "description": "",
+  "keywords": [],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "dayjs": "catalog:",
+    "zod": "catalog:"
+  }
+}

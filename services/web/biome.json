@@ -1,0 +1,10 @@
+{
+  "extends": ["../../biome.base.json"],
+  "linter": {
+    "rules": {
+      "nursery": {
+        "useSortedClasses": "error"
+      }
+    }
+  }
+}

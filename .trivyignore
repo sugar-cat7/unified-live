@@ -1,0 +1,6 @@
+# libc6 vulnerability in Distroless base image (gcr.io/distroless/nodejs22-debian12:nonroot)
+# Status: no-dsa (Minor issue) in Debian bookworm
+# Fixed version (glibc 2.42-8) is only available in unstable, not in bookworm
+# Issue tracker: https://security-tracker.debian.org/tracker/CVE-2026-0861
+# NVD: https://avd.aquasec.com/nvd/cve-2026-0861
+CVE-2026-0861

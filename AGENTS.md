@@ -1,17 +1,22 @@
-# Full-stack Template (Next.js 16 + Hono API)
+# unified-live SDK
 
 ## Guiding Principles
 
-- Error handling: Use `Result` types (`import { wrap, Ok, Err, AppError } from "@my-app/errors"`). No try-catch.
+- Error handling: Thrown exceptions (`UnifiedLiveError` hierarchy). No Result types.
 - Type definitions: Zod Schema First (`z.infer<typeof schema>`). No explicit interfaces.
 - Simplicity: Remove unnecessary code, only abstract when duplicated 3+ times, no premature optimization.
-- UseCase implementation: Sequential top-to-bottom execution. No UseCase-to-UseCase calls, no direct env variable access.
-- Function documentation: Write JSDoc with preconditions, postconditions, and idempotency for public Domain/UseCase functions.
+- Architecture: discordeno pattern (factory functions, overridable function objects). No class inheritance hierarchies.
+- Function documentation: Write JSDoc with preconditions, postconditions, and idempotency for public functions.
 - Run `./scripts/post-edit-check.sh` after code changes.
 
 ## References
 
 - Detailed technical documentation: `docs/`
+- Architecture reference: `docs/backend/sdk-architecture.md`
+- Glossary & decisions: `docs/reference/`
+- Type definitions: `docs/plan/unified-live-sdk/01_TYPES.md`
+- Platform plugins: `docs/plan/unified-live-sdk/02_PLUGINS.md`
+- Public API: `docs/plan/unified-live-sdk/03_CLIENT_API.md`
 - AI agent skills: `.agent/skills/`
 
 ## Spec-Driven Development
@@ -19,7 +24,7 @@
 - Feature development follows: spec drafting -> checklist generation -> phased implementation.
 - Spec documents are placed in `docs/plan/<feature>/`.
 - **Spec update -> Implementation**: When specs change, update `docs/plan/` first, then modify code. Verbal agreements are not specs.
-- Implementation order is bottom-up: Domain -> Data Access -> UseCase -> API -> Frontend.
+- Implementation order is bottom-up: Types -> Infrastructure -> Plugins -> Client API.
 - Skills: `/plan-feature` (spec drafting), `/init-impl` (checklist generation).
 
 ## Claude Code Operations

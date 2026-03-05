@@ -1,0 +1,187 @@
+import { PlatformNotFoundError } from "./errors.js";
+import type { PlatformPlugin } from "./plugin.js";
+import type {
+  Channel,
+  Content,
+  LiveStream,
+  Page,
+  ResolvedUrl,
+  Video,
+} from "./types.js";
+
+export type UnifiedClientOptions = {
+  plugins?: PlatformPlugin[];
+};
+
+export type UnifiedClient = {
+  /**
+   * Register a platform plugin.
+   *
+   * @precondition plugin.name is unique across registered plugins
+   * @postcondition plugin is available for URL matching and API calls
+   * @idempotency Re-registering the same name overwrites the previous plugin
+   */
+  register(plugin: PlatformPlugin): void;
+
+  /**
+   * Retrieve content by URL. Automatically routes to the correct plugin.
+   *
+   * @precondition url matches a registered plugin
+   * @postcondition returns Content (LiveStream or Video)
+   * @throws PlatformNotFoundError if no plugin matches the URL
+   */
+  getContent(url: string): Promise<Content>;
+
+  /**
+   * Retrieve content by platform name and ID.
+   *
+   * @precondition platform is registered
+   * @postcondition returns Content (LiveStream or Video)
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getContentById(platform: string, id: string): Promise<Content>;
+
+  /**
+   * List currently active live streams for a channel.
+   *
+   * @precondition platform is registered
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getLiveStreams(platform: string, channelId: string): Promise<LiveStream[]>;
+
+  /**
+   * List videos for a channel with cursor-based pagination.
+   *
+   * @precondition platform is registered
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getVideos(
+    platform: string,
+    channelId: string,
+    cursor?: string,
+  ): Promise<Page<Video>>;
+
+  /**
+   * Retrieve channel information.
+   *
+   * @precondition platform is registered
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getChannel(platform: string, id: string): Promise<Channel>;
+
+  /**
+   * Access a specific platform plugin.
+   *
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  platform(name: string): PlatformPlugin;
+
+  /**
+   * Parse a URL to determine which platform and resource it refers to.
+   * No network calls.
+   *
+   * @postcondition returns ResolvedUrl or null if no plugin matches
+   */
+  match(url: string): ResolvedUrl | null;
+
+  /**
+   * Release all resources (rate limit timers, token refresh schedulers).
+   *
+   * @idempotency Safe to call multiple times
+   */
+  dispose(): void;
+};
+
+/**
+ * Creates the main SDK client that manages plugins and routes requests.
+ *
+ * @precondition none
+ * @postcondition returns a fully functional UnifiedClient
+ * @idempotency Not idempotent — each call creates a new client
+ */
+export function createClient(options?: UnifiedClientOptions): UnifiedClient {
+  const plugins = new Map<string, PlatformPlugin>();
+
+  if (options?.plugins) {
+    for (const plugin of options.plugins) {
+      plugins.set(plugin.name, plugin);
+    }
+  }
+
+  function getPlugin(name: string): PlatformPlugin {
+    const plugin = plugins.get(name);
+    if (!plugin) {
+      throw new PlatformNotFoundError(name);
+    }
+    return plugin;
+  }
+
+  function matchUrl(url: string): ResolvedUrl | null {
+    for (const plugin of plugins.values()) {
+      const resolved = plugin.match(url);
+      if (resolved) {
+        return resolved;
+      }
+    }
+    return null;
+  }
+
+  const client: UnifiedClient = {
+    register(plugin: PlatformPlugin): void {
+      plugins.set(plugin.name, plugin);
+    },
+
+    async getContent(url: string): Promise<Content> {
+      const resolved = matchUrl(url);
+      if (!resolved) {
+        throw new PlatformNotFoundError(url);
+      }
+      const plugin = getPlugin(resolved.platform);
+      return plugin.getContent(resolved.id);
+    },
+
+    async getContentById(platform: string, id: string): Promise<Content> {
+      const plugin = getPlugin(platform);
+      return plugin.getContent(id);
+    },
+
+    async getLiveStreams(
+      platform: string,
+      channelId: string,
+    ): Promise<LiveStream[]> {
+      const plugin = getPlugin(platform);
+      return plugin.getLiveStreams(channelId);
+    },
+
+    async getVideos(
+      platform: string,
+      channelId: string,
+      cursor?: string,
+    ): Promise<Page<Video>> {
+      const plugin = getPlugin(platform);
+      return plugin.getVideos(channelId, cursor);
+    },
+
+    async getChannel(platform: string, id: string): Promise<Channel> {
+      const plugin = getPlugin(platform);
+      return plugin.getChannel(id);
+    },
+
+    platform(name: string): PlatformPlugin {
+      return getPlugin(name);
+    },
+
+    match(url: string): ResolvedUrl | null {
+      return matchUrl(url);
+    },
+
+    dispose(): void {
+      for (const plugin of plugins.values()) {
+        plugin.dispose();
+      }
+      plugins.clear();
+    },
+  };
+
+  return client;
+}

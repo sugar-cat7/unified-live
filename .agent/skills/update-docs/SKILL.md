@@ -18,11 +18,9 @@ description: Update docs/ in response to code changes. Keep docs/ always up to d
 
 # docs Structure
 
-- `docs/domain/` - Domain specifications (overview, entities, use cases, glossary)
+- `docs/reference/` - SDK reference (overview, glossary, decisions)
 - `docs/plan/` - Feature specifications (Spec-Driven Development, per-feature specs and checklists)
-- `docs/testing/` - Testing strategy (Unit/Integration/API/UI/VRT/E2E)
-- `docs/web-frontend/` - Frontend (architecture, hooks, CSS, a11y, testing, error handling, TypeScript)
-- `docs/backend/` - Backend (server architecture, domain modeling, API design, UseCase implementation rules, function documentation conventions, PR guidelines, date/time handling)
-- `docs/design/` - Design system (tokens, colors, typography, UI patterns, principles, a11y)
-- `docs/infra/` - Infrastructure (Terraform, tfaction, CI/CD)
+- `docs/testing/` - Testing strategy (Unit/Integration)
+- `docs/backend/` - SDK architecture, function documentation conventions, PR guidelines, datetime handling
+- `docs/infra/` - Infrastructure (CI/CD)
 - `docs/security/` - Security (lint, scanning)

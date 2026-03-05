@@ -1,0 +1,47 @@
+{
+  "name": "@unified-live/core",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "test:run": "vitest run",
+    "biome:check": "biome check .",
+    "biome:format": "biome format --write .",
+    "biome:unsafe-fix": "biome check --fix --unsafe .",
+    "biome:lint": "biome lint --write .",
+    "biome": "echo done"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.12",
+    "@opentelemetry/api": "^1.9.0",
+    "@types/node": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

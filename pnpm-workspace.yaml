@@ -1,14 +1,11 @@
 packages:
   - packages/*
-  - services/*
 
 catalog:
   '@types/node': 20.19.25
-  '@types/react': 19.2.7
-  '@types/react-dom': 19.2.3
-  dayjs: 1.11.19
   tsup: 8.5.1
   typescript: 5.9.3
+  vitest: 3.2.3
   zod: 4.2.1
 
 sharedWorkspaceLockfile: false

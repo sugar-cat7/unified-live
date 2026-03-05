@@ -9,7 +9,7 @@ on:
     - cron: '0 0 * * 1' # Every Monday 0:00 UTC (9:00 JST)
 
 jobs:
-  # 1. Dependency + Dockerfile + IaC scan
+  # 1. Dependency + IaC scan
   trivy-fs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -26,38 +26,7 @@ jobs:
           exit-code: '1'
           trivyignores: '.trivyignore'
 
-  # 2. Docker image scan
-  trivy-container:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: services/api/Dockerfile
-          target: api
-          push: false
-          load: true
-          tags: api:scan
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run Trivy container scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'api:scan'
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'
-          trivyignores: '.trivyignore'
-
-  # 3. Secret detection
+  # 2. Secret detection
   gitleaks:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -74,7 +43,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # 4. SAST (static analysis)
+  # 3. SAST (static analysis)
   semgrep:
     runs-on: ubuntu-latest
     timeout-minutes: 10

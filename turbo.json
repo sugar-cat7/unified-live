@@ -1,39 +1,18 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
-  "globalPassThroughEnv": [
-    "DATABASE_URL",
-    "GCP_PROJECT_ID",
-    "GCP_LOCATION",
-    "NEXT_PUBLIC_API_BASE_URL",
-    "FRONTEND_URL",
-    "BETTER_AUTH_URL",
-    "AUTH_GOOGLE_ID",
-    "AUTH_GOOGLE_SECRET",
-    "SSL_KEY_PATH",
-    "SSL_CERT_PATH"
-  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "outputs": ["dist/**"],
       "cache": false
     },
     "type-check": {
-      "dependsOn": ["^type-check"],
+      "dependsOn": ["^build"],
       "cache": false
     },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "tiup:start": {
-      "cache": false,
-      "persistent": true
-    },
-    "docker:up": {
-      "cache": false,
-      "persistent": true
+    "test:run": {
+      "dependsOn": ["^build"],
+      "cache": false
     },
     "biome:check": {
       "cache": false
@@ -54,17 +33,12 @@
       "dependsOn": ["biome:lint"],
       "cache": false
     },
-"//#knip": {
+    "//#knip": {
       "cache": false,
       "inputs": [
         "knip.json",
         "packages/*/src/**",
-        "packages/*/package.json",
-        "services/*/app/**",
-        "services/*/features/**",
-        "services/*/shared/**",
-        "services/*/{domain,infra,usecase,cmd,local}/**",
-        "services/*/package.json"
+        "packages/*/package.json"
       ]
     },
     "//#knip:fix": {

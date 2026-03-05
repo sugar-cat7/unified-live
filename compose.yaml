@@ -1,4 +1,0 @@
-# Docker Compose for local development
-# Add any services you need here (e.g., Redis, Postgres, etc.)
-
-services: {}

@@ -4,37 +4,22 @@
     "interface": true,
     "type": true
   },
-  "ignoreBinaries": ["tiup", "pkill"],
   "tags": ["-lintignore"],
   "workspaces": {
     ".": {
       "ignoreDependencies": [
+        "@biomejs/biome",
         "@textlint/textlint-plugin-markdown",
         "textlint-rule-preset-ja-technical-writing"
       ]
     },
-    "services/web": {
-      "entry": ["app/**/{page,layout,loading,error,not-found,route,global-error}.{ts,tsx}"],
-      "project": ["**/*.{ts,tsx}"],
-      "ignore": [".next/**", "node_modules/**"],
-      "ignoreDependencies": [
-        "tailwindcss"
-      ],
-      "next": {
-        "config": "next.config.ts"
-      }
+    "packages/core": {
+      "project": ["src/**/*.ts"],
+      "ignore": ["dist/**", "node_modules/**"],
+      "ignoreDependencies": ["@opentelemetry/api"]
     },
-    "services/api": {
-      "entry": ["cmd/*.ts", "local/**/*.ts"],
-      "project": ["**/*.ts"],
-      "ignore": ["dist/**", "drizzle/**", "node_modules/**", "infra/http/hono/openapi.ts", "infra/repository/txManager.ts"]
-    },
-    "packages/errors": {
-      "project": ["*.ts"],
-      "ignore": ["dist/**", "node_modules/**"]
-    },
-    "packages/logger": {
-      "project": ["*.ts"],
+    "packages/youtube": {
+      "project": ["src/**/*.ts"],
       "ignore": ["dist/**", "node_modules/**"]
     }
   }

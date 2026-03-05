@@ -1,6 +1,6 @@
 # 05: Package Structure
 
-Replaces the standard `05_FRONTEND.md`. Covers monorepo layout, build configuration, and packaging.
+Covers monorepo layout, build configuration, and packaging.
 
 ## Monorepo Layout
 
@@ -265,7 +265,7 @@ The monorepo currently contains template packages (`@my-app/errors`, `@my-app/lo
 
 | Existing Package | Decision |
 | --- | --- |
-| `@my-app/errors` | TBD (D-008): May reuse as-is, fork as `@unified-live/errors`, or remove if SDK uses thrown exceptions |
+| `@my-app/errors` | Remove. SDK uses thrown exceptions (D-008). |
 | `@my-app/logger` | Remove. SDK uses OTel for observability, not application logging. |
 | `@my-app/dayjs` | Remove. SDK uses native `Date` and `Intl` APIs. |
 
@@ -286,9 +286,9 @@ The following template artifacts are not applicable to the SDK project:
 
 | Layer | Test Type | Tool | What to Test |
 | --- | --- | --- | --- |
-| Domain (types, companions) | Unit | Vitest | Type guards, factory functions, Zod schema validation |
+| Types (schemas, type guards) | Unit | Vitest | Type guards, factory functions, Zod schema validation |
 | Rate limiting | Unit | Vitest | TokenBucket acquire/release/refill, QuotaBudget cost tracking/exhaustion |
 | Auth | Unit | Vitest (+ mock fetch) | Token fetch, refresh, expiry, thundering herd prevention |
-| Platform adapters | Integration | Vitest + MSW | Response mapping, pagination, URL matching (recorded HTTP responses) |
+| Platform plugins | Integration | Vitest + MSW | Response mapping, pagination, URL matching (recorded HTTP responses) |
 | RestManager | Unit | Vitest (+ mock fetch) | Request flow, retry, error handling, OTel span creation |
 | Client (end-to-end) | Integration | Vitest | Full flow: URL -> plugin resolution -> adapter -> response |

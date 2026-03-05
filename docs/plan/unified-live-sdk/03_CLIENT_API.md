@@ -1,7 +1,5 @@
 # 03: Client API
 
-Replaces the standard `03_USECASE.md`. Specifies the SDK's public API surface.
-
 ## UnifiedClient
 
 The main entry point for SDK consumers. Manages plugin registration and delegates operations to platform plugins.
@@ -277,11 +275,10 @@ class PlatformNotFoundError extends UnifiedLiveError {}
 class NotFoundError extends UnifiedLiveError {}
 ```
 
-### Error Handling (TBD: D-008)
+### Error Handling
 
-The error handling strategy is pending a decision (see `docs/domain/decisions.md` D-008):
+The SDK uses thrown exceptions (see `docs/reference/decisions.md` D-008). All public methods throw `UnifiedLiveError` subtypes:
 
-**Option A: Thrown exceptions** (simpler for SDK consumers)
 ```ts
 try {
   const content = await client.getContent(url);
@@ -290,16 +287,6 @@ try {
     console.log(`Quota resets at ${e.details.resetsAt}`);
   }
 }
-```
-
-**Option B: Result type** (explicit, composable)
-```ts
-const result = await client.getContent(url);
-if (result.isErr()) {
-  const error = result.error;
-  // handle error
-}
-const content = result.value;
 ```
 
 ## Usage Examples

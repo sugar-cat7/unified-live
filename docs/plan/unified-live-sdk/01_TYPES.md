@@ -1,10 +1,8 @@
-# 01: Domain Model
-
-Cross-reference: `docs/domain/entities.md` for entity catalog and business rules.
+# 01: Type Definitions
 
 Package location: `packages/core/src/types.ts`
 
-## Entity Schemas
+## Type Schemas
 
 ### ContentBase (shared fields)
 
@@ -125,7 +123,7 @@ export const resolvedUrlSchema = z.object({
 export type ResolvedUrl = z.infer<typeof resolvedUrlSchema>;
 ```
 
-## Companion Objects
+## Type Guards
 
 ```ts
 export const Content = {
@@ -142,7 +140,7 @@ export const Content = {
 | Twitch | `id = "44567123"` (stream_id) | `id = "11223344"` (video_id) | `sessionId = stream.id` (live) / `video.stream_id` (archive) |
 | TwitCasting | `id = "789012"` (movie_id) | `id = "789012"` (movie_id) | `sessionId = id` (same for both) |
 
-### Adapter Mapping Examples
+### Plugin Mapping Examples
 
 **YouTube**: `sessionId` is always `id` because YouTube uses the same ID for live and archive.
 
@@ -192,10 +190,10 @@ function movieToContent(raw: TCMovie): Content {
 }
 ```
 
-## Business Rules
+## Constraints
 
-1. **Content discrimination**: `type` is the discriminant. Consumers use `Content.isLive()` / `Content.isVideo()` for type-safe narrowing.
+1. **Content discrimination**: `type` is the discriminant. Consumers use type guard functions `Content.isLive()` / `Content.isVideo()` for type-safe narrowing.
 2. **sessionId availability**: `sessionId` is optional. It's undefined when the platform doesn't support session tracking (future platforms).
 3. **raw preservation**: `raw` always contains the original platform API response, enabling consumers to access platform-specific fields not included in the unified model.
 4. **Page cursor**: `cursor` is undefined for the last page. Consumers iterate by calling with the returned cursor until `cursor` is undefined.
-5. **Thumbnail dimensions**: Required for all Content. Adapters should use the best available thumbnail size from the platform API.
+5. **Thumbnail dimensions**: Required for all Content. Plugins should use the best available thumbnail size from the platform API.

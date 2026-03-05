@@ -33,7 +33,7 @@
 - Per-platform authentication: API key (YouTube), OAuth Client Credentials / User Token (Twitch), Basic Auth / Bearer (TwitCasting)
 - Rate limiting: automatic management with platform-appropriate strategies
 - OpenTelemetry instrumentation: traces and metrics for every platform API call
-- Platform adapters: YouTube, Twitch, TwitCasting
+- Platform plugins: YouTube, Twitch, TwitCasting
 
 ### Out of Scope
 
@@ -48,7 +48,7 @@
 
 | Metric | Target | Measurement Method |
 | --- | --- | --- |
-| Platform coverage | YouTube, Twitch, TwitCasting | All 3 platform adapters pass integration tests |
+| Platform coverage | YouTube, Twitch, TwitCasting | All 3 platform plugins pass integration tests |
 | API transparency | Consumer never sees 429/rate limit errors | Rate limit handling is fully automatic |
 | Auth transparency | Consumer never manually refreshes tokens | Token refresh is automatic (Twitch Client Credentials) |
 | Observability | Every platform API call emits OTel trace span | Verify spans in test collector |
@@ -67,7 +67,7 @@
 - HTTP: Native `fetch` (no HTTP client library)
 - API type generation: openapi-typescript (YouTube, Twitch)
 - Observability: `@opentelemetry/api` (peer dependency)
-- Error handling: Result type (`@my-app/errors`)
+- Error handling: Thrown exceptions (`UnifiedLiveError` hierarchy)
 - Build: tsup (ESM + CJS dual output)
 - Package manager: pnpm (workspace monorepo)
-- Architecture reference: discordeno (REST Manager, function override pattern)
+- Architecture: discordeno pattern (factory functions, overridable function objects)

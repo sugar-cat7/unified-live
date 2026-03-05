@@ -1,12 +1,12 @@
-# Full-stack Template (Next.js 16 + Hono API)
+# unified-live SDK
 
 ## Guiding Principles
 
-- Error handling: Use `Result` types (`import { wrap, Ok, Err, AppError } from "@my-app/errors"`). No try-catch.
+- Error handling: Thrown exceptions (`UnifiedLiveError` hierarchy). No Result types.
 - Type definitions: Zod Schema First (`z.infer<typeof schema>`). No explicit interfaces.
 - Simplicity: Remove unnecessary code, only abstract when duplicated 3+ times, no premature optimization.
-- UseCase implementation: Sequential top-to-bottom execution. No UseCase-to-UseCase calls, no direct env variable access.
-- Function documentation: Write JSDoc with preconditions, postconditions, and idempotency for public Domain/UseCase functions.
+- Architecture: discordeno pattern (factory functions, overridable function objects). No class inheritance hierarchies.
+- Function documentation: Write JSDoc with preconditions, postconditions, and idempotency for public functions.
 - Run `./scripts/post-edit-check.sh` after code changes.
 
 ## Copilot Review Output Rules
@@ -19,16 +19,15 @@
   - `Fix suggestion`: Minimal change to resolve the issue
 - `Violated rule` must reference only the following primary sources:
   - `.github/copilot-instructions.md`
-  - `AGENTS.md`
+  - `CLAUDE.md`
   - Relevant documents under `docs/`
 - If no rule source can be cited, separate it as a "suggestion" and do not assert it as a violation.
 
 ## Reference Documents
 
-- `docs/domain/` - Domain specs (overview, entities, use cases, glossary)
-- `docs/web-frontend/` - Frontend (architecture, hooks, CSS, a11y, testing, error handling, TypeScript)
-- `docs/backend/` - Backend (server architecture, domain model, API design, UseCase rules, function documentation conventions, PR guidelines, datetime handling)
-- `docs/design/` - Design system (tokens, colors, typography, UI patterns)
-- `docs/infra/` - Infrastructure (Terraform, CI/CD)
+- `docs/reference/` - Glossary, decisions, overview
+- `docs/plan/unified-live-sdk/` - Feature specifications
+- `docs/backend/` - SDK architecture reference
+- `docs/testing/` - Testing guidelines
 - `docs/security/` - Security
 - `.agent/skills/` - AI agent skill definitions

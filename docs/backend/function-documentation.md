@@ -133,7 +133,5 @@ describe("Item.archive", () => {
 
 ## Related Documents
 
-- [Server Architecture](./server-architecture.md) - Overall layer structure
-- [UseCase Implementation Rules](./usecase-rules.md) - Implementation principles for the UseCase layer
-- [Domain Model](./domain-modeling.md) - Design guidelines for the Domain layer
+- [SDK Architecture](./sdk-architecture.md) - Overall layer structure
 - [Unit Testing](../testing/unit-testing.md) - Table-driven test implementation guidelines

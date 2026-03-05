@@ -37,9 +37,9 @@ console.log(content.title, content.platform, content.sessionId);
 ## MVP Scope
 
 - **Core package** (`@unified-live/core`): Shared types, RestManager, RateLimitStrategy, TokenManager, OTel instrumentation
-- **YouTube adapter** (`@unified-live/youtube`): videos.list, channels.list, search.list, liveBroadcasts.list
-- **Twitch adapter** (`@unified-live/twitch`): /streams, /videos, /users, /channels + Client Credentials auth
-- **TwitCasting adapter** (`@unified-live/twitcasting`): /users, /movies + Basic/Bearer auth
+- **YouTube plugin** (`@unified-live/youtube`): videos.list, channels.list, search.list, liveBroadcasts.list
+- **Twitch plugin** (`@unified-live/twitch`): /streams, /videos, /users, /channels + Client Credentials auth
+- **TwitCasting plugin** (`@unified-live/twitcasting`): /users, /movies + Basic/Bearer auth
 
 ## Success Criteria
 
@@ -48,7 +48,7 @@ console.log(content.title, content.platform, content.sessionId);
 | `getContent(url)` returns normalized Content from any platform | Integration tests with recorded API responses |
 | Rate limits are invisible to consumer (no 429 errors bubble up) | Unit tests for TokenBucket and QuotaBudget strategies |
 | Twitch token refresh is automatic | Unit test for ClientCredentialsTokenManager |
-| `sessionId` links live and archive across platforms | Unit tests for adapter mapping |
+| `sessionId` links live and archive across platforms | Unit tests for plugin mapping |
 | OTel spans emitted for every platform API call | Integration test with test OTel collector |
 | YouTube `QuotaExhaustedError` is thrown clearly | Unit test for QuotaBudget exhaustion |
 
@@ -74,9 +74,9 @@ See `docs/backend/sdk-architecture.md` for the full architecture reference.
 
 ## Related Documents
 
-- `docs/domain/` — Domain entities, use cases, glossary, decisions
-- `docs/plan/unified-live-sdk/01_DOMAIN_MODEL.md` — Zod schemas and entity details
-- `docs/plan/unified-live-sdk/02_PLATFORM_ADAPTERS.md` — Per-platform adapter specifications
+- `docs/reference/` — Glossary, decisions, overview
+- `docs/plan/unified-live-sdk/01_TYPES.md` — Zod schemas and type definitions
+- `docs/plan/unified-live-sdk/02_PLUGINS.md` — Per-platform plugin specifications
 - `docs/plan/unified-live-sdk/03_CLIENT_API.md` — Public API surface
 - `docs/plan/unified-live-sdk/04_INFRASTRUCTURE.md` — RestManager, rate limiting, auth, OTel
 - `docs/plan/unified-live-sdk/05_PACKAGE_STRUCTURE.md` — Monorepo layout, build, publishing

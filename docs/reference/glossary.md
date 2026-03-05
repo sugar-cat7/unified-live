@@ -1,6 +1,6 @@
 # Glossary
 
-## Glossary (Ubiquitous Language)
+## Terms
 
 | Term | Description | Code Naming |
 | --- | --- | --- |
@@ -13,7 +13,7 @@
 | BroadcastSession | The lifecycle link between a live stream and its resulting archive video. Contains `sessionId` and content IDs for both live and archive. | `BroadcastSession` |
 | SessionId | A platform-specific identifier that links a live broadcast to its archive. Remains the same across the live and archive phases of a broadcast. | `sessionId` |
 | Platform | One of the supported live streaming services: YouTube, Twitch, or TwitCasting. | `platform` (string literal) |
-| PlatformPlugin | The interface that each platform adapter must implement. Provides `getContent`, `getLiveStreams`, `getVideos`, `getChannel`, `resolveArchive`, etc. | `PlatformPlugin` |
+| PlatformPlugin | The interface that each platform plugin must implement. Provides `getContent`, `getLiveStreams`, `getVideos`, `getChannel`, `resolveArchive`, etc. | `PlatformPlugin` |
 | RestManager | The HTTP client layer responsible for executing requests, managing retries, and coordinating rate limits and auth. Designed as a discordeno-style overridable function object. | `RestManager` |
 | RateLimitStrategy | An algorithm for managing API rate limits. Two implementations: TokenBucket (Twitch, TwitCasting) and QuotaBudget (YouTube). | `RateLimitStrategy` |
 | TokenBucket | A rate limiting strategy that uses a token refill model. Tokens are consumed per request and refilled over a time window. Header-driven: actual remaining count is updated from API response headers. | `TokenBucketStrategy` |
@@ -26,9 +26,9 @@
 
 ## Naming Rules
 
-- Reflect domain concepts in code using the term from the Glossary
+- Use terms from the Glossary consistently in code
 - Platform names are lowercase strings: `"youtube"`, `"twitch"`, `"twitcasting"`
-- All entity types use PascalCase in code
+- All types use PascalCase in code
 - The discriminant field is always `type` (not `kind`, `category`, etc.)
 - Pagination cursors are always `cursor: string | undefined` (not `nextPageToken`, `offset`, etc.)
 

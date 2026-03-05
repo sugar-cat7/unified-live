@@ -1,6 +1,6 @@
 # 04: Infrastructure
 
-Replaces the standard `04_API_INTERFACE.md`. Covers the SDK's cross-cutting infrastructure: RestManager, rate limiting, authentication, and observability.
+Covers the SDK's cross-cutting infrastructure: RestManager, rate limiting, authentication, and observability.
 
 ---
 

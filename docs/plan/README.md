@@ -16,11 +16,11 @@ docs/plan/
 ├── README.md                    # This document
 └── <feature-name>/              # Directory per feature
     ├── 00_OVERVIEW.md           # Feature overview, purpose, scope
-    ├── 01_DOMAIN_MODEL.md       # Entity changes, business rules
-    ├── 02_DATA_ACCESS.md        # Repository and DB changes
-    ├── 03_USECASE.md            # UseCase layer changes
-    ├── 04_API_INTERFACE.md      # API endpoint specifications
-    ├── 05_FRONTEND.md           # Frontend UI specifications
+    ├── 01_TYPES.md              # Type definitions, Zod schemas
+    ├── 02_PLUGINS.md            # Platform plugin specifications
+    ├── 03_CLIENT_API.md         # Public API surface
+    ├── 04_INFRASTRUCTURE.md     # RestManager, rate limiting, auth, OTel
+    ├── 05_PACKAGE_STRUCTURE.md  # Monorepo layout, build, packaging
     └── CHECKLIST.md             # Implementation checklist (phases and session notes)
 ```
 
@@ -34,14 +34,14 @@ Feature directories and auto-generated files use different naming conventions, s
 Create structured specification documents from ambiguous requirements.
 
 - Gather requirements through interviews and write specifications in the file structure above
-- Specifications correspond to Clean Architecture layers (Domain -> Data Access -> UseCase -> Interface)
+- Specifications follow the SDK layer order: Types -> Infrastructure -> Plugins -> Client API
 - Mark undecided items as `TBD` and record the next actions
 
 ### Step 2: Checklist Generation (`/init-impl`)
 
 Read the specifications and generate a phased implementation checklist.
 
-- Implementation order is bottom-up: Domain -> Data Access -> UseCase -> API -> Frontend
+- Implementation order is bottom-up: Types -> Infrastructure -> Plugins -> Client API
 - Each phase includes a goal, checklist, test commands, and session notes
 - Session notes record Done / Next / Risks and TODO items
 
@@ -55,14 +55,14 @@ Follow the checklist and implement phase by phase.
 
 ## Specification File Overview
 
-| File | Contents | Corresponding Layer |
+| File | Contents | Layer |
 | --- | --- | --- |
 | `00_OVERVIEW.md` | Feature purpose, background, scope, success criteria | - |
-| `01_DOMAIN_MODEL.md` | New/modified entities, business rules, Zod Schema | Domain |
-| `02_DATA_ACCESS.md` | Table changes, repository changes, migrations | Infrastructure |
-| `03_USECASE.md` | UseCase definitions, inputs/outputs, error cases | UseCase |
-| `04_API_INTERFACE.md` | Endpoints, request/response, authentication | Infrastructure (HTTP) |
-| `05_FRONTEND.md` | Page structure, components, state management | Frontend |
+| `01_TYPES.md` | Type definitions, Zod schemas, type guards | Types |
+| `02_PLUGINS.md` | Platform plugin specifications, response mapping | Plugins |
+| `03_CLIENT_API.md` | Public API surface, error types, usage examples | Client |
+| `04_INFRASTRUCTURE.md` | RestManager, rate limiting, auth, OTel | Infrastructure |
+| `05_PACKAGE_STRUCTURE.md` | Monorepo layout, build config, packaging | Package |
 | `CHECKLIST.md` | Phased implementation checklist, session notes | - |
 
 ## Checklist Structure
@@ -74,20 +74,20 @@ Follow the checklist and implement phase by phase.
 
 Spec: `docs/plan/<feature>/`
 
-## Phase 1: Domain Model
-Document: `01_DOMAIN_MODEL.md`
+## Phase 1: Types
+Document: `01_TYPES.md`
 Status: Not started
 
 ### Goal
-Implement domain models and unit tests
+Implement type definitions and unit tests
 
 ### Checklist
 - [ ] Zod Schema definitions
-- [ ] Companion object implementation
-- [ ] Domain model unit tests
+- [ ] Type guard functions
+- [ ] Type unit tests
 
 ### Testing
-pnpm test -- services/api/domain/
+pnpm test --filter @unified-live/core
 
 ### Session Notes
 - Done:
@@ -96,21 +96,22 @@ pnpm test -- services/api/domain/
 
 ---
 
-## Phase 2: Data Access
-Document: `02_DATA_ACCESS.md`
+## Phase 2: Infrastructure
+Document: `04_INFRASTRUCTURE.md`
 Status: Not started
 
 ### Goal
-Repository implementation and integration tests
+RestManager, rate limiting, auth implementations and tests
 
 ### Checklist
-- [ ] DB schema definitions (drizzle)
-- [ ] Create and run migrations
-- [ ] Repository implementation
-- [ ] Integration tests
+- [ ] RestManager implementation
+- [ ] RateLimitStrategy implementations (TokenBucket, QuotaBudget)
+- [ ] TokenManager implementations
+- [ ] OTel instrumentation
+- [ ] Unit tests
 
 ### Testing
-pnpm test -- services/api/infra/repository/
+pnpm test --filter @unified-live/core
 
 ### Session Notes
 - Done:
@@ -119,20 +120,23 @@ pnpm test -- services/api/infra/repository/
 
 ---
 
-## Phase 3: UseCase
-Document: `03_USECASE.md`
+## Phase 3: Platform Plugins
+Document: `02_PLUGINS.md`
 Status: Not started
 
 ### Goal
-UseCase implementation and tests
+Platform plugin implementations and integration tests
 
 ### Checklist
-- [ ] UseCase implementation
-- [ ] Register in DI container
-- [ ] UseCase tests
+- [ ] YouTubePlugin implementation
+- [ ] TwitchPlugin implementation
+- [ ] TwitCastingPlugin implementation
+- [ ] Integration tests with recorded HTTP responses
 
 ### Testing
-pnpm test -- services/api/usecase/
+pnpm test --filter @unified-live/youtube
+pnpm test --filter @unified-live/twitch
+pnpm test --filter @unified-live/twitcasting
 
 ### Session Notes
 - Done:
@@ -141,44 +145,20 @@ pnpm test -- services/api/usecase/
 
 ---
 
-## Phase 4: API Interface
-Document: `04_API_INTERFACE.md`
+## Phase 4: Client API
+Document: `03_CLIENT_API.md`
 Status: Not started
 
 ### Goal
-API endpoint implementation and API tests
+UnifiedClient implementation and end-to-end tests
 
 ### Checklist
-- [ ] Hono route definitions (OpenAPI)
-- [ ] Request/response Zod Schema
-- [ ] API tests
+- [ ] UnifiedClient implementation
+- [ ] PluginRegistry implementation
+- [ ] End-to-end integration tests
 
 ### Testing
-pnpm test -- services/api/infra/http/
-
-### Session Notes
-- Done:
-- Next:
-- Risks/TODO:
-
----
-
-## Phase 5: Frontend
-Document: `05_FRONTEND.md`
-Status: Not started
-
-### Goal
-Frontend implementation and UI tests
-
-### Checklist
-- [ ] App Router route creation
-- [ ] Feature module creation (api/, components/, hooks/, types/)
-- [ ] Container components
-- [ ] Presenter components
-- [ ] UI tests
-
-### Testing
-pnpm test -- services/web/
+pnpm test --filter @unified-live/core
 
 ### Session Notes
 - Done:
@@ -186,7 +166,7 @@ pnpm test -- services/web/
 - Risks/TODO:
 ```
 
-Phases for layers not covered in the specification may be omitted (e.g., omit Phase 5 for backend-only features).
+Phases for layers not covered in the specification may be omitted.
 
 ## How to Write Session Notes
 
@@ -212,6 +192,5 @@ Use these 3 items to restore context when resuming across days or sessions.
 
 - `/plan-feature` - Specification generation skill
 - `/init-impl` - Checklist generation skill
-- `docs/domain/` - Project-wide domain specifications
-- `docs/backend/server-architecture.md` - Clean Architecture overview
-- `docs/web-frontend/architecture.md` - Frontend architecture
+- `docs/reference/` - Glossary, decisions, overview
+- `docs/backend/sdk-architecture.md` - SDK architecture reference

@@ -1,6 +1,6 @@
 # SDK Architecture
 
-Architecture reference for unified-live SDK implementers. Equivalent of `server-architecture.md` for the web app template.
+Architecture reference for unified-live SDK implementers.
 
 ## Layer Diagram
 
@@ -54,7 +54,7 @@ Architecture reference for unified-live SDK implementers. Equivalent of `server-
               Platform APIs (googleapis.com / api.twitch.tv / apiv2.twitcasting.tv)
 ```
 
-## Dependency Rules
+## Package Dependencies
 
 1. **`@unified-live/core`** has zero platform-specific code. It defines interfaces (PlatformPlugin, RateLimitStrategy, TokenManager) and provides implementations of shared infrastructure (RestManager, TokenBucket, QuotaBudget, StaticTokenManager).
 
@@ -131,9 +131,9 @@ UnifiedLiveError (base)
 3. Non-retryable errors are mapped to SDK error types
 4. SDK error is returned/thrown to consumer
 
-### TBD: Result Type vs Thrown Exceptions
+### Thrown Exceptions (D-008)
 
-See `docs/domain/decisions.md` D-008. The decision affects all public API signatures.
+The SDK uses thrown exceptions. All public methods throw `UnifiedLiveError` subtypes. See `docs/reference/decisions.md` D-008.
 
 ## Testing Strategy
 
@@ -141,11 +141,11 @@ See `docs/domain/decisions.md` D-008. The decision affects all public API signat
 
 | Layer | Approach | Dependencies |
 | --- | --- | --- |
-| **Domain** (types, companions) | Pure unit tests. No mocks. | None |
+| **Types** (schemas, type guards) | Pure unit tests. No mocks. | None |
 | **RateLimitStrategy** | Unit tests. Mock timers for TokenBucket refill. | `vi.useFakeTimers()` |
 | **TokenManager** | Unit tests with mock fetch. Test token refresh, expiry, thundering herd. | Mock `fetch` |
 | **RestManager** | Unit tests with mock fetch. Test request flow, retry, OTel span creation. | Mock `fetch`, mock OTel |
-| **Platform adapters** | Integration tests with recorded HTTP responses. Test response mapping, pagination, URL matching. | MSW (Mock Service Worker) |
+| **Platform plugins** | Integration tests with recorded HTTP responses. Test response mapping, pagination, URL matching. | MSW (Mock Service Worker) |
 | **UnifiedClient** | Integration tests. Test full flow: URL -> plugin -> adapter -> response. | MSW or mock plugins |
 
 ### Test Commands
@@ -178,5 +178,5 @@ To add a new platform (e.g., Niconico):
 ## Reference Documents
 
 - `docs/plan/unified-live-sdk/` — Detailed feature specifications
-- `docs/domain/` — Domain entities, use cases, glossary, decisions
-- `docs/domain/decisions.md` — Architecture decision log
+- `docs/reference/` — Glossary, decisions, overview
+- `docs/reference/decisions.md` — Architecture decision log

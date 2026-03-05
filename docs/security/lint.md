@@ -29,11 +29,10 @@ pnpm security-scan
 
 When updating `docs/`, also verify the following.
 
-1. Follows the writing rules in [docs/design/writing.md](../design/writing.md)
-2. Heading structure (`#` -> `##` -> `###`) is not broken
-3. No terminology inconsistencies (use the same term for the same concept)
-4. Referenced links exist and relative paths are correct
-5. `pnpm textlint` passes
+1. Heading structure (`#` -> `##` -> `###`) is not broken
+2. No terminology inconsistencies (use terms from `docs/reference/glossary.md`)
+3. Referenced links exist and relative paths are correct
+4. `pnpm textlint` passes
 
 See [docs/security/textlint.md](./textlint.md) for textlint operational guidelines and setup examples.
 
@@ -44,15 +43,11 @@ The `/code-review` skill checks these rules.
 
 | Rule | Target | Detection Method |
 | --- | --- | --- |
-| UseCase-to-UseCase calls prohibited | `usecase/` | AI review |
-| Direct environment variable access in UseCase prohibited | `usecase/` | AI review + grep `process.env` |
-| Direct message queue operations in UseCase prohibited | `usecase/` | AI review |
-| JSDoc (preconditions/postconditions) required for Domain functions | `domain/` | AI review |
-| Idempotency (`@idempotent`) annotation required for UseCase functions | `usecase/` | AI review |
-| try-catch prohibited (Result type required) | Entire codebase | AI review |
+| JSDoc (preconditions/postconditions) required for public functions | `packages/*/src/` | AI review |
 | Direct interface definitions prohibited (Zod Schema First) | Entire codebase | AI review |
+| Error hierarchy must extend `UnifiedLiveError` | `packages/*/src/` | AI review |
 
 See the following for details.
 
-- [UseCase Implementation Rules](../backend/usecase-rules.md)
 - [Function Documentation Conventions](../backend/function-documentation.md)
+- [SDK Architecture](../backend/sdk-architecture.md)

@@ -1,6 +1,4 @@
-# 02: Platform Adapters
-
-Replaces the standard `02_DATA_ACCESS.md`. The SDK's "data access" layer is HTTP calls to platform APIs.
+# 02: Platform Plugins
 
 ## PlatformPlugin Interface
 
@@ -43,7 +41,7 @@ interface PlatformPlugin {
 
 ---
 
-## YouTube Adapter
+## YouTube Plugin
 
 Package: `packages/youtube/`
 
@@ -65,7 +63,7 @@ Package: `packages/youtube/`
 
 YouTube uses an API Key passed as a query parameter (`?key=<apiKey>`). No `Authorization` header.
 
-The YouTubePlugin overrides RestManager to inject the key:
+The YouTube plugin overrides RestManager to inject the key:
 
 ```ts
 // Override: inject API key as query parameter
@@ -88,7 +86,7 @@ this.rest.request = async (req) => {
 
 ### Response Mapping
 
-| YouTube API Object | SDK Entity | Key Mapping |
+| YouTube API Object | SDK Type | Key Mapping |
 | --- | --- | --- |
 | `Video` (with `liveStreamingDetails.actualStartTime`) | `LiveStream` | `snippet.liveBroadcastContent === "live"` |
 | `Video` (without live details, or ended) | `Video` | `contentDetails.duration` > 0 |
@@ -117,7 +115,7 @@ YouTube uses the same ID for live and archive. `resolveArchive(live)` is equival
 
 ---
 
-## Twitch Adapter
+## Twitch Plugin
 
 Package: `packages/twitch/`
 
@@ -181,7 +179,7 @@ parseHeaders: (headers: Headers) => {
 
 ### Response Mapping
 
-| Twitch API Object | SDK Entity | Key Mapping |
+| Twitch API Object | SDK Type | Key Mapping |
 | --- | --- | --- |
 | `Stream` | `LiveStream` | `viewer_count`, `started_at` |
 | `Video` (type: "archive") | `Video` | `duration` (ISO 8601 format: "3h2m1s"), `view_count` |
@@ -200,7 +198,7 @@ parseHeaders: (headers: Headers) => {
 | `twitch.tv/<username>` | channel | path segment (user_login) |
 | `twitch.tv/videos/<id>` | content | path segment (video_id) |
 
-Note: `twitch.tv/<username>` when user is live could resolve to either LiveStream or Channel. The plugin resolves to channel by default; consumers use `getLiveStreams()` to check if the channel is live.
+Note: `twitch.tv/<username>` when user is live could resolve to either LiveStream or Channel. The Twitch plugin resolves to channel by default; consumers use `getLiveStreams()` to check if the channel is live.
 
 ### resolveArchive
 
@@ -229,7 +227,7 @@ async resolveArchive(live: LiveStream): Promise<Video | null> {
 
 ---
 
-## TwitCasting Adapter
+## TwitCasting Plugin
 
 Package: `packages/twitcasting/`
 
@@ -298,7 +296,7 @@ parseHeaders: (headers: Headers) => {
 
 ### Response Mapping
 
-| TwitCasting API Object | SDK Entity | Key Mapping |
+| TwitCasting API Object | SDK Type | Key Mapping |
 | --- | --- | --- |
 | `Movie` (is_live: true) | `LiveStream` | `current_view_count`, `created` (Unix timestamp) |
 | `Movie` (is_live: false) | `Video` | `duration`, `total_view_count`, `created` |
@@ -388,7 +386,7 @@ TwitCasting uses the same ID for live and archive. `resolveArchive(live)` is equ
 
 1. **API documentation is Japanese only**: The SDK provides English JSDoc for all public APIs.
 2. **`is_live` / `is_recorded` flags**: Movies have both flags. `is_live = true` means currently broadcasting. `is_recorded = true` means a past broadcast (archive). These are mutually exclusive in practice.
-3. **User ID vs Screen ID**: TwitCasting uses numeric user IDs internally but `screen_id` (alphanumeric username) in URLs. The adapter must handle both.
+3. **User ID vs Screen ID**: TwitCasting uses numeric user IDs internally but `screen_id` (alphanumeric username) in URLs. The plugin must handle both.
 
 ---
 

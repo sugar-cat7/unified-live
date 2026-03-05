@@ -18,8 +18,7 @@ Record the rationale behind specification decisions in chronological order.
 - Context: The SDK needs a single return type for `getContent()` that can represent both live streams and archived videos.
 - Rationale: Discriminated unions enable type-safe narrowing in TypeScript (`if (content.type === "live") { content.viewerCount }`). A single `Content` type simplifies the public API surface.
 - Alternatives: (1) Separate `LiveStream` and `Video` types at top level with no shared union — rejected because `getContent()` would need two separate methods or a wrapper type. (2) A single flat type with optional fields — rejected because it loses type safety.
-- Impact Scope: All entities, all platform adapters, all public API methods
-- Related Use Cases: UC-001, UC-002
+- Impact Scope: All types, all platform plugins, all public API methods
 
 ---
 
@@ -70,8 +69,7 @@ Record the rationale behind specification decisions in chronological order.
 - Context: On Twitch, the Stream ID (live) and Video ID (archive) are different. On YouTube and TwitCasting, the same ID is used for both. Consumers who track broadcasts across their lifecycle need a way to correlate these.
 - Rationale: `sessionId` abstracts away the platform-specific ID mapping. For YouTube/TwitCasting, `sessionId === id`. For Twitch, `sessionId` equals the `stream_id`, which appears on both the Stream object and the Video object's `stream_id` field.
 - Alternatives: (1) Consumer-managed correlation — pushes complexity to every consumer. (2) Always use the same ID (force mapping at archive time) — not possible because Twitch Video API returns only `video_id`, not `stream_id`, as the primary ID. (3) Separate `liveId` / `archiveId` fields — more verbose and doesn't solve the lookup problem.
-- Impact Scope: Content type, all platform adapters, BroadcastSession
-- Related Use Cases: UC-006, UC-008
+- Impact Scope: Content type, all platform plugins, BroadcastSession
 
 ---
 
@@ -104,11 +102,21 @@ Record the rationale behind specification decisions in chronological order.
 ### D-008: Error Handling Strategy
 
 - Date: 2026-03-05
-- Status: Proposed (TBD)
-- Decision: Reuse the existing `@my-app/errors` Result type pattern for the SDK's public API. All public methods return `Result<T, SdkError>` instead of throwing.
-- Context: The monorepo already has `@my-app/errors` with `Ok`, `Err`, `wrap`, and `AppError`. The SDK could reuse this or adopt thrown exceptions (more familiar for SDK consumers).
-- Rationale: Result types make error handling explicit and composable. They align with the monorepo's existing conventions.
-- Alternatives: (1) Thrown exceptions — more familiar for SDK consumers, simpler API. (2) Fork `@my-app/errors` as `@unified-live/errors` with SDK-specific error codes — preserves Result pattern but decouples from the template. (3) Dual mode — return Result by default, offer a `.throw()` variant.
-- Impact Scope: All public API methods, all error types
-- Related Use Cases: All
-- Next Action: Decide before implementation begins. Consider the target audience (SDK consumers may prefer thrown exceptions over Result types).
+- Status: Accepted
+- Decision: The SDK uses **thrown exceptions** with a typed error hierarchy rooted in `UnifiedLiveError`. The SDK does NOT use Result types and does NOT depend on `@my-app/errors`.
+- Context: The monorepo template uses `@my-app/errors` with `Ok`, `Err`, `wrap`, and `AppError`. However, research into major OSS TypeScript SDKs (discordeno, Octokit, Stripe, AWS SDK v3) shows they all use thrown exceptions.
+- Rationale: (1) Every major OSS TypeScript SDK throws exceptions — this is the strongest signal from ecosystem research. (2) SDK consumers expect `try/catch` or `.catch()` for async operations. (3) Result types require consumers to learn a new error handling pattern. (4) The SDK's typed error hierarchy (`UnifiedLiveError`, `QuotaExhaustedError`, etc.) provides type safety via `instanceof` checks.
+- Alternatives: (1) Result type (`@my-app/errors`) — rejected because it diverges from every OSS SDK convention and adds consumer friction. (2) Fork as `@unified-live/errors` — rejected because thrown exceptions are simpler. (3) Dual mode (Result + `.throw()`) — rejected because it doubles the API surface.
+- Impact Scope: All public API methods, all error types, `packages/core/src/errors.ts`
+
+---
+
+### D-009: Remove DDD/Clean Architecture Terminology
+
+- Date: 2026-03-05
+- Status: Accepted
+- Decision: Replace all DDD and Clean Architecture terminology in documentation with standard OSS SDK terminology. "Entity" -> "Type", "Aggregate Root" -> removed, "UseCase" -> "Client Method", "Adapter" -> "Plugin", "Companion Object" -> "Type Guard", "Business Rules" -> "Constraints", "Domain Model" -> "Type Definitions".
+- Context: The documentation was initially written using a web-app template that follows Clean Architecture / DDD. The SDK architecture is sound, but the terminology creates confusion for OSS contributors who are familiar with standard SDK patterns.
+- Rationale: Aligning terminology with standard OSS SDK conventions (discordeno, Octokit, Stripe, AWS SDK v3) reduces contributor onboarding friction and makes the project more approachable.
+- Alternatives: Keep DDD terminology — rejected because it creates an unnecessary barrier for SDK contributors.
+- Impact Scope: All documentation files, CLAUDE.md

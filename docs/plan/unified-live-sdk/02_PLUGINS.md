@@ -10,8 +10,8 @@ interface PlatformPlugin {
   /** REST client instance for this platform */
   readonly rest: RestManager;
 
-  /** Check if a URL belongs to this platform */
-  match(url: string): boolean;
+  /** Check if a URL belongs to this platform. Returns resolved info or null. */
+  match(url: string): ResolvedUrl | null;
 
   /** Parse a URL into platform, type, and resource ID */
   resolveUrl(url: string): ResolvedUrl | null;
@@ -35,7 +35,7 @@ interface PlatformPlugin {
   resolveSession?(content: Content): Promise<BroadcastSession | null>;
 
   /** Release resources (timers, connections) */
-  dispose?(): void;
+  dispose(): void;
 }
 ```
 

@@ -1,164 +1,125 @@
-# Post-Implementation Review & Fix Plan
+# Review #2: Post-Bug-Fix Review
 
 ## Context
 
-The plugin-based SDK architecture (YouTube-only MVP) was implemented across Phases 0-7. All gates pass (build, type-check, biome, knip, 120 tests). This review identifies bugs, missing coverage, and cleanup items to address before merging.
+After the first review fixed 2 bugs (thumbnail validation, JSON parse safety), added 9 tests (120 -> 129), cleaned template artifacts, and aligned `resolveArchive` signature, a second full review was conducted. This review focuses on spec-implementation alignment, remaining test gaps, and a fragile timezone calculation.
 
-## Severity Legend
+## Triage Summary
 
-- **P0 (Bug)**: Runtime error or incorrect behavior
-- **P1 (Gap)**: Missing error handling or test coverage for realistic scenarios
-- **P2 (Cleanup)**: Template artifacts, docs, minor improvements
+3 agents explored core, youtube, and project config. Several findings were **false positives**:
 
----
-
-## P0: Bugs
-
-### P0-1: `getBestThumbnail()` returns invalid data when no thumbnail exists
-
-**File**: `packages/youtube/src/mapper.ts:133-134`
-
-When all thumbnail sizes are `undefined`, returns `{ url: "", width: 0, height: 0 }`. This violates the core `thumbnailSchema` which requires `z.url()` (non-empty valid URL) and `z.int().check(z.positive())` (width/height > 0). Any downstream validation or serialization will fail.
-
-**Fix**: Throw an error or use a known YouTube placeholder URL. Since `thumbnail` is required on `Content` but optional on `Channel`, the simplest fix is to throw — a video with no thumbnail at all is a data integrity issue from YouTube's side.
-
-```ts
-function getBestThumbnail(thumbnails: ...) {
-  const thumb = thumbnails.high ?? thumbnails.medium ?? thumbnails.default;
-  if (!thumb) {
-    throw new Error("YouTube video has no thumbnail");
-  }
-  return { url: thumb.url, width: thumb.width, height: thumb.height };
-}
-```
-
-### P0-2: `handleResponse` crashes on non-JSON responses
-
-**File**: `packages/core/src/rest/manager.ts:194`
-
-`response.json()` will throw a `SyntaxError` if the response body is not valid JSON (HTML error pages, empty body, etc.). This uncaught error bypasses the error hierarchy entirely.
-
-**Fix**: Wrap in try-catch, throw a meaningful `UnifiedLiveError`.
-
-```ts
-handleResponse: async <T>(response: Response, _req: RestRequest): Promise<RestResponse<T>> => {
-  let data: T;
-  try {
-    data = (await response.json()) as T;
-  } catch {
-    throw new UnifiedLiveError(
-      `Failed to parse response from ${_req.path}`,
-      manager.platform,
-      "PARSE_ERROR",
-    );
-  }
-  // ... rest unchanged
-},
-```
-
-### P0-3: `handle.complete()` never called on error paths
-
-**File**: `packages/core/src/rest/manager.ts:155,163`
-
-In the `request` method, `handle.complete(response.headers)` is only called on success (line 155). In the `catch` block, `handle.release()` is called (line 163). However, for non-retriable errors (404, final 401), the code `throw`s before reaching `handle.complete()` — the catch block calls `handle.release()`, which is correct. But: if `handleResponse` itself throws (e.g. P0-2), the response headers are lost. This is actually fine because `release()` is the correct fallback. **No fix needed** — just confirming the error path is safe.
+- **Zod v4 `.check()` API** — `z.int().check(z.positive())` is valid Zod v4 (verified in review #1)
+- **Rate limit handle lifecycle** — Handle is acquired once before the retry loop, reused across retries, then complete/release once. This is correct by design.
+- **Upcoming broadcasts misclassified** — SDK has no "upcoming" type; mapping to Video is acceptable MVP behavior.
 
 ---
 
-## P1: Missing Error Handling & Test Gaps
+## P1: Spec Divergences (fix docs to match implementation)
 
-### P1-1: Missing tests for `getChannel()`, `getLiveStreams()`, `getVideos()`
+### P1-1: `match()` return type in spec
+
+**Spec** (`02_PLUGINS.md:14`): `match(url: string): boolean`
+**Impl** (`core/src/plugin.ts:29`): `match(url: string): ResolvedUrl | null`
+
+Fix spec. Implementation is superior — returning `ResolvedUrl | null` avoids a separate `resolveUrl()` call.
+
+### P1-2: `dispose()` optionality in spec
+
+**Spec** (`02_PLUGINS.md:38`): `dispose?(): void`
+**Impl** (`core/src/plugin.ts:53`): `dispose(): void`
+
+Fix spec. Required `dispose()` is safer — plugins should always be disposable.
+
+### P1-3: Plugin construction syntax in spec
+
+**Spec** (`03_CLIENT_API.md:17,183,200`): `new YouTubePlugin({ ... })`
+**Impl** (`youtube/src/plugin.ts:50`): `createYouTubePlugin({ ... })`
+
+Fix spec. Factory functions follow the discordeno pattern per CLAUDE.md.
+
+### P1-4: `getContent` overload vs `getContentById` in spec
+
+**Spec** (`03_CLIENT_API.md:75`): `client.getContent(platform: string, id: string)` (overload)
+**Impl** (`core/src/client.ts:42`): `client.getContentById(platform, id)` (separate method)
+
+Fix spec. Separate method name avoids TypeScript overload complexity.
+
+---
+
+## P1: Code Fix
+
+### P1-5: `nextResetTime()` uses fragile `toLocaleString` parsing
+
+**File**: `packages/core/src/rest/quota.ts:105-116`
+
+```ts
+const pt = new Date(
+  now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }),
+);
+```
+
+Parsing a formatted locale string back into a Date is unreliable across Node.js versions. Replace with `Intl.DateTimeFormat.formatToParts()` which returns structured data.
+
+---
+
+## P1: Missing Tests
+
+### P1-6: `resolveUrl()` untested
 
 **File**: `packages/youtube/src/__tests__/plugin.test.ts`
 
-The plugin test only covers `getContent`, `match`, `handleRateLimit`, and `dispose`. The three other main methods have zero test coverage:
-- `getChannel()` — three code paths (@handle, UC-ID, custom URL), NotFoundError
-- `getLiveStreams()` — search + video fetch pipeline, empty results
-- `getVideos()` — channel lookup + playlist + video fetch pipeline, pagination cursor
+Delegates to `matchYouTubeUrl()` which is tested, but the plugin method itself needs a direct test.
 
-**Fix**: Add tests for each method with at least: happy path + not-found error.
+### P1-7: `resolveArchive()` untested
 
-### P1-2: Missing test for non-JSON response in RestManager
+**File**: `packages/youtube/src/__tests__/plugin.test.ts`
 
-**File**: `packages/core/src/__tests__/rest/manager.test.ts`
+No test covers the archive resolution path (plugin.ts:289-293).
 
-No test verifies behavior when the server returns non-JSON (e.g. HTML 502 page). After fixing P0-2, add a test that verifies the error is properly thrown.
+### P1-8: 403 `rateLimitExceeded` untested
 
-### P1-3: `toChannel()` missing JSDoc
+**File**: `packages/youtube/src/__tests__/plugin.test.ts`
 
-**File**: `packages/youtube/src/mapper.ts:112`
+Only `quotaExceeded` 403 is tested. The `rateLimitExceeded` 403 retry path (plugin.ts:97-104) has no coverage.
 
-Per CLAUDE.md: "Write JSDoc with preconditions, postconditions, and idempotency for public functions." `toChannel()` is exported and has only a one-line JSDoc without the required annotations.
+### P1-9: Empty playlist in `getVideos()` untested
 
-**Fix**: Add full JSDoc matching the `toContent()` pattern.
+**File**: `packages/youtube/src/__tests__/plugin.test.ts`
 
-### P1-4: RestManager type JSDoc missing preconditions/postconditions
-
-**File**: `packages/core/src/rest/manager.ts:26-52`
-
-The overridable method signatures have brief comments but not the formal JSDoc required by CLAUDE.md. The `createRestManager` factory itself (line 55-61) has proper JSDoc — the individual method types should match.
-
-**Fix**: Add `@precondition` / `@postcondition` to each method's JSDoc.
+The `{ items: [] }` return path (plugin.ts:259-261) has no test.
 
 ---
 
-## P2: Cleanup
+## P2: Deferred Items
 
-### P2-1: Template artifact references remain
+These are tracked but not fixed in this pass:
 
-These files reference deleted template paths (`services/api/Dockerfile`, etc.):
-- `.semgrepignore` — references `services/api/Dockerfile`
-- `.gitleaks.toml` — allowlist references `services/api/Dockerfile`
-- `scripts/security-scan.sh` — references template Docker image scan
-- `.github/workflows/create-release-pr.yml` — references `develop` branch and `infrastructure/terraform/**`
-
-**Fix**: Clean each file to remove dead references.
-
-### P2-2: `@opentelemetry/api` missing from pnpm catalog
-
-**File**: `pnpm-workspace.yaml`
-
-Core's `package.json` specifies `"@opentelemetry/api": "^1.9.0"` directly instead of using `catalog:`. The spec (`05_PACKAGE_STRUCTURE.md`) expects it in the catalog.
-
-**Fix**: Add `'@opentelemetry/api': ^1.9.0` to `pnpm-workspace.yaml` catalog, update core's `package.json` to `"@opentelemetry/api": "catalog:"`.
-
-### P2-3: `resolveArchive` signature diverges from spec
-
-**File**: `packages/core/src/plugin.ts:50`, `packages/youtube/src/plugin.ts:289`
-
-Spec says `resolveArchive?(live: LiveStream): Promise<Video | null>` but implementation uses `Content` param and `Content | null` return. The broader type works but is less precise.
-
-**Fix**: Narrow to spec signature. The YouTube implementation already checks `content.type === "video"`, so narrowing the param to `LiveStream` just removes the dead branch.
+| Item | Description |
+|------|-------------|
+| `PlatformNotFoundError(url)` | `client.ts:137` passes full URL as platform name — semantically wrong but informative error message |
+| RestManager edge case tests | Multi-401, mixed errors, concurrent requests |
+| Turbo cache disabled | `turbo.json` has `"cache": false` on all tasks — likely intentional during dev |
+| knip missing in CI | `post-edit-check.sh` runs it locally, but not in `.github/workflows/` |
+| biome format check in CI | CI only runs `biome:check`, not full format pipeline |
+| `getBestThumbnail` generic Error | Throws `Error` instead of `UnifiedLiveError` — internal function, already tested |
 
 ---
 
 ## Implementation Order
 
-1. **P0-1** — Fix `getBestThumbnail` (mapper.ts)
-2. **P0-2** — Fix `handleResponse` JSON parsing (manager.ts)
-3. **P1-1** — Add plugin method tests (plugin.test.ts)
-4. **P1-2** — Add non-JSON response test (manager.test.ts)
-5. **P1-3** — Add JSDoc to `toChannel` (mapper.ts)
-6. **P1-4** — Add JSDoc to RestManager methods (manager.ts)
-7. **P2-1** — Clean template artifact references
-8. **P2-2** — Add @opentelemetry/api to catalog
-9. **P2-3** — Narrow resolveArchive signature
+1. **P1-1..P1-4** — Fix spec docs (`02_PLUGINS.md`, `03_CLIENT_API.md`)
+2. **P1-5** — Fix `nextResetTime()` (`quota.ts`)
+3. **P1-6..P1-9** — Add 4 missing tests (`plugin.test.ts`)
+4. Run `./scripts/post-edit-check.sh`
 
 ## Files Modified
 
 | File | Changes |
 |------|---------|
-| `packages/youtube/src/mapper.ts` | P0-1: thumbnail error, P1-3: JSDoc |
-| `packages/core/src/rest/manager.ts` | P0-2: JSON parse safety, P1-4: JSDoc |
-| `packages/youtube/src/__tests__/plugin.test.ts` | P1-1: getChannel/getLiveStreams/getVideos tests |
-| `packages/core/src/__tests__/rest/manager.test.ts` | P1-2: non-JSON response test |
-| `packages/core/src/plugin.ts` | P2-3: narrow resolveArchive |
-| `packages/youtube/src/plugin.ts` | P2-3: narrow resolveArchive |
-| `.semgrepignore` | P2-1: remove template ref |
-| `.gitleaks.toml` | P2-1: remove template ref |
-| `scripts/security-scan.sh` | P2-1: remove template ref |
-| `.github/workflows/create-release-pr.yml` | P2-1: remove template refs |
-| `pnpm-workspace.yaml` | P2-2: add @opentelemetry/api to catalog |
-| `packages/core/package.json` | P2-2: use catalog: for @opentelemetry/api |
+| `docs/plan/unified-live-sdk/02_PLUGINS.md` | P1-1: `match()` return type, P1-2: `dispose()` required |
+| `docs/plan/unified-live-sdk/03_CLIENT_API.md` | P1-3: factory syntax, P1-4: `getContentById` |
+| `packages/core/src/rest/quota.ts` | P1-5: replace `toLocaleString` with `formatToParts` |
+| `packages/youtube/src/__tests__/plugin.test.ts` | P1-6..P1-9: resolveUrl, resolveArchive, 403 retry, empty playlist |
 
 ## Verification
 

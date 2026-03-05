@@ -104,13 +104,32 @@ export function createQuotaBudgetStrategy(
 /** Pacific time midnight (Google's quota reset schedule). */
 function nextResetTime(): Date {
   const now = new Date();
-  const pt = new Date(
-    now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }),
-  );
-  const tomorrow = new Date(pt);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  // Convert back to UTC by computing the offset
-  const offset = pt.getTime() - now.getTime();
-  return new Date(tomorrow.getTime() - offset);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const get = (type: Intl.DateTimeFormatPartTypes) => {
+    const part = parts.find((p) => p.type === type);
+    return Number.parseInt(part?.value ?? "0", 10);
+  };
+
+  const ptYear = get("year");
+  const ptMonth = get("month") - 1;
+  const ptDay = get("day");
+  const ptHour = get("hour");
+  const ptMinute = get("minute");
+  const ptSecond = get("second");
+
+  // Build "now" and "tomorrow midnight" as local Dates for offset computation
+  const ptNow = new Date(ptYear, ptMonth, ptDay, ptHour, ptMinute, ptSecond);
+  const ptMidnight = new Date(ptYear, ptMonth, ptDay + 1, 0, 0, 0, 0);
+  const offset = ptNow.getTime() - now.getTime();
+  return new Date(ptMidnight.getTime() - offset);
 }

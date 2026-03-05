@@ -8,18 +8,18 @@ The main entry point for SDK consumers. Manages plugin registration and delegate
 
 ```ts
 import { createClient } from "@unified-live/core";
-import { YouTubePlugin } from "@unified-live/youtube";
-import { TwitchPlugin } from "@unified-live/twitch";
-import { TwitCastingPlugin } from "@unified-live/twitcasting";
+import { createYouTubePlugin } from "@unified-live/youtube";
+import { createTwitchPlugin } from "@unified-live/twitch";
+import { createTwitCastingPlugin } from "@unified-live/twitcasting";
 
 const client = createClient({
   plugins: [
-    new YouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
-    new TwitchPlugin({
+    createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
+    createTwitchPlugin({
       clientId: process.env.TWITCH_CLIENT_ID!,
       clientSecret: process.env.TWITCH_CLIENT_SECRET!,
     }),
-    new TwitCastingPlugin({
+    createTwitCastingPlugin({
       clientId: process.env.TC_CLIENT_ID!,
       clientSecret: process.env.TC_CLIENT_SECRET!,
     }),
@@ -72,12 +72,12 @@ const live = await client.getContent("https://twitch.tv/videos/12345");
 
 ---
 
-### `client.getContent(platform: string, id: string): Promise<Content>`
+### `client.getContentById(platform: string, id: string): Promise<Content>`
 
 Retrieve content by directly specifying platform and resource ID.
 
 ```ts
-const content = await client.getContent("twitch", "44567123");
+const content = await client.getContentById("twitch", "44567123");
 ```
 
 **Errors**: Same as URL-based `getContent`.
@@ -180,8 +180,8 @@ client.dispose();
 
 ```ts
 const client = createClient();
-client.register(new YouTubePlugin({ apiKey: "..." }));
-client.register(new TwitchPlugin({ clientId: "...", clientSecret: "..." }));
+client.register(createYouTubePlugin({ apiKey: "..." }));
+client.register(createTwitchPlugin({ clientId: "...", clientSecret: "..." }));
 ```
 
 ### Config-Based Registration (MVP)
@@ -197,7 +197,7 @@ Plugins installed as npm packages with a `unified-live-plugin` field in their `p
 ### YouTube
 
 ```ts
-new YouTubePlugin({
+createYouTubePlugin({
   apiKey: string;           // Required: YouTube Data API v3 key
   quota?: {
     dailyLimit?: number;    // Default: 10,000. Increase if quota extension approved.
@@ -209,13 +209,13 @@ new YouTubePlugin({
 
 ```ts
 // App Access Token (server-side, most common)
-new TwitchPlugin({
+createTwitchPlugin({
   clientId: string;         // Required
   clientSecret: string;     // Required
 });
 
 // User Access Token (for user-specific operations, Phase 2)
-new TwitchPlugin({
+createTwitchPlugin({
   clientId: string;
   clientSecret: string;
   userToken: {
@@ -230,13 +230,13 @@ new TwitchPlugin({
 
 ```ts
 // Basic Auth (read-only, most common)
-new TwitCastingPlugin({
+createTwitCastingPlugin({
   clientId: string;         // Required
   clientSecret: string;     // Required
 });
 
 // Bearer Token (user-specific operations, Phase 2)
-new TwitCastingPlugin({
+createTwitCastingPlugin({
   accessToken: string;
   expiresIn: number;        // ~15,552,000 (180 days)
 });

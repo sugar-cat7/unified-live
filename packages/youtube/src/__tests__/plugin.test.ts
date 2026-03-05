@@ -1,5 +1,6 @@
 import {
   Content,
+  type LiveStream,
   NotFoundError,
   QuotaExhaustedError,
 } from "@unified-live/core";
@@ -313,6 +314,143 @@ describe("createYouTubePlugin", () => {
     await expect(plugin.getVideos("UC_nonexistent")).rejects.toThrow(
       NotFoundError,
     );
+  });
+
+  it("resolveUrl delegates to match", () => {
+    plugin = createYouTubePlugin({
+      apiKey: "test-key",
+      fetch: createMockFetch([]),
+    });
+
+    expect(
+      plugin.resolveUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+    ).toEqual({ platform: "youtube", type: "content", id: "dQw4w9WgXcQ" });
+    expect(plugin.resolveUrl("https://example.com/foo")).toBeNull();
+  });
+
+  it("resolveArchive returns Video when broadcast has ended", async () => {
+    const fetchFn = createMockFetch([
+      {
+        body: {
+          items: [sampleVideoItem],
+          pageInfo: { totalResults: 1, resultsPerPage: 5 },
+        },
+      },
+    ]);
+
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
+    const live: LiveStream = {
+      id: "dQw4w9WgXcQ",
+      platform: "youtube",
+      type: "live",
+      title: "Live Stream",
+      url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      thumbnail: {
+        url: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        width: 480,
+        height: 360,
+      },
+      channel: {
+        id: "UC123",
+        name: "Test Channel",
+        url: "https://www.youtube.com/channel/UC123",
+      },
+      viewerCount: 0,
+      startedAt: new Date("2024-01-01T12:00:00Z"),
+      raw: {},
+    };
+    const archive = await plugin.resolveArchive?.(live);
+
+    expect(archive).not.toBeNull();
+    expect(archive?.type).toBe("video");
+    expect(archive?.id).toBe("dQw4w9WgXcQ");
+  });
+
+  it("resolveArchive returns null when still live", async () => {
+    const fetchFn = createMockFetch([
+      {
+        body: {
+          items: [sampleLiveItem],
+          pageInfo: { totalResults: 1, resultsPerPage: 5 },
+        },
+      },
+    ]);
+
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
+    const live: LiveStream = {
+      id: "dQw4w9WgXcQ",
+      platform: "youtube",
+      type: "live",
+      title: "Live Stream",
+      url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      thumbnail: {
+        url: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        width: 480,
+        height: 360,
+      },
+      channel: {
+        id: "UC123",
+        name: "Test Channel",
+        url: "https://www.youtube.com/channel/UC123",
+      },
+      viewerCount: 1500,
+      startedAt: new Date("2024-01-01T12:00:00Z"),
+      raw: {},
+    };
+    const archive = await plugin.resolveArchive?.(live);
+
+    expect(archive).toBeNull();
+  });
+
+  it("getVideos returns empty page for channel with no uploads", async () => {
+    const fetchFn = createMockFetch([
+      // channels.list response
+      {
+        body: {
+          items: [sampleChannelItem],
+          pageInfo: { totalResults: 1, resultsPerPage: 5 },
+        },
+      },
+      // playlistItems.list response (empty)
+      {
+        body: {
+          items: [],
+          pageInfo: { totalResults: 0, resultsPerPage: 50 },
+        },
+      },
+    ]);
+
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
+    const page = await plugin.getVideos("UC123");
+
+    expect(page.items).toEqual([]);
+    expect(page.cursor).toBeUndefined();
+  });
+
+  it("handles 403 rateLimitExceeded by retrying", async () => {
+    const fetchFn = createMockFetch([
+      {
+        status: 403,
+        body: {
+          error: {
+            errors: [{ reason: "rateLimitExceeded" }],
+          },
+        },
+        headers: { "Retry-After": "0" },
+      },
+      {
+        body: {
+          items: [sampleVideoItem],
+          pageInfo: { totalResults: 1, resultsPerPage: 5 },
+        },
+      },
+    ]);
+
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
+    const content = await plugin.getContent("dQw4w9WgXcQ");
+
+    expect(content.type).toBe("video");
+    expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
   it("handles 403 quotaExceeded by throwing QuotaExhaustedError", async () => {

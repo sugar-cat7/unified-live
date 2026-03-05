@@ -47,7 +47,7 @@ export type PlatformPlugin = {
   getVideos(channelId: string, cursor?: string): Promise<Page<Video>>;
 
   /** Resolve the archive video for a live stream (platform-specific). */
-  resolveArchive?(content: Content): Promise<Content | null>;
+  resolveArchive?(live: LiveStream): Promise<Video | null>;
 
   /** Release resources (timers, connections). */
   dispose(): void;

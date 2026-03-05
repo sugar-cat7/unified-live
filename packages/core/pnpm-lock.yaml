@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@opentelemetry/api':
+      specifier: ^1.9.0
+      version: 1.9.0
     '@types/node':
       specifier: 20.19.25
       version: 20.19.25
@@ -34,7 +37,7 @@ importers:
         specifier: ^2.3.12
         version: 2.4.5
       '@opentelemetry/api':
-        specifier: ^1.9.0
+        specifier: 'catalog:'
         version: 1.9.0
       '@types/node':
         specifier: 'catalog:'

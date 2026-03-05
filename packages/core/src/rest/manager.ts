@@ -3,6 +3,7 @@ import {
   AuthenticationError,
   NotFoundError,
   RateLimitError,
+  UnifiedLiveError,
 } from "../errors.js";
 import { getTracer, SpanAttributes } from "../telemetry/traces.js";
 import type { RateLimitStrategy } from "./strategy.js";
@@ -23,32 +24,69 @@ export type RestManager = {
   readonly rateLimitStrategy: RateLimitStrategy;
   readonly tokenManager: TokenManager | undefined;
 
-  /** High-level API — called by plugins. */
+  /**
+   * Execute a full request lifecycle: rate limit → headers → fetch → retry → parse.
+   *
+   * @precondition rateLimitStrategy is initialized and not disposed
+   * @postcondition returns parsed response or throws an error from the hierarchy
+   */
   request: <T>(req: RestRequest) => Promise<RestResponse<T>>;
 
-  /** Build auth + custom headers for a request. */
+  /**
+   * Build auth + custom headers for a request. Override to inject platform-specific headers.
+   *
+   * @precondition tokenManager (if set) is ready to provide auth headers
+   * @postcondition returns a headers record including Authorization if tokenManager is set
+   */
   createHeaders: (req: RestRequest) => Promise<Record<string, string>>;
 
-  /** Execute a single fetch call. */
+  /**
+   * Execute a single fetch call. Override to add logging, metrics, or custom transport.
+   *
+   * @precondition url is a fully-qualified URL
+   * @postcondition returns the raw Response from the server
+   */
   runRequest: (url: string, init: RequestInit) => Promise<Response>;
 
-  /** Parse the response body and construct a RestResponse. */
+  /**
+   * Parse the response body as JSON and construct a RestResponse.
+   * Throws UnifiedLiveError if the response is not valid JSON.
+   *
+   * @precondition response.ok or a handled status code
+   * @postcondition returns a RestResponse with parsed data and optional rate limit info
+   */
   handleResponse: <T>(
     response: Response,
     req: RestRequest,
   ) => Promise<RestResponse<T>>;
 
-  /** Handle rate-limited responses. Return true to retry. */
+  /**
+   * Handle rate-limited responses (429, 403). Return true to retry.
+   * Override for platform-specific quota/rate limit detection.
+   *
+   * @precondition response has status 429 or 403
+   * @postcondition returns true if the request should be retried, false otherwise
+   */
   handleRateLimit: (
     response: Response,
     req: RestRequest,
     attempt: number,
   ) => Promise<boolean>;
 
-  /** Extract rate limit info from response headers. */
+  /**
+   * Extract rate limit info from response headers. Override per platform.
+   * Default returns undefined (no parsing).
+   *
+   * @postcondition returns RateLimitInfo if headers contain rate limit data, undefined otherwise
+   */
   parseRateLimitHeaders: (headers: Headers) => RateLimitInfo | undefined;
 
-  /** Release all resources (timers, etc.). */
+  /**
+   * Release all resources (timers, connections).
+   *
+   * @postcondition rateLimitStrategy and tokenManager are disposed
+   * @idempotency Safe — multiple calls have no additional effect
+   */
   dispose: () => void;
 };
 
@@ -191,7 +229,16 @@ export function createRestManager(options: RestManagerOptions): RestManager {
       response: Response,
       _req: RestRequest,
     ): Promise<RestResponse<T>> => {
-      const data = (await response.json()) as T;
+      let data: T;
+      try {
+        data = (await response.json()) as T;
+      } catch {
+        throw new UnifiedLiveError(
+          `Failed to parse JSON response from ${_req.path}`,
+          manager.platform,
+          "PARSE_ERROR",
+        );
+      }
       const rateLimit = manager.parseRateLimitHeaders(response.headers);
       return {
         status: response.status,

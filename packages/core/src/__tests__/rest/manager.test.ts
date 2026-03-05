@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AuthenticationError, NotFoundError } from "../../errors.js";
+import {
+  AuthenticationError,
+  NotFoundError,
+  UnifiedLiveError,
+} from "../../errors.js";
 import { createRestManager } from "../../rest/manager.js";
 import type {
   RateLimitHandle,
@@ -291,6 +295,31 @@ describe("createRestManager", () => {
       .calls[0]?.[1] as RequestInit;
     const headers = calledInit.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer test-token");
+  });
+
+  it("throws UnifiedLiveError on non-JSON response", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = vi.fn(async () => {
+      return new Response("<html>502 Bad Gateway</html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      });
+    }) as unknown as typeof globalThis.fetch;
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    await expect(
+      manager.request({ method: "GET", path: "/broken" }),
+    ).rejects.toThrow(UnifiedLiveError);
+
+    await expect(
+      manager.request({ method: "GET", path: "/broken" }),
+    ).rejects.toThrow("Failed to parse JSON response");
   });
 
   it("dispose cleans up strategy and tokenManager", () => {

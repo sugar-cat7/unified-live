@@ -108,6 +108,10 @@ export function toContent(item: YTVideoResource): Content {
 
 /**
  * Convert a YouTube Channel resource to a unified Channel type.
+ *
+ * @precondition item has at least id and snippet fields
+ * @postcondition returns a Channel with thumbnail undefined if none available
+ * @idempotency Safe — pure function
  */
 export function toChannel(item: YTChannelResource): Channel {
   const thumbnail =
@@ -131,7 +135,7 @@ function getBestThumbnail(
 ) {
   const thumb = thumbnails.high ?? thumbnails.medium ?? thumbnails.default;
   if (!thumb) {
-    return { url: "", width: 0, height: 0 };
+    throw new Error("YouTube resource has no thumbnail");
   }
   return { url: thumb.url, width: thumb.width, height: thumb.height };
 }

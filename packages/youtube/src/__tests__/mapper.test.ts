@@ -84,6 +84,19 @@ describe("toContent", () => {
     });
   });
 
+  it("throws when video has no thumbnail at all", () => {
+    const noThumb: YTVideoResource = {
+      ...baseVideoResource,
+      snippet: {
+        ...baseVideoResource.snippet,
+        thumbnails: {},
+      },
+    };
+    expect(() => toContent(noThumb)).toThrow(
+      "YouTube resource has no thumbnail",
+    );
+  });
+
   it("uses best available thumbnail", () => {
     const noHighThumb: YTVideoResource = {
       ...baseVideoResource,

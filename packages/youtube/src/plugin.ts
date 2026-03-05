@@ -286,10 +286,10 @@ export function createYouTubePlugin(
       };
     },
 
-    async resolveArchive(content: Content): Promise<Content | null> {
+    async resolveArchive(live: LiveStream): Promise<Video | null> {
       // YouTube uses the same ID for live and archive
-      if (content.type === "video") return content;
-      return plugin.getContent(content.id);
+      const content = await plugin.getContent(live.id);
+      return content.type === "video" ? content : null;
     },
 
     dispose(): void {

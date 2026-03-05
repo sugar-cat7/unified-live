@@ -1,276 +1,167 @@
-# Plan: YouTube-only MVP Implementation
+# Post-Implementation Review & Fix Plan
 
 ## Context
 
-The unified-live SDK docs and architecture specs are finalized (see `docs/plan/unified-live-sdk/`). The repo is still a web-app template (Next.js + Hono + TiDB) with zero SDK source code. This plan implements the plugin-based SDK architecture with YouTube-only minimum scope, removing all template artifacts.
+The plugin-based SDK architecture (YouTube-only MVP) was implemented across Phases 0-7. All gates pass (build, type-check, biome, knip, 120 tests). This review identifies bugs, missing coverage, and cleanup items to address before merging.
 
-Specs: `01_TYPES.md`, `02_PLUGINS.md`, `03_CLIENT_API.md`, `04_INFRASTRUCTURE.md`, `05_PACKAGE_STRUCTURE.md`
+## Severity Legend
 
-## Spec Divergences
-
-These deviations from the spec docs are intentional:
-
-1. **`createYouTubePlugin(config)` not `new YouTubePlugin(config)`** — CLAUDE.md: "factory functions, overridable function objects. No class inheritance hierarchies."
-2. **`mapper.ts` not `adapter.ts`** — D-009 renamed "Adapter" to "Plugin". The response mapping file is a mapper.
-3. **`registry.ts` folded into `client.ts`** — Registry is a `Map` inside the client. Separate file is premature.
-4. **`rest/queue.ts` deferred** — Token bucket handles its own queue. Not needed for YouTube.
-5. **`zod` as runtime dep (not devDep)** — Schemas are exported and used for validation by consumers.
-6. **No `openapi-typescript` generated types for MVP** — YouTube API types defined inline in `mapper.ts` (subset of fields actually used). Generated types add tooling overhead for MVP.
-7. **No `createClient` convenience shorthand** (`{ youtube: { apiKey } }`) — Would require core to import platform packages, violating dependency graph. Consumers use `createClient({ plugins: [createYouTubePlugin({ apiKey })] })`.
-
-## Phase 0: Clean Slate
-
-Remove template artifacts, update root config.
-
-### Delete (entire directories)
-
-- `services/api/`, `services/web/`
-- `infrastructure/terraform/`
-- `packages/errors/`, `packages/logger/`, `packages/dayjs/`
-
-### Delete (files)
-
-- `compose.yaml`, `compose.test.yaml`
-- `renovate/groups/api.json`, `renovate/groups/web.json`, `renovate/groups/infra.json`
-- `.github/workflows/terraform-apply-dev.yml`, `.github/workflows/terraform-plan-dev.yml`, `.github/workflows/visual-regression.yaml`
-
-### Modify
-
-- **`package.json`** — Name `unified-live`, remove template scripts (dev:next, tiup:*, db:*, storybook, etc.), remove dotenv-cli
-- **`pnpm-workspace.yaml`** — Remove `services/*`, clean catalog to SDK deps only
-- **`turbo.json`** — Remove globalPassThroughEnv, template tasks (dev, tiup, docker), simplify
-- **`knip.json`** — Replace workspace config for `packages/core` and `packages/youtube`
-- **`scripts/post-edit-check.sh`** — Remove `pnpm security-scan` (Docker-dependent)
-- **`.github/workflows/pr-check.yaml`** — Remove integration-test job, docker-build, octocov
-- **`.github/workflows/security-scan.yaml`** — Remove Docker image scan section
-
-### Create
-
-- **`tsconfig.base.json`** — Shared TS config per spec (ESNext, Bundler, strict, verbatimModuleSyntax)
-
-### Verify
-
-`pnpm install` succeeds, no build errors from removed packages.
+- **P0 (Bug)**: Runtime error or incorrect behavior
+- **P1 (Gap)**: Missing error handling or test coverage for realistic scenarios
+- **P2 (Cleanup)**: Template artifacts, docs, minor improvements
 
 ---
 
-## Phase 1: Core Types + Errors
+## P0: Bugs
 
-Create `packages/core/` scaffold and implement the type foundation.
+### P0-1: `getBestThumbnail()` returns invalid data when no thumbnail exists
 
-### Create
+**File**: `packages/youtube/src/mapper.ts:133-134`
 
-- `packages/core/package.json` — `@unified-live/core`, zod as runtime dep, @opentelemetry/api as optional peer
-- `packages/core/tsconfig.json` — Extends `../../tsconfig.base.json`
-- `packages/core/tsup.config.ts` — ESM + CJS, dts, external @opentelemetry/api
-- `packages/core/vitest.config.ts`
-- `packages/core/biome.json` — Extends `../../biome.base.json`
-- `packages/core/src/types.ts` — All Zod schemas from 01_TYPES.md:
-  - `thumbnailSchema`, `channelRefSchema`, `contentBaseSchema` (internal)
-  - `liveStreamSchema`/`LiveStream`, `videoSchema`/`Video`
-  - `contentSchema`/`Content` (discriminated union)
-  - `channelSchema`/`Channel`, `broadcastSessionSchema`/`BroadcastSession`
-  - `resolvedUrlSchema`/`ResolvedUrl`, `Page<T>` type
-  - `Content.isLive()`, `Content.isVideo()` type guards
-- `packages/core/src/errors.ts` — Error hierarchy from 03_CLIENT_API.md:
-  - `UnifiedLiveError` (base: platform, code)
-  - `QuotaExhaustedError` (details: consumed, limit, resetsAt, requestedCost)
-  - `AuthenticationError`, `RateLimitError` (retryAfter), `PlatformNotFoundError`, `NotFoundError`
-- `packages/core/src/index.ts` — Re-exports types + errors
-- `packages/core/src/__tests__/types.test.ts` — Schema parse/reject, type guards
-- `packages/core/src/__tests__/errors.test.ts` — instanceof chain, message formatting
+When all thumbnail sizes are `undefined`, returns `{ url: "", width: 0, height: 0 }`. This violates the core `thumbnailSchema` which requires `z.url()` (non-empty valid URL) and `z.int().check(z.positive())` (width/height > 0). Any downstream validation or serialization will fail.
 
-### Verify
+**Fix**: Throw an error or use a known YouTube placeholder URL. Since `thumbnail` is required on `Content` but optional on `Channel`, the simplest fix is to throw — a video with no thumbnail at all is a data integrity issue from YouTube's side.
 
-`pnpm --filter @unified-live/core build && pnpm --filter @unified-live/core test:run`
-
----
-
-## Phase 2: Auth + Telemetry
-
-### Create
-
-- `packages/core/src/auth/types.ts` — `TokenManager` type (getAuthHeader, invalidate, dispose)
-- `packages/core/src/auth/static.ts` — `createStaticTokenManager(header): TokenManager`
-- `packages/core/src/telemetry/traces.ts` — `getTracer()` using `@opentelemetry/api`, span attribute constants
-- `packages/core/src/telemetry/metrics.ts` — `getMeter()`, metric definitions
-- `packages/core/src/__tests__/auth/static.test.ts`
-- Update `packages/core/src/index.ts`
-
-### Verify
-
-`pnpm --filter @unified-live/core test:run`
-
----
-
-## Phase 3: Rate Limit Strategies
-
-### Create
-
-- `packages/core/src/rest/types.ts` — RestRequest, RestResponse, RateLimitInfo, RestManagerOptions, RetryConfig
-- `packages/core/src/rest/strategy.ts` — RateLimitStrategy, RateLimitHandle, RateLimitStatus types
-- `packages/core/src/rest/quota.ts` — `createQuotaBudgetStrategy(config): RateLimitStrategy`
-  - `acquire()`: Check consumed + cost <= dailyLimit, throw QuotaExhaustedError if over
-  - `handle.complete()`: no-op (YouTube has no quota headers)
-  - Auto-reset at Pacific midnight via setTimeout
-- `packages/core/src/rest/bucket.ts` — `createTokenBucketStrategy(config): RateLimitStrategy`
-  - `acquire()`: Consume token or block until refill
-  - `handle.complete(headers)`: Update remaining from server headers
-  - Refill timer via setInterval
-- `packages/core/src/__tests__/rest/quota.test.ts` — Cost deduction, exhaustion, release, auto-reset (fake timers)
-- `packages/core/src/__tests__/rest/bucket.test.ts` — Acquire/block/refill, header update, dispose
-- Update `packages/core/src/index.ts`
-
-### Verify
-
-`pnpm --filter @unified-live/core test:run`
-
----
-
-## Phase 4: RestManager
-
-discordeno-style factory: `createRestManager(options): RestManager` returning a plain object with overridable function properties.
-
-### Create
-
-- `packages/core/src/rest/manager.ts`:
-  - Overridable methods: `request`, `createHeaders`, `runRequest`, `handleResponse`, `handleRateLimit`, `parseRateLimitHeaders`, `dispose`
-  - Request flow: OTel span → rateLimitStrategy.acquire → createHeaders → buildUrl → runRequest → retry loop (429/5xx) → handleResponse → handle.complete → span end
-  - Helper: `buildUrl(base, path, query)`, `sleep(ms)`
-- `packages/core/src/__tests__/rest/manager.test.ts`:
-  - Successful GET, retry on 5xx, 429 with Retry-After, 404→NotFoundError, 401→AuthenticationError
-  - rateLimitStrategy.acquire called, handle.complete called
-  - Method override works (reassign function property)
-  - Uses mock fetch via `options.fetch`
-- Update `packages/core/src/index.ts`
-
-### Verify
-
-`pnpm --filter @unified-live/core test:run && pnpm --filter @unified-live/core build`
-
----
-
-## Phase 5: Plugin Interface + Client
-
-### Create
-
-- `packages/core/src/plugin.ts` — `PlatformPlugin` type:
-  - `name`, `rest`, `match`, `resolveUrl`, `getContent`, `getChannel`, `getLiveStreams`, `getVideos`
-  - Optional: `resolveArchive`, `resolveSession`, `dispose`
-- `packages/core/src/client.ts` — `createClient(options?): UnifiedClient`:
-  - Internal `Map<string, PlatformPlugin>` registry
-  - `register(plugin)`, `getContent(url)` / `getContent(platform, id)`, `getLiveStreams`, `getVideos`, `getChannel`, `platform(name)`, `match(url)`, `dispose()`
-  - URL-based routing: iterate plugins calling `match()`, resolve to plugin + id
-- `packages/core/src/__tests__/client.test.ts` — Mock plugin, URL routing, PlatformNotFoundError
-- Update `packages/core/src/index.ts`
-
-### Verify
-
-`pnpm --filter @unified-live/core test:run && pnpm --filter @unified-live/core build`
-
-Core package is feature-complete at this point.
-
----
-
-## Phase 6: YouTube Plugin
-
-### Create
-
-- `packages/youtube/package.json` — @unified-live/youtube, depends on workspace:* core
-- `packages/youtube/tsconfig.json`, `tsup.config.ts`, `vitest.config.ts`, `biome.json`
-- `packages/youtube/src/urls.ts` — URL patterns:
-  - `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/live/` → content
-  - `youtube.com/channel/`, `youtube.com/@`, `youtube.com/c/` → channel
-- `packages/youtube/src/quota.ts` — Cost map (videos:list=1, search:list=100, etc.), `createYouTubeQuotaStrategy(dailyLimit?)`
-- `packages/youtube/src/mapper.ts`:
-  - `toContent(item): Content` — Determine LiveStream vs Video from `liveBroadcastContent`
-  - `toChannel(item): Channel`
-  - `parseDuration(iso8601): number` — PT1H2M3S → seconds
-  - Inline YouTube API response type subset (no generated types for MVP)
-- `packages/youtube/src/plugin.ts` — `createYouTubePlugin(config): PlatformPlugin`:
-  - Creates RestManager with QuotaBudgetStrategy
-  - Override `rest.request`: inject API key as query param
-  - Override `rest.handleRateLimit`: 403 quotaExceeded → QuotaExhaustedError, 403 rateLimitExceeded → retry
-  - Implements: getContent (videos.list), getChannel (channels.list, handles @handle/forUsername), getLiveStreams (search.list + videos.list), getVideos (channels → uploads playlist → playlistItems → videos.list), resolveArchive (same ID)
-- `packages/youtube/src/index.ts`
-- Tests:
-  - `__tests__/urls.test.ts` — All URL patterns + non-matching
-  - `__tests__/mapper.test.ts` — Live/video/channel mapping, duration parsing
-  - `__tests__/plugin.test.ts` — Integration with mock fetch: getContent, 403 quota, getLiveStreams empty
-
-### Verify
-
-`pnpm --filter @unified-live/youtube test:run && pnpm --filter @unified-live/youtube build`
-
----
-
-## Phase 7: Integration Test + Polish
-
-### Create
-
-- `packages/youtube/src/__tests__/integration.test.ts` — Full consumer flow:
-  - `createClient({ plugins: [createYouTubePlugin({ apiKey })] })`
-  - `client.getContent("https://youtube.com/watch?v=...")` → Content
-  - `client.match(url)` → ResolvedUrl
-  - `client.dispose()`
-
-### Polish
-
-- JSDoc on all public functions (preconditions, postconditions, idempotency)
-- Run `pnpm biome`, `pnpm knip`, `pnpm type-check`
-- Run `./scripts/post-edit-check.sh` as final gate
-
-### Verify (final)
-
-```
-pnpm build          # Both packages build
-pnpm biome          # Lint passes
-pnpm knip           # No dead exports
-pnpm type-check     # No type errors
-pnpm test           # All tests pass
+```ts
+function getBestThumbnail(thumbnails: ...) {
+  const thumb = thumbnails.high ?? thumbnails.medium ?? thumbnails.default;
+  if (!thumb) {
+    throw new Error("YouTube video has no thumbnail");
+  }
+  return { url: thumb.url, width: thumb.width, height: thumb.height };
+}
 ```
 
+### P0-2: `handleResponse` crashes on non-JSON responses
+
+**File**: `packages/core/src/rest/manager.ts:194`
+
+`response.json()` will throw a `SyntaxError` if the response body is not valid JSON (HTML error pages, empty body, etc.). This uncaught error bypasses the error hierarchy entirely.
+
+**Fix**: Wrap in try-catch, throw a meaningful `UnifiedLiveError`.
+
+```ts
+handleResponse: async <T>(response: Response, _req: RestRequest): Promise<RestResponse<T>> => {
+  let data: T;
+  try {
+    data = (await response.json()) as T;
+  } catch {
+    throw new UnifiedLiveError(
+      `Failed to parse response from ${_req.path}`,
+      manager.platform,
+      "PARSE_ERROR",
+    );
+  }
+  // ... rest unchanged
+},
+```
+
+### P0-3: `handle.complete()` never called on error paths
+
+**File**: `packages/core/src/rest/manager.ts:155,163`
+
+In the `request` method, `handle.complete(response.headers)` is only called on success (line 155). In the `catch` block, `handle.release()` is called (line 163). However, for non-retriable errors (404, final 401), the code `throw`s before reaching `handle.complete()` — the catch block calls `handle.release()`, which is correct. But: if `handleResponse` itself throws (e.g. P0-2), the response headers are lost. This is actually fine because `release()` is the correct fallback. **No fix needed** — just confirming the error path is safe.
+
 ---
 
-## File Summary
+## P1: Missing Error Handling & Test Gaps
 
-### Phase 0 Delete (directories)
+### P1-1: Missing tests for `getChannel()`, `getLiveStreams()`, `getVideos()`
 
-`services/api/`, `services/web/`, `infrastructure/terraform/`, `packages/errors/`, `packages/logger/`, `packages/dayjs/`
+**File**: `packages/youtube/src/__tests__/plugin.test.ts`
 
-### Phase 0 Delete (files)
+The plugin test only covers `getContent`, `match`, `handleRateLimit`, and `dispose`. The three other main methods have zero test coverage:
+- `getChannel()` — three code paths (@handle, UC-ID, custom URL), NotFoundError
+- `getLiveStreams()` — search + video fetch pipeline, empty results
+- `getVideos()` — channel lookup + playlist + video fetch pipeline, pagination cursor
 
-`compose.yaml`, `compose.test.yaml`, `renovate/groups/{api,web,infra}.json`, `.github/workflows/{terraform-apply-dev,terraform-plan-dev,visual-regression}.*`
+**Fix**: Add tests for each method with at least: happy path + not-found error.
 
-### Phase 0 Modify
+### P1-2: Missing test for non-JSON response in RestManager
 
-`package.json`, `pnpm-workspace.yaml`, `turbo.json`, `knip.json`, `scripts/post-edit-check.sh`, `.github/workflows/pr-check.yaml`, `.github/workflows/security-scan.yaml`
+**File**: `packages/core/src/__tests__/rest/manager.test.ts`
 
-### Phase 0 Create
+No test verifies behavior when the server returns non-JSON (e.g. HTML 502 page). After fixing P0-2, add a test that verifies the error is properly thrown.
 
-`tsconfig.base.json`
+### P1-3: `toChannel()` missing JSDoc
 
-### Phases 1-5: packages/core/ (~17 source files + ~8 test files)
+**File**: `packages/youtube/src/mapper.ts:112`
+
+Per CLAUDE.md: "Write JSDoc with preconditions, postconditions, and idempotency for public functions." `toChannel()` is exported and has only a one-line JSDoc without the required annotations.
+
+**Fix**: Add full JSDoc matching the `toContent()` pattern.
+
+### P1-4: RestManager type JSDoc missing preconditions/postconditions
+
+**File**: `packages/core/src/rest/manager.ts:26-52`
+
+The overridable method signatures have brief comments but not the formal JSDoc required by CLAUDE.md. The `createRestManager` factory itself (line 55-61) has proper JSDoc — the individual method types should match.
+
+**Fix**: Add `@precondition` / `@postcondition` to each method's JSDoc.
+
+---
+
+## P2: Cleanup
+
+### P2-1: Template artifact references remain
+
+These files reference deleted template paths (`services/api/Dockerfile`, etc.):
+- `.semgrepignore` — references `services/api/Dockerfile`
+- `.gitleaks.toml` — allowlist references `services/api/Dockerfile`
+- `scripts/security-scan.sh` — references template Docker image scan
+- `.github/workflows/create-release-pr.yml` — references `develop` branch and `infrastructure/terraform/**`
+
+**Fix**: Clean each file to remove dead references.
+
+### P2-2: `@opentelemetry/api` missing from pnpm catalog
+
+**File**: `pnpm-workspace.yaml`
+
+Core's `package.json` specifies `"@opentelemetry/api": "^1.9.0"` directly instead of using `catalog:`. The spec (`05_PACKAGE_STRUCTURE.md`) expects it in the catalog.
+
+**Fix**: Add `'@opentelemetry/api': ^1.9.0` to `pnpm-workspace.yaml` catalog, update core's `package.json` to `"@opentelemetry/api": "catalog:"`.
+
+### P2-3: `resolveArchive` signature diverges from spec
+
+**File**: `packages/core/src/plugin.ts:50`, `packages/youtube/src/plugin.ts:289`
+
+Spec says `resolveArchive?(live: LiveStream): Promise<Video | null>` but implementation uses `Content` param and `Content | null` return. The broader type works but is less precise.
+
+**Fix**: Narrow to spec signature. The YouTube implementation already checks `content.type === "video"`, so narrowing the param to `LiveStream` just removes the dead branch.
+
+---
+
+## Implementation Order
+
+1. **P0-1** — Fix `getBestThumbnail` (mapper.ts)
+2. **P0-2** — Fix `handleResponse` JSON parsing (manager.ts)
+3. **P1-1** — Add plugin method tests (plugin.test.ts)
+4. **P1-2** — Add non-JSON response test (manager.test.ts)
+5. **P1-3** — Add JSDoc to `toChannel` (mapper.ts)
+6. **P1-4** — Add JSDoc to RestManager methods (manager.ts)
+7. **P2-1** — Clean template artifact references
+8. **P2-2** — Add @opentelemetry/api to catalog
+9. **P2-3** — Narrow resolveArchive signature
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `packages/youtube/src/mapper.ts` | P0-1: thumbnail error, P1-3: JSDoc |
+| `packages/core/src/rest/manager.ts` | P0-2: JSON parse safety, P1-4: JSDoc |
+| `packages/youtube/src/__tests__/plugin.test.ts` | P1-1: getChannel/getLiveStreams/getVideos tests |
+| `packages/core/src/__tests__/rest/manager.test.ts` | P1-2: non-JSON response test |
+| `packages/core/src/plugin.ts` | P2-3: narrow resolveArchive |
+| `packages/youtube/src/plugin.ts` | P2-3: narrow resolveArchive |
+| `.semgrepignore` | P2-1: remove template ref |
+| `.gitleaks.toml` | P2-1: remove template ref |
+| `scripts/security-scan.sh` | P2-1: remove template ref |
+| `.github/workflows/create-release-pr.yml` | P2-1: remove template refs |
+| `pnpm-workspace.yaml` | P2-2: add @opentelemetry/api to catalog |
+| `packages/core/package.json` | P2-2: use catalog: for @opentelemetry/api |
+
+## Verification
 
 ```
-packages/core/
-├── package.json, tsconfig.json, tsup.config.ts, vitest.config.ts, biome.json
-└── src/
-    ├── index.ts
-    ├── types.ts, errors.ts, plugin.ts, client.ts
-    ├── auth/types.ts, auth/static.ts
-    ├── telemetry/traces.ts, telemetry/metrics.ts
-    ├── rest/types.ts, rest/strategy.ts, rest/quota.ts, rest/bucket.ts, rest/manager.ts
-    └── __tests__/types.test.ts, errors.test.ts, client.test.ts
-        auth/static.test.ts, rest/{quota,bucket,manager}.test.ts
-```
-
-### Phases 6-7: packages/youtube/ (~5 source files + ~4 test files)
-
-```
-packages/youtube/
-├── package.json, tsconfig.json, tsup.config.ts, vitest.config.ts, biome.json
-└── src/
-    ├── index.ts, plugin.ts, mapper.ts, quota.ts, urls.ts
-    └── __tests__/urls.test.ts, mapper.test.ts, plugin.test.ts, integration.test.ts
+./scripts/post-edit-check.sh   # build + biome + knip + type-check + test
 ```

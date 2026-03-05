@@ -24,5 +24,4 @@ description: Update docs/ in response to code changes. Keep docs/ always up to d
 - `docs/web-frontend/` - Frontend (architecture, hooks, CSS, a11y, testing, error handling, TypeScript)
 - `docs/backend/` - Backend (server architecture, domain modeling, API design, UseCase implementation rules, function documentation conventions, PR guidelines, date/time handling)
 - `docs/design/` - Design system (tokens, colors, typography, UI patterns, principles, a11y)
-- `docs/infra/` - Infrastructure (Terraform, tfaction, CI/CD)
 - `docs/security/` - Security (lint, scanning)

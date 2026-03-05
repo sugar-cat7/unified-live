@@ -12,7 +12,7 @@ The project is named `tempalte-services-en` and is intended as an English-langua
 |---|---|---|
 | Project instructions | 4 | `AGENTS.md`, `README.md`, `.github/copilot-instructions.md`, `.github/pull_request_template.md` |
 | Agent skills | 26 | `.agent/skills/*/SKILL.md` |
-| Documentation | ~50 | `docs/backend/`, `docs/design/`, `docs/domain/`, `docs/infra/`, `docs/plan/`, `docs/security/`, `docs/testing/`, `docs/web-frontend/` |
+| Documentation | ~50 | `docs/backend/`, `docs/design/`, `docs/domain/`, `docs/plan/`, `docs/security/`, `docs/testing/`, `docs/web-frontend/` |
 | Service/Package READMEs | 4 | `services/web/README.md`, `services/api/README.md`, `services/api/local/db/README.md`, `packages/dayjs/README.md` |
 | Config | 1 | `.textlintrc.json` (remove Japanese-only preset) |
 
@@ -42,7 +42,7 @@ Batch by topic for terminology consistency:
 - **Workflow skills** (7): plan-feature, init-impl, init-project, domain-spec-kickoff, domain-doc-evolution, update-docs, research
 - **Testing skills** (7): testing, unit-testing, integration-testing, api-testing, ui-testing, vrt-testing, e2e-testing
 - **Backend/architecture skills** (6): backend-development, code-review, error-handling, sql-antipatterns, typescript-conventions, twada-tdd
-- **Frontend/design/infra skills** (6): frontend-development, design-system, quality-check, infra-and-quality, infra-tfaction-bootstrap, drawio-architecture
+- **Frontend/design skills** (3): frontend-development, design-system, quality-check
 
 ### Phase 3: Documentation (docs/)
 
@@ -52,7 +52,6 @@ Translate all markdown files by directory:
 - `docs/design/` (13 files)
 - `docs/domain/` (5 files)
 - `docs/testing/` (7 files)
-- `docs/infra/` (6 files)
 - `docs/plan/` (1 file - `README.md`)
 - `docs/security/` (2 files)
 
@@ -96,9 +95,9 @@ Translate ~48 Japanese comments across 7 files missed in earlier passes:
 2. `services/web/app/globals.css` - 23 comments (color names, utility descriptions)
 3. `services/web/vrt/Dockerfile` - 2 comments
 4. `services/web/vrt/docker-entrypoint.sh` - 3 comments
-5. `infrastructure/terraform/modules/terraform_backend/terraform.tf` - 1 comment
-6. `infrastructure/terraform/modules/terraform_backend/state_bucket.tf` - 1 comment
-7. `infrastructure/terraform/modules/terraform_backend/github_oidc.tf` - 1 comment
+5. ~~`infrastructure/terraform/modules/terraform_backend/terraform.tf`~~ - removed
+6. ~~`infrastructure/terraform/modules/terraform_backend/state_bucket.tf`~~ - removed
+7. ~~`infrastructure/terraform/modules/terraform_backend/github_oidc.tf`~~ - removed
 
 After translation: commit, then final grep verification.
 

@@ -39,7 +39,6 @@ Based on the answers, update the following.
 Provide guidance on targets for replacing `@my-app` with the project identifier.
 
 - `package.json` (root + packages/* + services/*)
-- `infrastructure/terraform/`
 - `renovate.json` / `renovate/default.json`
 - `compose.test.yaml`
 - `.github/workflows/`

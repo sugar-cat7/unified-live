@@ -29,6 +29,5 @@
 - `docs/web-frontend/` - Frontend (architecture, hooks, CSS, a11y, testing, error handling, TypeScript)
 - `docs/backend/` - Backend (server architecture, domain model, API design, UseCase rules, function documentation conventions, PR guidelines, datetime handling)
 - `docs/design/` - Design system (tokens, colors, typography, UI patterns)
-- `docs/infra/` - Infrastructure (Terraform, CI/CD)
 - `docs/security/` - Security
 - `.agent/skills/` - AI agent skill definitions

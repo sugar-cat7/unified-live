@@ -13,7 +13,7 @@ When starting from this template, run the following steps in order.
    - Run `/domain-spec-kickoff` with an AI agent
    - Initialize `docs/domain/*.md` in a single interview
 4. **Replace `@my-app` with your project identifier**
-   - Targets: `package.json` (root + workspaces), `infrastructure/terraform/`, `renovate*.json`, `.github/workflows/`, `compose.test.yaml`
+   - Targets: `package.json` (root + workspaces), `renovate*.json`, `.github/workflows/`, `compose.test.yaml`
 5. **Create local environment variables**
    - Create `.env.local` at the repository root
    - Minimal example:
@@ -75,7 +75,6 @@ Key skills are located in `.agent/skills/`.
 | [docs/testing/](docs/testing/) | Unit/Integration/API/UI/VRT/E2E test implementation guidelines |
 | [docs/backend/](docs/backend/) | Backend design and conventions |
 | [docs/design/](docs/design/) | Design system |
-| [docs/infra/](docs/infra/) | Terraform and CI/CD |
 | [docs/security/](docs/security/) | Security and linting |
 
 ### Docs Writing

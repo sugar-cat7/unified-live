@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - develop
-    paths-ignore:
-      - 'infrastructure/terraform/**'
-      - '.github/workflows/terraform-*.yml'
 
 permissions:
   contents: read

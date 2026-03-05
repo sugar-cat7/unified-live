@@ -10,20 +10,6 @@
   ],
   "packageRules": [
     {
-      "description": "Terraform Google provider",
-      "groupName": "infra-terraform",
-      "matchManagers": ["terraform"],
-      "matchPackagePatterns": ["^hashicorp/google"],
-      "matchUpdateTypes": ["minor", "patch"]
-    },
-    {
-      "description": "Terraform major requires review",
-      "matchManagers": ["terraform"],
-      "matchUpdateTypes": ["major"],
-      "labels": ["terraform", "major-update", "requires-review"],
-      "automerge": false
-    },
-    {
       "description": "Docker Node.js images",
       "groupName": "infra-docker-node",
       "matchDatasources": ["docker"],

@@ -29,7 +29,6 @@ export type {
   RestResponse,
   RetryConfig,
 } from "./rest/types.js";
-export { getMeter, MetricNames } from "./telemetry/metrics.js";
 export { getTracer, SpanAttributes } from "./telemetry/traces.js";
 export type {
   BroadcastSession,

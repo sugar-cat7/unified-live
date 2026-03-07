@@ -26,9 +26,7 @@ unified-live/
 │   │   │   │   ├── types.ts           # TokenManager interface
 │   │   │   │   └── noop.ts            # StaticTokenManager
 │   │   │   └── telemetry/
-│   │   │       ├── traces.ts          # Span creation, attribute helpers
-│   │   │       ├── metrics.ts         # Counter, Histogram, Gauge definitions
-│   │   │       └── noop.ts            # Noop documentation
+│   │   │       └── traces.ts          # Span creation, attribute helpers
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │

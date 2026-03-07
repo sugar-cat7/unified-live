@@ -14,23 +14,13 @@
       "dependsOn": ["^build"],
       "cache": false
     },
-    "biome:check": {
+    "format": {
       "cache": false
     },
-    "biome:format": {
-      "dependsOn": ["biome:check"],
+    "format:check": {
       "cache": false
     },
-    "biome:unsafe-fix": {
-      "dependsOn": ["biome:format"],
-      "cache": false
-    },
-    "biome:lint": {
-      "dependsOn": ["biome:unsafe-fix"],
-      "cache": false
-    },
-    "biome": {
-      "dependsOn": ["biome:lint"],
+    "//#lint": {
       "cache": false
     },
     "//#knip": {

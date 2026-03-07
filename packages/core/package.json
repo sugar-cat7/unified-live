@@ -19,11 +19,8 @@
     "build": "tsup",
     "type-check": "tsc --noEmit",
     "test:run": "vitest run",
-    "biome:check": "biome check .",
-    "biome:format": "biome format --write .",
-    "biome:unsafe-fix": "biome check --fix --unsafe .",
-    "biome:lint": "biome lint --write .",
-    "biome": "echo done"
+    "format": "biome format --write .",
+    "format:check": "biome check ."
   },
   "dependencies": {
     "zod": "catalog:"

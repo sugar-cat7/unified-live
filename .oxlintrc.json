@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "pedantic": "off",
+    "style": "off"
+  },
+  "rules": {
+    "no-param-reassign": "error",
+    "default-param-last": "error",
+    "no-else-return": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/no-inferrable-types": "error",
+    "typescript/prefer-enum-initializers": "error"
+  },
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "coverage",
+    ".turbo",
+    "*.config.js",
+    "*.config.ts"
+  ]
+}

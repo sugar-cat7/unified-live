@@ -1,6 +1,6 @@
 ---
 name: Code Review
-description: PR/code review based on architecture rules. Detects violations of UseCase implementation rules, Result type, and JSDoc conventions.
+description: PR/code review based on SDK architecture rules. Detects violations of Zod Schema First, error hierarchy, and JSDoc conventions.
 user_invocable: true
 ---
 
@@ -13,22 +13,20 @@ user_invocable: true
 
 ## Architecture Violations
 
-1. Is a UseCase calling another UseCase?
-2. Is a UseCase directly accessing environment variables?
-3. Is a UseCase directly operating PubSub/message queues?
-4. Does the UseCase follow "top-to-bottom sequential execution"?
-5. Are there multiple conditional branches inside a loop?
+1. Are there direct interface/type definitions? (Zod Schema First is required)
+2. Does the error hierarchy extend `UnifiedLiveError`?
+3. Are factory functions used instead of class inheritance? (discordeno pattern)
+4. Are new abstractions introduced without 3+ duplications?
 
 ## Code Conventions
 
-6. Is try-catch being used? (Result type is mandatory)
-7. Are interfaces being defined directly? (Zod Schema First is required)
-8. Do public functions in Domain/UseCase have JSDoc (preconditions and postconditions)?
-9. Do UseCase functions document idempotency (`@idempotent`)?
+5. Do public functions have JSDoc (preconditions and postconditions)?
+6. Are errors thrown as exceptions (not Result types)?
+7. Are type definitions derived from Zod schemas using `z.infer<typeof schema>`?
 
 ## Testing
 
-10. Are tests included for additions or changes to Domain functions?
+8. Are tests included for additions or changes?
 
 # Output Format
 
@@ -43,9 +41,6 @@ If you cannot cite a rule source, separate it as an "Improvement Suggestion" and
 
 # Reference Documents
 
-- `docs/backend/usecase-rules.md` - UseCase implementation rules
+- `docs/backend/sdk-architecture.md` - SDK architecture (discordeno pattern)
 - `docs/backend/function-documentation.md` - Function documentation conventions
-- `docs/backend/server-architecture.md` - Overall architecture
-- `docs/backend/domain-modeling.md` - Domain model design
-- `docs/backend/pr-guidelines.md` - PR guidelines
 - `docs/security/lint.md` - Lint / Quality Check

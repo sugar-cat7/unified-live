@@ -11,4 +11,5 @@ description: Type definitions using Zod Schema First, satisfies operator, type-s
 
 # Reference Documents
 
-- `docs/web-frontend/typescript.md` - Schema-First Development, satisfies, type-safe patterns
+- `docs/backend/sdk-architecture.md` - SDK architecture and type conventions
+- `docs/plan/unified-live-sdk/01_TYPES.md` - Type definitions specification

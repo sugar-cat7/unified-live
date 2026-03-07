@@ -257,28 +257,13 @@ pnpm add @unified-live/core @unified-live/youtube @unified-live/twitch @unified-
 
 No unused platform code is included in the bundle.
 
-## Relationship to Existing Packages
+## Template Cleanup (Completed)
 
-The monorepo currently contains template packages (`@my-app/errors`, `@my-app/logger`, `@my-app/dayjs`). For the SDK-only repo:
+The following template artifacts were removed during project initialization:
 
-| Existing Package | Decision |
-| --- | --- |
-| `@my-app/errors` | Remove. SDK uses thrown exceptions (D-008). |
-| `@my-app/logger` | Remove. SDK uses OTel for observability, not application logging. |
-| `@my-app/dayjs` | Remove. SDK uses native `Date` and `Intl` APIs. |
-
-## Items to Remove
-
-The following template artifacts are not applicable to the SDK project:
-
-- `services/api/` — No Hono API server
-- `services/web/` — No Next.js frontend
-- `infrastructure/terraform/` — No infrastructure to deploy
-- `docs/web-frontend/` — No frontend docs
-- `docs/design/` — No design system
-- `docs/backend/sql-antipatterns.md` — No database
-- `docs/backend/api-design.md` — No HTTP server (SDK is the API)
-- `docs/testing/ui-testing.md`, `docs/testing/vrt-testing.md`, `docs/testing/e2e-testing.md` — No UI
+- Template packages (`@my-app/errors`, `@my-app/logger`, `@my-app/dayjs`) — SDK uses thrown exceptions (D-008), OTel, and native `Date`/`Intl` APIs
+- `services/api/`, `services/web/`, `infrastructure/terraform/` — Not applicable to SDK
+- Template documentation (`docs/web-frontend/`, `docs/design/`, `docs/infra/`) — Not applicable to SDK
 
 ## Testing Strategy
 

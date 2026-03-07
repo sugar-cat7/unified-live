@@ -1,6 +1,6 @@
 ---
 name: Testing
-description: A comprehensive testing skill centered on Vitest that implements Unit/Integration/API/UI/VRT/E2E tests. Used to incrementally ensure quality with table-driven tests and a minimal-mock policy.
+description: Testing skill centered on Vitest. Implements unit and integration tests with table-driven approach and minimal-mock policy.
 ---
 
 # Trigger Conditions
@@ -13,8 +13,3 @@ description: A comprehensive testing skill centered on Vitest that implements Un
 - `docs/testing/README.md` - Testing strategy overview
 - `docs/testing/unit-testing.md` - Unit testing
 - `docs/testing/integration-testing.md` - Integration testing
-- `docs/testing/api-testing.md` - API testing
-- `docs/testing/ui-testing.md` - UI testing
-- `docs/testing/vrt-testing.md` - VRT
-- `docs/testing/e2e-testing.md` - E2E
-- `docs/web-frontend/twada-tdd.md` - t_wada-based TDD strategy

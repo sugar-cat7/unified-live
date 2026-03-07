@@ -19,10 +19,11 @@
       "Bash(git log *)",
       "Bash(git show *)",
       "Bash(pnpm build)",
-      "Bash(pnpm biome)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm format:check)",
       "Bash(pnpm knip)",
       "Bash(pnpm type-check)",
-      "Bash(pnpm test)",
+      "Bash(pnpm test:run)",
       "Bash(pnpm security-scan)"
     ],
     "deny": [

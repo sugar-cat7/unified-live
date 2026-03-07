@@ -21,6 +21,5 @@ description: Update docs/ in response to code changes. Keep docs/ always up to d
 - `docs/reference/` - SDK reference (overview, glossary, decisions)
 - `docs/plan/` - Feature specifications (Spec-Driven Development, per-feature specs and checklists)
 - `docs/testing/` - Testing strategy (Unit/Integration)
-- `docs/backend/` - SDK architecture, function documentation conventions, PR guidelines, datetime handling
-- `docs/infra/` - Infrastructure (CI/CD)
+- `docs/backend/` - SDK architecture, function documentation conventions
 - `docs/security/` - Security (lint, scanning)

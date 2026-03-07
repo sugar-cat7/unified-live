@@ -17,12 +17,11 @@ After making changes, always run the following command.
 
 ```bash
 pnpm build
-pnpm biome
-pnpm textlint
+pnpm lint
+pnpm format:check
 pnpm knip
 pnpm type-check
-pnpm test
-pnpm security-scan
+pnpm test:run
 ```
 
 ## Additional Checks for Documentation Changes
@@ -32,7 +31,6 @@ When updating `docs/`, also verify the following.
 1. Heading structure (`#` -> `##` -> `###`) is not broken
 2. No terminology inconsistencies (use terms from `docs/reference/glossary.md`)
 3. Referenced links exist and relative paths are correct
-4. `pnpm textlint` passes
 
 See [docs/security/textlint.md](./textlint.md) for textlint operational guidelines and setup examples.
 

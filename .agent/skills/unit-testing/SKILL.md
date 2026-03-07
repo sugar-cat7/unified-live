@@ -18,4 +18,3 @@ description: Used to implement unit tests with Vitest table-driven approach, ver
 # Reference Documents
 
 - `docs/testing/unit-testing.md`
-- `docs/web-frontend/twada-tdd.md`

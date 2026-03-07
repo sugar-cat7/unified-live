@@ -2,45 +2,60 @@
 
 ## Purpose
 
-- Guarantee the behavior of multi-module collaboration including UseCase, Repository, and DB
-- Detect boundary mismatches (persistence, transactions, transformations) invisible to unit tests
+- Guarantee the behavior of multi-module collaboration: client -> plugin -> RestManager -> mock fetch
+- Detect boundary mismatches (URL routing, response mapping, error propagation) invisible to unit tests
 
 ## Scope
 
-- `services/api/usecase/**`
-- `services/api/infra/repository/**`
-- Application flows involving the DB
+- `packages/youtube/src/__tests__/plugin.test.ts` — Plugin + RestManager wiring
+- `packages/youtube/src/__tests__/integration.test.ts` — Client + plugin end-to-end flow
+- `packages/core/src/__tests__/rest/manager.test.ts` — RestManager retry, auth, rate limit integration
 
 ## Implementation Rules
 
-1. Use real implementations for application internals (UseCase/Repository/DB)
-2. Only mock external service dependencies at the boundary
+1. Use real SDK wiring (createClient, createYouTubePlugin, createRestManager)
+2. Only mock the fetch boundary with `createMockFetch` helper
 3. Enumerate business scenarios with table-driven tests
-4. Keep each test independent; do not depend on data from previous cases
-
-## Data Management
-
-- Run migrate/seed before tests
-- Create required data per test and avoid unnecessary shared state
-- Ensure reproducibility in CI via `compose.test.yaml`
+4. Keep each test independent; do not depend on state from previous cases
 
 ## Mocking Policy
 
-- Default: no mocking (especially use real DB)
-- Exception: only for uncontrollable external boundaries such as payment, email, and external SaaS
+- Default: no mocking of SDK internals
+- Exception: `fetch` is replaced with a mock that returns recorded API responses
+- Pattern: factory function `createMockFetch(responses[])` that replays responses in order
+
+```ts
+function createMockFetch(
+  responses: Array<{ body: unknown; status?: number; headers?: Record<string, string> }>,
+): typeof globalThis.fetch {
+  let callIndex = 0;
+  return vi.fn(async () => {
+    const r = responses[callIndex];
+    if (!r)
+      throw new Error(
+        `createMockFetch: unexpected call #${callIndex} (only ${responses.length} responses defined)`,
+      );
+    callIndex++;
+    return new Response(JSON.stringify(r.body), {
+      status: r.status ?? 200,
+      headers: { "Content-Type": "application/json", ...r.headers },
+    });
+  }) as unknown as typeof globalThis.fetch;
+}
+```
 
 ## File Placement
 
-- `services/api/test/integration/**/*.test.ts`
-- Align with the `include` in `services/api/vitest.integration.config.ts`
+- `packages/*/src/__tests__/*.test.ts`
+- Aligned with the `include` in each package's `vitest.config.ts`
 
 ## Execution Commands
 
-- All: `pnpm test:integration`
-- API only: `pnpm --filter api test:integration`
+- All: `pnpm test`
+- Core only: `pnpm --filter @unified-live/core test:run`
+- YouTube only: `pnpm --filter @unified-live/youtube test:run`
 
 ## References (Primary Sources)
 
-- Playwright Test Isolation: https://playwright.dev/docs/browser-contexts
-- Next.js Testing (organizing test types): https://nextjs.org/docs/app/guides/testing
-- t_wada policy: `docs/web-frontend/twada-tdd.md`
+- Vitest `test.each`: https://vitest.dev/api/#test-each
+- Vitest Mocking: https://vitest.dev/guide/mocking.html

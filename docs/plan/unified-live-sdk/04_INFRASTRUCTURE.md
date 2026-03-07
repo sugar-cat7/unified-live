@@ -17,7 +17,6 @@ interface RestManager {
   readonly platform: string;
   readonly baseUrl: string;
   readonly tracer: Tracer;
-  readonly meter: Meter;
   readonly rateLimitStrategy: RateLimitStrategy;
   readonly tokenManager: TokenManager;
 
@@ -440,26 +439,13 @@ unified-live.client getContent
 | `unified_live.quota.consumed` | int | YouTube quota units consumed (YouTube only) |
 | `unified_live.quota.daily_remaining` | int | YouTube remaining daily quota (YouTube only) |
 
-### Metrics
+### Metrics (Deferred)
 
-| Metric | Type | Labels | Description |
-| --- | --- | --- | --- |
-| `unified_live.request.count` | Counter | platform, method, status | Total request count |
-| `unified_live.request.duration` | Histogram | platform, method | Request latency (ms) |
-| `unified_live.rate_limit.remaining` | Gauge | platform, bucket | Remaining tokens/units |
-| `unified_live.rate_limit.wait_time` | Histogram | platform | Time spent waiting for rate limit (ms) |
-| `unified_live.retry.count` | Counter | platform, reason | Retry count |
-| `unified_live.plugin.errors` | Counter | platform, error_code | Error count |
-| `unified_live.quota.consumed` | Gauge | platform | YouTube consumed quota |
-| `unified_live.quota.daily_limit` | Gauge | platform | YouTube daily limit |
-| `unified_live.token.refresh_count` | Counter | platform | Token refresh count |
-| `unified_live.token.refresh_errors` | Counter | platform | Token refresh failures |
+Metrics instrumentation is deferred. When implemented, counters and histograms will be added to `packages/core/src/telemetry/metrics.ts`.
 
 ### Noop Fallback
 
-Package: `packages/core/src/telemetry/noop.ts`
-
-When the OTel SDK is not registered, `trace.getTracer()` and `metrics.getMeter()` return no-op implementations automatically (this is built into `@opentelemetry/api`). No special handling needed in the SDK code.
+When the OTel SDK is not registered, `trace.getTracer()` returns a no-op implementation automatically (this is built into `@opentelemetry/api`). No special handling needed in the SDK code.
 
 ### Consumer Setup
 
@@ -484,5 +470,3 @@ const client = createClient({ ... });
 | File | Purpose |
 | --- | --- |
 | `packages/core/src/telemetry/traces.ts` | Tracer creation, span attribute helpers |
-| `packages/core/src/telemetry/metrics.ts` | Meter creation, counter/histogram/gauge definitions |
-| `packages/core/src/telemetry/noop.ts` | Documentation noting `@opentelemetry/api` handles noop automatically |

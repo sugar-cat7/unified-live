@@ -103,6 +103,7 @@ export function createRestManager(options: RestManagerOptions): RestManager {
   const retryableStatuses =
     options.retry?.retryableStatuses ?? DEFAULT_RETRYABLE_STATUSES;
   const fetchFn = options.fetch ?? globalThis.fetch;
+  const tracer = getTracer();
 
   const manager: RestManager = {
     platform: options.platform,
@@ -111,7 +112,6 @@ export function createRestManager(options: RestManagerOptions): RestManager {
     tokenManager: options.tokenManager,
 
     request: async <T>(req: RestRequest): Promise<RestResponse<T>> => {
-      const tracer = getTracer();
       return tracer.startActiveSpan(
         `unified-live.rest ${manager.platform} ${req.method} ${req.path}`,
         async (span) => {
@@ -176,17 +176,14 @@ export function createRestManager(options: RestManagerOptions): RestManager {
 
               const result = await manager.handleResponse<T>(response, req);
 
-              const rateLimitInfo = manager.parseRateLimitHeaders(
-                response.headers,
-              );
-              if (rateLimitInfo) {
+              if (result.rateLimit) {
                 span.setAttribute(
                   SpanAttributes.RATE_LIMIT_REMAINING,
-                  rateLimitInfo.remaining,
+                  result.rateLimit.remaining,
                 );
                 span.setAttribute(
                   SpanAttributes.RATE_LIMIT_LIMIT,
-                  rateLimitInfo.limit,
+                  result.rateLimit.limit,
                 );
               }
 

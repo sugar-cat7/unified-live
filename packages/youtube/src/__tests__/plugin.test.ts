@@ -16,8 +16,11 @@ function createMockFetch(
 ): typeof globalThis.fetch {
   let callIndex = 0;
   return vi.fn(async () => {
-    const r = responses[callIndex] ?? responses.at(-1);
-    if (!r) throw new Error("No mock response configured");
+    const r = responses[callIndex];
+    if (!r)
+      throw new Error(
+        `createMockFetch: unexpected call #${callIndex} (only ${responses.length} responses defined)`,
+      );
     callIndex++;
     return new Response(JSON.stringify(r.body), {
       status: r.status ?? 200,

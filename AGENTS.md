@@ -2,7 +2,7 @@
 
 ## Guiding Principles
 
-- Error handling: Thrown exceptions (`UnifiedLiveError` hierarchy). No Result types.
+- Error handling: Public API uses thrown exceptions (`UnifiedLiveError` hierarchy). Internal logic may use `Result<V, E>` / `Ok` / `Err` / `wrap` / `unwrap` for readability, but Result must never appear in public return types.
 - Type definitions: Zod Schema First (`z.infer<typeof schema>`). No explicit interfaces.
 - Simplicity: Remove unnecessary code, only abstract when duplicated 3+ times, no premature optimization.
 - Architecture: discordeno pattern (factory functions, overridable function objects). No class inheritance hierarchies.

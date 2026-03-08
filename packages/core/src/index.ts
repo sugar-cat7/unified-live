@@ -10,7 +10,8 @@ export {
   RateLimitError,
   UnifiedLiveError,
 } from "./errors.js";
-export type { PlatformPlugin } from "./plugin.js";
+export type { PluginDefinition, PluginMethods } from "./plugin.js";
+export { PlatformPlugin } from "./plugin.js";
 export type { TokenBucketConfig } from "./rest/bucket.js";
 export { createTokenBucketStrategy } from "./rest/bucket.js";
 export type { RestManager } from "./rest/manager.js";
@@ -29,6 +30,9 @@ export type {
   RestResponse,
   RetryConfig,
 } from "./rest/types.js";
+export { createRateLimitHeaderParser } from "./rest/types.js";
+export type { ErrResult, OkResult, Result } from "./result.js";
+export { Err, Ok, unwrap, wrap } from "./result.js";
 export { getTracer, SpanAttributes } from "./telemetry/traces.js";
 export type {
   BroadcastSession,

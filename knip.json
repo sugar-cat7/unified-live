@@ -21,6 +21,14 @@
     "packages/youtube": {
       "project": ["src/**/*.ts"],
       "ignore": ["dist/**", "node_modules/**"]
+    },
+    "packages/twitch": {
+      "project": ["src/**/*.ts"],
+      "ignore": ["dist/**", "node_modules/**"]
+    },
+    "packages/twitcasting": {
+      "project": ["src/**/*.ts"],
+      "ignore": ["dist/**", "node_modules/**"]
     }
   }
 }

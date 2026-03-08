@@ -68,18 +68,30 @@ Architecture reference for unified-live SDK implementers.
 
 ### 1. Function Objects Over Classes (discordeno Pattern)
 
-RestManager is designed as an interface with method properties, not a class with virtual methods. Every method is a replaceable property:
+RestManager is designed as an interface with method properties, not a class with virtual methods. Every method is a replaceable property.
+
+Plugin authors use `PlatformPlugin.create()` which handles RestManager wiring declaratively via `PluginDefinition`:
 
 ```ts
-// Plugin customization via direct override
-const origCreateHeaders = this.rest.createHeaders;
-this.rest.createHeaders = async (req) => {
-  const headers = await origCreateHeaders(req);
-  return { ...headers, "Client-Id": config.clientId };
-};
+// Declarative plugin creation (preferred)
+const plugin = PlatformPlugin.create(
+  {
+    name: "twitch",
+    baseUrl: "https://api.twitch.tv/helix",
+    rateLimitStrategy: createTokenBucketStrategy({ ... }),
+    headers: { "Client-Id": config.clientId },         // Declarative headers
+    transformRequest: (req) => ({ ...req, ... }),       // Request transformation
+    handleRateLimit: customHandler,                     // Platform-specific rate limit
+    parseRateLimitHeaders: parseTwitchHeaders,          // Header parsing
+  },
+  { getContent, getChannel, getLiveStreams, getVideos },
+);
+
+// Direct override still works for advanced cases
+rest.createHeaders = async (req) => { ... };
 ```
 
-**Why**: Avoids deep inheritance hierarchies. Enables targeted customization of any single behavior without affecting others. Proven at scale by discordeno.
+**Why**: Avoids deep inheritance hierarchies. `PlatformPlugin.create()` centralizes common boilerplate while RestManager's overridable properties remain available for advanced customization. Proven at scale by discordeno.
 
 ### 2. Zod Schema First
 
@@ -104,12 +116,12 @@ Rate limits, auth token refresh, and retries are handled inside RestManager. SDK
 
 **Exception**: YouTube `QuotaExhaustedError` is thrown immediately because the daily quota reset is hours away — waiting would be pointless.
 
-### 5. Platform-Specific Behavior via Strategy + Override
+### 5. Platform-Specific Behavior via Declarative Definition + Strategy
 
 The SDK handles platform differences through two mechanisms:
 
-- **Strategy pattern**: `RateLimitStrategy` (TokenBucket vs QuotaBudget) and `TokenManager` (per-platform auth) are injected into RestManager.
-- **Method override**: Platform plugins override specific RestManager methods for behaviors that don't fit the strategy interfaces (e.g., YouTube's 403 quota error handling, TwitCasting's required headers).
+- **Strategy pattern**: `RateLimitStrategy` (TokenBucket vs QuotaBudget) and `TokenManager` (per-platform auth) are injected via `PluginDefinition`.
+- **Declarative definition**: `PlatformPlugin.create(definition, methods)` accepts `transformRequest`, `handleRateLimit`, `parseRateLimitHeaders`, and `headers` properties to declaratively configure platform-specific behaviors (e.g., YouTube's API key injection, 403 quota handling). Direct RestManager overrides remain available for advanced cases.
 
 ## Error Handling
 
@@ -166,14 +178,19 @@ pnpm test --filter @unified-live/twitcasting
 To add a new platform (e.g., Niconico):
 
 1. Create `packages/niconico/` with the standard structure
-2. Implement `PlatformPlugin` interface:
-   - `match(url)` / `resolveUrl(url)` for URL patterns
-   - `getContent(id)`, `getChannel(id)`, `getLiveStreams(channelId)`, `getVideos(channelId, cursor?)`
+2. Define a `PluginDefinition` with:
+   - `name`, `baseUrl`, `matchUrl` for URL patterns
+   - `rateLimitStrategy` (TokenBucket or QuotaBudget)
+   - `tokenManager` for the platform's auth model (if needed)
+   - `transformRequest` for auth injection (e.g., API key as query param)
+   - `handleRateLimit` for platform-specific error handling (optional)
+   - `parseRateLimitHeaders` for extracting rate limit info from headers (optional)
+   - `headers` for static headers required on all requests (optional)
+3. Implement `PluginMethods` as pure functions receiving `RestManager` as first argument:
+   - `getContent(rest, id)`, `getChannel(rest, id)`, `getLiveStreams(rest, channelId)`, `getVideos(rest, channelId, cursor?)`
    - Response mapping functions (platform response -> Content/Channel)
-3. Configure `RateLimitStrategy` (TokenBucket or QuotaBudget)
-4. Implement `TokenManager` for the platform's auth model
-5. Override RestManager methods for platform-specific behaviors
-6. Add integration tests with recorded HTTP responses
+4. Wire everything with `PlatformPlugin.create(definition, methods)`
+5. Add integration tests with recorded HTTP responses
 
 ## Reference Documents
 

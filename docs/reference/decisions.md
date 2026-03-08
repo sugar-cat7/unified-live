@@ -120,3 +120,15 @@ Record the rationale behind specification decisions in chronological order.
 - Rationale: Aligning terminology with standard OSS SDK conventions (discordeno, Octokit, Stripe, AWS SDK v3) reduces contributor onboarding friction and makes the project more approachable.
 - Alternatives: Keep DDD terminology — rejected because it creates an unnecessary barrier for SDK contributors.
 - Impact Scope: All documentation files, CLAUDE.md
+
+---
+
+### D-010: PlatformPlugin Companion Object with Declarative PluginDefinition
+
+- Date: 2026-03-08
+- Status: Accepted
+- Decision: Add a companion object `PlatformPlugin.create(definition, methods)` that constructs a fully wired `PlatformPlugin` from a declarative `PluginDefinition` and pure `PluginMethods`. Add `PlatformPlugin.is(value)` type guard.
+- Context: Each plugin manually called `createRestManager()`, overrode `rest.request` for auth injection, overrode `rest.handleRateLimit` for platform-specific error handling, and returned a hand-crafted object literal. This pattern was repetitive and error-prone when adding new platforms.
+- Rationale: (1) `PluginDefinition` captures common customizations declaratively (`transformRequest`, `handleRateLimit`, `parseRateLimitHeaders`, `headers`) — no manual RestManager overrides needed. (2) `PluginMethods` are pure functions receiving `rest` as first argument — easier to test and compose. (3) TypeScript companion object pattern (type + value with same name) is idiomatic. (4) Backward compatible — manual RestManager overrides still work for advanced cases.
+- Alternatives: (1) Keep manual override pattern — rejected because repetitive across platforms. (2) Abstract base class — rejected per D-002 (function objects over classes). (3) Builder pattern — rejected for unnecessary complexity. (4) Middleware/interceptor pattern — rejected for being over-engineered for the use cases.
+- Impact Scope: `packages/core/src/plugin.ts`, `packages/youtube/src/plugin.ts`, all future platform plugins, documentation

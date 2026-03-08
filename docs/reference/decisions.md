@@ -102,22 +102,22 @@ Record the rationale behind specification decisions in chronological order.
 ### D-008: Error Handling Strategy
 
 - Date: 2026-03-05
-- Status: Accepted
-- Decision: The SDK uses **thrown exceptions** with a typed error hierarchy rooted in `UnifiedLiveError`. The SDK does NOT use Result types and does NOT depend on `@my-app/errors`.
-- Context: The monorepo template uses `@my-app/errors` with `Ok`, `Err`, `wrap`, and `AppError`. However, research into major OSS TypeScript SDKs (discordeno, Octokit, Stripe, AWS SDK v3) shows they all use thrown exceptions.
-- Rationale: (1) Every major OSS TypeScript SDK throws exceptions — this is the strongest signal from ecosystem research. (2) SDK consumers expect `try/catch` or `.catch()` for async operations. (3) Result types require consumers to learn a new error handling pattern. (4) The SDK's typed error hierarchy (`UnifiedLiveError`, `QuotaExhaustedError`, etc.) provides type safety via `instanceof` checks.
-- Alternatives: (1) Result type (`@my-app/errors`) — rejected because it diverges from every OSS SDK convention and adds consumer friction. (2) Fork as `@unified-live/errors` — rejected because thrown exceptions are simpler. (3) Dual mode (Result + `.throw()`) — rejected because it doubles the API surface.
-- Impact Scope: All public API methods, all error types, `packages/core/src/errors.ts`
+- Status: Accepted (updated 2026-03-08)
+- Decision: The public API uses **thrown exceptions** with a typed error hierarchy rooted in `UnifiedLiveError`. Internal logic may optionally use `Result<V, E>` / `Ok` / `Err` / `wrap` / `unwrap` for readability, but Result must never appear in public return types.
+- Context: Major OSS TypeScript SDKs (discordeno, Octokit, Stripe, AWS SDK v3) all use thrown exceptions. However, internal error flow within plugin implementations can be complex, and Result types improve readability in those cases.
+- Rationale: (1) Public API follows OSS SDK convention — thrown exceptions with typed error hierarchy. (2) Internal Result usage is optional and improves readability for complex error flows. (3) The boundary is strict: `Result` is an internal implementation detail, never exposed to SDK consumers.
+- Alternatives: (1) Result-only (no exceptions) — rejected because it diverges from every OSS SDK convention. (2) No Result at all — rejected because internal readability suffers for complex error paths. (3) Dual mode (Result + `.throw()`) — rejected because it doubles the public API surface.
+- Impact Scope: All public API methods, all error types, `packages/core/src/errors.ts`, `packages/core/src/result.ts`
 
 ---
 
 ### D-009: Remove DDD/Clean Architecture Terminology
 
 - Date: 2026-03-05
-- Status: Accepted
-- Decision: Replace all DDD and Clean Architecture terminology in documentation with standard OSS SDK terminology. "Entity" -> "Type", "Aggregate Root" -> removed, "UseCase" -> "Client Method", "Adapter" -> "Plugin", "Companion Object" -> "Type Guard", "Business Rules" -> "Constraints", "Domain Model" -> "Type Definitions".
+- Status: Accepted (updated 2026-03-08)
+- Decision: Replace DDD and Clean Architecture terminology in documentation with standard OSS SDK terminology. "Entity" -> "Type", "Aggregate Root" -> removed, "UseCase" -> "Client Method", "Adapter" -> "Plugin", "Business Rules" -> "Constraints", "Domain Model" -> "Type Definitions". The **companion object pattern** is retained — it is a TypeScript idiom (type + value with same name), not DDD-specific.
 - Context: The documentation was initially written using a web-app template that follows Clean Architecture / DDD. The SDK architecture is sound, but the terminology creates confusion for OSS contributors who are familiar with standard SDK patterns.
-- Rationale: Aligning terminology with standard OSS SDK conventions (discordeno, Octokit, Stripe, AWS SDK v3) reduces contributor onboarding friction and makes the project more approachable.
+- Rationale: Aligning terminology with standard OSS SDK conventions (discordeno, Octokit, Stripe, AWS SDK v3) reduces contributor onboarding friction. The companion object pattern is kept because it is idiomatic TypeScript (used by Zod, Prisma, etc.) and accurately describes the `type X + const X` pattern used for `Content` and `PlatformPlugin`.
 - Alternatives: Keep DDD terminology — rejected because it creates an unnecessary barrier for SDK contributors.
 - Impact Scope: All documentation files, CLAUDE.md
 

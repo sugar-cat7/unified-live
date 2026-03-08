@@ -2,14 +2,14 @@
 
 ## Overview
 
-Public functions in Domain and UseCase layers must have their specifications documented with JSDoc.
+Public functions must have their specifications documented with JSDoc.
 This improves the accuracy of code generation, test generation, and reviews.
 
 Explicitly stating preconditions and postconditions makes it easier to design boundary value tests.
 
 ## Required Tags
 
-### Domain Functions
+### Type Operations (Companion Object Methods, Mappers)
 
 | Tag | Description | Required |
 |------|------|------|
@@ -18,81 +18,61 @@ Explicitly stating preconditions and postconditions makes it easier to design bo
 | `@precondition` | Conditions that must hold before the call | Yes |
 | `@postcondition` | Conditions guaranteed after the call | Yes |
 
-### UseCase Functions
+### Infrastructure & Plugin Functions
 
-In addition to the Domain function tags, the following is also required.
+In addition to the above tags, the following is also required.
 
 | Tag | Description | Required |
 |------|------|------|
-| `@idempotent` | Whether the function is idempotent and why | Yes |
+| `@idempotency` | Whether the function is idempotent and why | Yes |
 
 ## Code Examples
 
-### Domain Function
+### Companion Object Method
 
 ```typescript
 /**
- * Transitions an item to the archived state.
+ * Narrows Content to LiveStream.
  *
- * @param item - The item to archive
- * @returns The archived item
- * @precondition item.status === "active"
- * @postcondition return.status === "archived" && return.archivedAt !== undefined
+ * @precondition content is a valid Content value
+ * @postcondition returns true iff content.type === "live"
  */
-export const archive = (item: Item): Item => ({
-  ...item,
-  status: "archived",
-  archivedAt: new Date(),
-});
+export const Content = {
+  isLive: (content: Content): content is LiveStream => content.type === "live",
+} as const;
 ```
 
-```typescript
-/**
- * Updates the item name.
- *
- * @param item - The item to update
- * @param name - The new name (1 to 100 characters)
- * @returns The item with the updated name
- * @precondition name.length >= 1 && name.length <= 100
- * @postcondition return.name === name && return.updatedAt > item.updatedAt
- */
-export const updateName = (item: Item, name: string): Item => ({
-  ...item,
-  name,
-  updatedAt: new Date(),
-});
-```
-
-### UseCase Function
+### Factory Function
 
 ```typescript
 /**
- * Creates a new item.
+ * Creates a YouTube platform plugin.
  *
- * @param input - Creation parameters
- * @returns The created item
- * @precondition input.name.length >= 1
- * @postcondition One item is added to the DB
- * @idempotent false - Calling multiple times with the same input creates duplicates
+ * @param config - YouTube API configuration
+ * @precondition config.apiKey is a valid YouTube Data API v3 key
+ * @postcondition returns a PlatformPlugin that handles YouTube URLs and API calls
+ * @idempotency Not idempotent — each call creates a new plugin instance
  */
-export const create = async (input: CreateItemInput): Promise<Result<Item, AppError>> => {
+export function createYouTubePlugin(config: YouTubePluginConfig): PlatformPlugin {
   // ...
-};
+}
 ```
+
+### Plugin Method (PluginMethods)
 
 ```typescript
 /**
- * Updates the status of an item.
+ * Retrieves a YouTube video or live stream by ID.
  *
- * @param input - Item ID and the new status
- * @returns The updated item
- * @precondition An item with the specified ID exists
- * @postcondition The item's status is changed to input.status
- * @idempotent true - Calling multiple times with the same input produces the same result
+ * @param rest - RestManager for making API calls
+ * @param id - YouTube video ID
+ * @precondition id is a valid YouTube video ID
+ * @postcondition returns Content matching the video ID
+ * @idempotency Safe — read-only operation
  */
-export const updateStatus = async (input: UpdateStatusInput): Promise<Result<Item, AppError>> => {
+export async function youtubeGetContent(rest: RestManager, id: string): Promise<Content> {
   // ...
-};
+}
 ```
 
 ## Relationship with Tests
@@ -108,25 +88,22 @@ JSDoc preconditions and postconditions directly inform test design.
 ### Example of Test Derivation
 
 ```typescript
-describe("Item.archive", () => {
+describe("Content.isLive", () => {
   const cases = [
     {
-      name: "can archive an active item",
-      input: { ...baseItem, status: "active" as const },
-      expected: { status: "archived" },
+      name: "returns true for live streams",
+      input: { ...baseContent, type: "live" as const },
+      expected: true,
+    },
+    {
+      name: "returns false for videos",
+      input: { ...baseContent, type: "video" as const },
+      expected: false,
     },
   ];
 
   it.each(cases)("$name", ({ input, expected }) => {
-    const result = Item.archive(input);
-    expect(result.status).toBe(expected.status);
-    expect(result.archivedAt).toBeDefined(); // @postcondition
-  });
-
-  it("items with a status other than active violate the precondition", () => {
-    // @precondition violation test
-    const draftItem = { ...baseItem, status: "draft" as const };
-    expect(() => Item.archive(draftItem)).toThrow();
+    expect(Content.isLive(input)).toBe(expected); // @postcondition
   });
 });
 ```

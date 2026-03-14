@@ -127,7 +127,13 @@ export function createRestManager(options: RestManagerOptions): RestManager {
           try {
             for (let attempt = 0; attempt <= maxRetries; attempt++) {
               const headers = await manager.createHeaders(req);
-              const url = buildUrl(manager.baseUrl, req.path, req.query);
+              const reqUrl = new URL(req.path, manager.baseUrl);
+              if (req.query) {
+                for (const [key, value] of Object.entries(req.query)) {
+                  reqUrl.searchParams.set(key, value);
+                }
+              }
+              const url = reqUrl.toString();
 
               const init: RequestInit = {
                 method: req.method,
@@ -305,20 +311,6 @@ export function createRestManager(options: RestManagerOptions): RestManager {
   };
 
   return manager;
-}
-
-function buildUrl(
-  base: string,
-  path: string,
-  query?: Record<string, string>,
-): string {
-  const url = new URL(path, base);
-  if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      url.searchParams.set(key, value);
-    }
-  }
-  return url.toString();
 }
 
 function sleep(ms: number): Promise<void> {

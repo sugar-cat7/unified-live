@@ -63,7 +63,20 @@ export type YTPlaylistItemResource = {
  * @postcondition returns LiveStream if currently live, Video otherwise
  */
 export function toContent(item: YTVideoResource): Content {
-  const thumbnail = getBestThumbnail(item.snippet.thumbnails);
+  const thumb =
+    item.snippet.thumbnails.high ??
+    item.snippet.thumbnails.medium ??
+    item.snippet.thumbnails.default;
+  if (!thumb) {
+    throw new ParseError("youtube", "PARSE_RESPONSE", {
+      message: "YouTube resource has no thumbnail",
+    });
+  }
+  const thumbnail = {
+    url: thumb.url,
+    width: thumb.width,
+    height: thumb.height,
+  };
   const channel = {
     id: item.snippet.channelId,
     name: item.snippet.channelTitle,
@@ -129,18 +142,6 @@ export function toChannel(item: YTChannelResource): Channel {
       ? { url: thumbnail.url, width: thumbnail.width, height: thumbnail.height }
       : undefined,
   };
-}
-
-function getBestThumbnail(
-  thumbnails: YTVideoResource["snippet"]["thumbnails"],
-) {
-  const thumb = thumbnails.high ?? thumbnails.medium ?? thumbnails.default;
-  if (!thumb) {
-    throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message: "YouTube resource has no thumbnail",
-    });
-  }
-  return { url: thumb.url, width: thumb.width, height: thumb.height };
 }
 
 /**

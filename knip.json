@@ -9,8 +9,7 @@
     ".": {
       "ignoreDependencies": [
         "@textlint/textlint-plugin-markdown",
-        "textlint-rule-preset-ja-technical-writing",
-        "esbuild"
+        "textlint-rule-preset-ja-technical-writing"
       ]
     },
     "packages/core": {

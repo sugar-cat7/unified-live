@@ -1,11 +1,11 @@
 /**
  * Measure minified + gzipped bundle size for each package using esbuild.
- * Outputs JSON for octocov custom metrics and a human-readable table.
+ * Outputs JSON for custom metrics or a human-readable table.
  *
  * Usage:
  *   npx tsx scripts/check-bundle-size.ts [--json]
  */
-import { execFileSync } from "node:child_process";
+import * as esbuild from "esbuild";
 import { gzipSync } from "node:zlib";
 import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -30,6 +30,7 @@ const packages = [
   { name: "@unified-live/twitcasting", dir: "packages/twitcasting" },
 ];
 
+const missing: string[] = [];
 const results: PackageEntry[] = [];
 
 for (const pkg of packages) {
@@ -38,7 +39,7 @@ for (const pkg of packages) {
   try {
     statSync(distEntry);
   } catch {
-    console.error(`Skipping ${pkg.name}: dist/index.mjs not found`);
+    missing.push(pkg.name);
     continue;
   }
 
@@ -48,21 +49,14 @@ for (const pkg of packages) {
   const outFile = join(tmpDir, "bundle.min.mjs");
 
   try {
-    execFileSync(
-      "npx",
-      [
-        "esbuild",
-        distEntry,
-        "--bundle",
-        "--minify",
-        "--format=esm",
-        `--outfile=${outFile}`,
-        "--external:@opentelemetry/*",
-        "--external:zod",
-        "--external:@unified-live/*",
-      ],
-      { cwd: root, stdio: "pipe" },
-    );
+    esbuild.buildSync({
+      entryPoints: [distEntry],
+      bundle: true,
+      minify: true,
+      format: "esm",
+      outfile: outFile,
+      external: ["@opentelemetry/*", "zod", "@unified-live/*"],
+    });
 
     const minifiedBytes = statSync(outFile).size;
     const minifiedContent = readFileSync(outFile);
@@ -78,6 +72,11 @@ for (const pkg of packages) {
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
+}
+
+if (missing.length > 0) {
+  console.error(`Missing dist for: ${missing.join(", ")}. Run pnpm build first.`);
+  process.exit(1);
 }
 
 const formatSize = (bytes: number): string => {

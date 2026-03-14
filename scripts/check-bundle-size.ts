@@ -6,7 +6,7 @@
  *   npx tsx scripts/check-bundle-size.ts [--json]
  */
 import { gzipSync } from "node:zlib";
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,14 +36,13 @@ for (const pkg of packages) {
   for (const filename of ["index.mjs", "index.cjs"]) {
     const filePath = join(distDir, filename);
 
+    let content: Buffer;
     try {
-      statSync(filePath);
+      content = readFileSync(filePath);
     } catch {
       missing.push(`${pkg.name}/${filename}`);
       continue;
     }
-
-    const content = readFileSync(filePath);
     results.push({
       name: pkg.name,
       file: filename,

@@ -13,7 +13,6 @@ import {
   type TwitchUser,
   type TwitchVideo,
   userToChannel,
-  videoToContent,
   videoToVideo,
 } from "./mapper.js";
 
@@ -38,7 +37,7 @@ export async function twitchGetContent(
     throw new NotFoundError("twitch", id);
   }
 
-  return videoToContent(item);
+  return videoToVideo(item);
 }
 
 export async function twitchGetChannel(

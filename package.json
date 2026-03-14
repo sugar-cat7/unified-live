@@ -6,8 +6,6 @@
     "build": "turbo build",
     "type-check": "turbo type-check",
     "lint": "oxlint",
-    "format": "turbo format",
-    "format:check": "turbo format:check",
     "textlint": "textlint \"{README.md,docs/**/*.md}\"",
     "textlint:fix": "textlint --fix \"{README.md,docs/**/*.md}\"",
     "knip": "knip",
@@ -17,7 +15,6 @@
     "security-scan": "./scripts/security-scan.sh"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.12",
     "@textlint/textlint-plugin-markdown": "^15.5.2",
     "@types/node": "catalog:",
     "knip": "^5.82.1",

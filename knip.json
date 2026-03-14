@@ -8,7 +8,6 @@
   "workspaces": {
     ".": {
       "ignoreDependencies": [
-        "@biomejs/biome",
         "@textlint/textlint-plugin-markdown",
         "textlint-rule-preset-ja-technical-writing"
       ]
@@ -29,6 +28,10 @@
     "packages/twitcasting": {
       "project": ["src/**/*.ts"],
       "ignore": ["dist/**", "node_modules/**"]
+    },
+    "apps/docs": {
+      "ignore": ["dist/**", "node_modules/**", ".astro/**"],
+      "ignoreDependencies": ["sharp"]
     }
   }
 }

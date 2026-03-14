@@ -93,101 +93,112 @@ export type UnifiedClient = {
 };
 
 /**
- * Creates the main SDK client that manages plugins and routes requests.
+ * Companion object for the UnifiedClient type.
+ * Provides factory utility.
  *
- * @precondition none
- * @postcondition returns a fully functional UnifiedClient
- * @idempotency Not idempotent — each call creates a new client
+ * @example
+ * ```ts
+ * const client = UnifiedClient.create({ plugins: [twitchPlugin] });
+ * ```
  */
-export function createClient(options?: UnifiedClientOptions): UnifiedClient {
-  const plugins = new Map<string, PlatformPlugin>();
+export const UnifiedClient = {
+  /**
+   * Creates the main SDK client that manages plugins and routes requests.
+   *
+   * @precondition none
+   * @postcondition returns a fully functional UnifiedClient
+   * @idempotency Not idempotent — each call creates a new client
+   */
+  create(options?: UnifiedClientOptions): UnifiedClient {
+    const plugins = new Map<string, PlatformPlugin>();
 
-  if (options?.plugins) {
-    for (const plugin of options.plugins) {
-      plugins.set(plugin.name, plugin);
-    }
-  }
-
-  function getPlugin(name: string): PlatformPlugin {
-    const plugin = plugins.get(name);
-    if (!plugin) {
-      throw new PlatformNotFoundError(name);
-    }
-    return plugin;
-  }
-
-  function matchUrl(url: string): ResolvedUrl | null {
-    for (const plugin of plugins.values()) {
-      const resolved = plugin.match(url);
-      if (resolved) {
-        return resolved;
+    if (options?.plugins) {
+      for (const plugin of options.plugins) {
+        plugins.set(plugin.name, plugin);
       }
     }
-    return null;
-  }
 
-  const client: UnifiedClient = {
-    register(plugin: PlatformPlugin): void {
-      plugins.set(plugin.name, plugin);
-    },
-
-    async getContent(url: string): Promise<Content> {
-      if (!url) {
-        throw new ValidationError(
-          "VALIDATION_INVALID_INPUT",
-          "URL must be a non-empty string",
-        );
+    function getPlugin(name: string): PlatformPlugin {
+      const plugin = plugins.get(name);
+      if (!plugin) {
+        throw new PlatformNotFoundError(name);
       }
-      const resolved = matchUrl(url);
-      if (!resolved) {
-        throw new PlatformNotFoundError(url);
-      }
-      const plugin = getPlugin(resolved.platform);
-      return plugin.getContent(resolved.id);
-    },
+      return plugin;
+    }
 
-    async getContentById(platform: string, id: string): Promise<Content> {
-      const plugin = getPlugin(platform);
-      return plugin.getContent(id);
-    },
-
-    async getLiveStreams(
-      platform: string,
-      channelId: string,
-    ): Promise<LiveStream[]> {
-      const plugin = getPlugin(platform);
-      return plugin.getLiveStreams(channelId);
-    },
-
-    async getVideos(
-      platform: string,
-      channelId: string,
-      cursor?: string,
-    ): Promise<Page<Video>> {
-      const plugin = getPlugin(platform);
-      return plugin.getVideos(channelId, cursor);
-    },
-
-    async getChannel(platform: string, id: string): Promise<Channel> {
-      const plugin = getPlugin(platform);
-      return plugin.getChannel(id);
-    },
-
-    platform(name: string): PlatformPlugin {
-      return getPlugin(name);
-    },
-
-    match(url: string): ResolvedUrl | null {
-      return matchUrl(url);
-    },
-
-    dispose(): void {
+    function matchUrl(url: string): ResolvedUrl | null {
       for (const plugin of plugins.values()) {
-        plugin.dispose();
+        const resolved = plugin.match(url);
+        if (resolved) {
+          return resolved;
+        }
       }
-      plugins.clear();
-    },
-  };
+      return null;
+    }
 
-  return client;
-}
+    const client: UnifiedClient = {
+      register(plugin: PlatformPlugin): void {
+        plugins.set(plugin.name, plugin);
+      },
+
+      async getContent(url: string): Promise<Content> {
+        if (!url) {
+          throw new ValidationError(
+            "VALIDATION_INVALID_INPUT",
+            "URL must be a non-empty string",
+          );
+        }
+        const resolved = matchUrl(url);
+        if (!resolved) {
+          throw new PlatformNotFoundError(url);
+        }
+        const plugin = getPlugin(resolved.platform);
+        return plugin.getContent(resolved.id);
+      },
+
+      async getContentById(platform: string, id: string): Promise<Content> {
+        const plugin = getPlugin(platform);
+        return plugin.getContent(id);
+      },
+
+      async getLiveStreams(
+        platform: string,
+        channelId: string,
+      ): Promise<LiveStream[]> {
+        const plugin = getPlugin(platform);
+        return plugin.getLiveStreams(channelId);
+      },
+
+      async getVideos(
+        platform: string,
+        channelId: string,
+        cursor?: string,
+      ): Promise<Page<Video>> {
+        const plugin = getPlugin(platform);
+        return plugin.getVideos(channelId, cursor);
+      },
+
+      async getChannel(platform: string, id: string): Promise<Channel> {
+        const plugin = getPlugin(platform);
+        return plugin.getChannel(id);
+      },
+
+      platform(name: string): PlatformPlugin {
+        return getPlugin(name);
+      },
+
+      match(url: string): ResolvedUrl | null {
+        return matchUrl(url);
+      },
+
+      dispose(): void {
+        for (const plugin of plugins.values()) {
+          plugin.dispose();
+        }
+        plugins.clear();
+      },
+    };
+
+    return client;
+  },
+} as const;

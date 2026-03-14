@@ -1,10 +1,10 @@
-import { Content, createClient } from "@unified-live/core";
+import { Content, UnifiedClient } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "../plugin.js";
 
 /**
  * Integration test: Full consumer flow with mock fetch.
- * Tests the complete path: createClient -> createYouTubePlugin -> URL routing -> API call -> response mapping.
+ * Tests the complete path: UnifiedClient.create -> createYouTubePlugin -> URL routing -> API call -> response mapping.
  */
 
 function createMockFetch(
@@ -51,17 +51,17 @@ const sampleVideoResponse = {
 };
 
 describe("YouTube Integration", () => {
-  let client: ReturnType<typeof createClient>;
+  let client: ReturnType<typeof UnifiedClient.create>;
 
   afterEach(() => {
     client?.dispose();
   });
 
-  it("full consumer flow: createClient -> getContent by URL", async () => {
+  it("full consumer flow: UnifiedClient.create -> getContent by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
 
     const plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    client = createClient({ plugins: [plugin] });
+    client = UnifiedClient.create({ plugins: [plugin] });
 
     const content = await client.getContent(
       "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -84,7 +84,7 @@ describe("YouTube Integration", () => {
       apiKey: "test-key",
       fetch: createMockFetch(() => ({ body: {} })),
     });
-    client = createClient({ plugins: [plugin] });
+    client = UnifiedClient.create({ plugins: [plugin] });
 
     const resolved = client.match("https://youtu.be/dQw4w9WgXcQ");
     expect(resolved).toEqual({
@@ -100,7 +100,7 @@ describe("YouTube Integration", () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
 
     const plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    client = createClient({ plugins: [plugin] });
+    client = UnifiedClient.create({ plugins: [plugin] });
 
     const content = await client.getContentById("youtube", "dQw4w9WgXcQ");
     expect(content.id).toBe("dQw4w9WgXcQ");
@@ -111,7 +111,7 @@ describe("YouTube Integration", () => {
       apiKey: "test-key",
       fetch: createMockFetch(() => ({ body: {} })),
     });
-    client = createClient({ plugins: [plugin] });
+    client = UnifiedClient.create({ plugins: [plugin] });
 
     // Should not throw
     client.dispose();

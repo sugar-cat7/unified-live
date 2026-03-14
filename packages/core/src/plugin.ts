@@ -1,4 +1,7 @@
-import type { RestManager } from "./rest/manager.js";
+import type { TokenManager } from "./auth/types.js";
+import { createRestManager, type RestManager } from "./rest/manager.js";
+import type { RateLimitStrategy } from "./rest/strategy.js";
+import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types.js";
 import type {
   Channel,
   Content,
@@ -7,6 +10,81 @@ import type {
   ResolvedUrl,
   Video,
 } from "./types.js";
+
+/**
+ * Declarative configuration for creating a PlatformPlugin via `PlatformPlugin.create()`.
+ * Plugin authors provide this instead of manually wiring RestManager overrides.
+ */
+export type PluginDefinition = {
+  /** Platform identifier (e.g., "youtube", "twitch"). */
+  name: string;
+
+  /** Base URL for the platform's API. */
+  baseUrl: string;
+
+  /** Rate limiting strategy instance. */
+  rateLimitStrategy: RateLimitStrategy;
+
+  /** Token manager for auth (optional — some platforms use query param auth). */
+  tokenManager?: TokenManager;
+
+  /** URL matcher — pure function, no network calls. */
+  matchUrl: (url: string) => ResolvedUrl | null;
+
+  /** Transform requests before sending (e.g., inject API key, add headers). */
+  transformRequest?: (req: RestRequest) => RestRequest;
+
+  /** Additional default headers for all requests. */
+  headers?: Record<string, string>;
+
+  /** Platform-specific rate limit handling (e.g., YouTube 403 quota detection). */
+  handleRateLimit?: (
+    response: Response,
+    req: RestRequest,
+    attempt: number,
+  ) => Promise<boolean>;
+
+  /** Parse rate limit info from response headers. */
+  parseRateLimitHeaders?: (headers: Headers) => RateLimitInfo | undefined;
+
+  /** Override fetch for testing. */
+  fetch?: typeof globalThis.fetch;
+
+  /** Retry configuration. */
+  retry?: RetryConfig;
+};
+
+/**
+ * Platform-specific data access methods.
+ * Separated from PluginDefinition because they need access to the constructed RestManager.
+ * Methods receive `rest` as the first argument — pure functions that are easier to test and compose.
+ */
+export type PluginMethods = {
+  /** Retrieve content by ID. */
+  getContent: (rest: RestManager, id: string) => Promise<Content>;
+
+  /** Retrieve channel by ID. */
+  getChannel: (rest: RestManager, id: string) => Promise<Channel>;
+
+  /** List live streams for a channel. */
+  getLiveStreams: (
+    rest: RestManager,
+    channelId: string,
+  ) => Promise<LiveStream[]>;
+
+  /** List videos for a channel with pagination. */
+  getVideos: (
+    rest: RestManager,
+    channelId: string,
+    cursor?: string,
+  ) => Promise<Page<Video>>;
+
+  /** Resolve archive for a live stream (optional). */
+  resolveArchive?: (
+    rest: RestManager,
+    live: LiveStream,
+  ) => Promise<Video | null>;
+};
 
 /**
  * A platform-specific plugin that implements data retrieval for a single streaming platform.
@@ -52,3 +130,88 @@ export type PlatformPlugin = {
   /** Release resources (timers, connections). */
   dispose(): void;
 };
+
+/**
+ * Companion object for the PlatformPlugin type.
+ * Provides factory and type guard utilities.
+ *
+ * @example
+ * ```ts
+ * const plugin = PlatformPlugin.create(definition, methods);
+ * if (PlatformPlugin.is(unknown)) { ... }
+ * ```
+ */
+export const PlatformPlugin = {
+  /**
+   * Create a PlatformPlugin from a declarative definition and methods.
+   *
+   * @precondition definition.rateLimitStrategy is initialized
+   * @postcondition returns a fully functional PlatformPlugin with wired RestManager
+   */
+  create(definition: PluginDefinition, methods: PluginMethods): PlatformPlugin {
+    const rest = createRestManager({
+      platform: definition.name,
+      baseUrl: definition.baseUrl,
+      rateLimitStrategy: definition.rateLimitStrategy,
+      tokenManager: definition.tokenManager,
+      headers: definition.headers,
+      fetch: definition.fetch,
+      retry: definition.retry,
+    });
+
+    if (definition.transformRequest) {
+      const origRequest = rest.request;
+      const transform = definition.transformRequest;
+      rest.request = <T>(req: RestRequest) => {
+        return origRequest<T>(transform(req));
+      };
+    }
+
+    if (definition.handleRateLimit) {
+      rest.handleRateLimit = definition.handleRateLimit;
+    }
+
+    if (definition.parseRateLimitHeaders) {
+      rest.parseRateLimitHeaders = definition.parseRateLimitHeaders;
+    }
+
+    const plugin: PlatformPlugin = {
+      name: definition.name,
+      rest,
+      match: definition.matchUrl,
+      resolveUrl: definition.matchUrl,
+      getContent: (id) => methods.getContent(rest, id),
+      getChannel: (id) => methods.getChannel(rest, id),
+      getLiveStreams: (channelId) => methods.getLiveStreams(rest, channelId),
+      getVideos: (channelId, cursor) =>
+        methods.getVideos(rest, channelId, cursor),
+      resolveArchive: methods.resolveArchive
+        ? (live) => methods.resolveArchive!(rest, live)
+        : undefined,
+      dispose: () => rest.dispose(),
+    };
+
+    return plugin;
+  },
+
+  /**
+   * Type guard for PlatformPlugin.
+   *
+   * @postcondition returns true if value has all required PlatformPlugin properties
+   */
+  is(value: unknown): value is PlatformPlugin {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return (
+      typeof obj.name === "string" &&
+      typeof obj.match === "function" &&
+      typeof obj.resolveUrl === "function" &&
+      typeof obj.getContent === "function" &&
+      typeof obj.getChannel === "function" &&
+      typeof obj.getLiveStreams === "function" &&
+      typeof obj.getVideos === "function" &&
+      typeof obj.dispose === "function" &&
+      obj.rest !== undefined
+    );
+  },
+} as const;

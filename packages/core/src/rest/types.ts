@@ -42,3 +42,27 @@ export type RetryConfig = {
 import type { TokenManager } from "../auth/types.js";
 import type { RateLimitStrategy } from "./strategy.js";
 export type { TokenManager, RateLimitStrategy };
+
+/**
+ * Creates a rate limit header parser from header name mappings.
+ * Eliminates duplication across plugins that use standard limit/remaining/reset headers.
+ *
+ * @idempotency Safe — returns a pure function
+ */
+export function createRateLimitHeaderParser(headerNames: {
+  limit: string;
+  remaining: string;
+  reset: string;
+}): (headers: Headers) => RateLimitInfo | undefined {
+  return (headers: Headers) => {
+    const limit = headers.get(headerNames.limit);
+    const remaining = headers.get(headerNames.remaining);
+    const reset = headers.get(headerNames.reset);
+    if (!limit || !remaining || !reset) return undefined;
+    return {
+      limit: Number.parseInt(limit, 10),
+      remaining: Number.parseInt(remaining, 10),
+      resetsAt: new Date(Number.parseInt(reset, 10) * 1000),
+    };
+  };
+}

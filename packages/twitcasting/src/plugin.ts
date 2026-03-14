@@ -1,0 +1,66 @@
+import {
+  createRateLimitHeaderParser,
+  createTokenBucketStrategy,
+  PlatformPlugin,
+} from "@unified-live/core";
+import { createBasicAuthTokenManager } from "./auth.js";
+import {
+  twitcastingGetChannel,
+  twitcastingGetContent,
+  twitcastingGetLiveStreams,
+  twitcastingGetVideos,
+  twitcastingResolveArchive,
+} from "./methods.js";
+import { matchTwitCastingUrl } from "./urls.js";
+
+const TWITCASTING_BASE_URL = "https://apiv2.twitcasting.tv";
+
+export type TwitCastingPluginConfig = {
+  clientId: string;
+  clientSecret: string;
+  /** Override fetch for testing. */
+  fetch?: typeof globalThis.fetch;
+};
+
+const parseTwitCastingRateLimitHeaders = createRateLimitHeaderParser({
+  limit: "X-RateLimit-Limit",
+  remaining: "X-RateLimit-Remaining",
+  reset: "X-RateLimit-Reset",
+});
+
+/**
+ * Creates a TwitCasting platform plugin.
+ *
+ * @precondition config.clientId and config.clientSecret are valid TwitCasting app credentials
+ * @postcondition returns a PlatformPlugin that handles TwitCasting URLs and API calls
+ * @idempotency Not idempotent — each call creates a new plugin instance
+ */
+export function createTwitCastingPlugin(
+  config: TwitCastingPluginConfig,
+): PlatformPlugin {
+  return PlatformPlugin.create(
+    {
+      name: "twitcasting",
+      baseUrl: TWITCASTING_BASE_URL,
+      rateLimitStrategy: createTokenBucketStrategy({
+        global: { requests: 60, perMs: 60_000 },
+        parseHeaders: parseTwitCastingRateLimitHeaders,
+      }),
+      tokenManager: createBasicAuthTokenManager({
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+      }),
+      matchUrl: matchTwitCastingUrl,
+      headers: { "X-Api-Version": "2.0" },
+      parseRateLimitHeaders: parseTwitCastingRateLimitHeaders,
+      fetch: config.fetch,
+    },
+    {
+      getContent: twitcastingGetContent,
+      getChannel: twitcastingGetChannel,
+      getLiveStreams: twitcastingGetLiveStreams,
+      getVideos: twitcastingGetVideos,
+      resolveArchive: twitcastingResolveArchive,
+    },
+  );
+}

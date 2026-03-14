@@ -63,15 +63,14 @@ Package: `packages/youtube/`
 
 YouTube uses an API Key passed as a query parameter (`?key=<apiKey>`). No `Authorization` header.
 
-The YouTube plugin overrides RestManager to inject the key:
+The YouTube plugin uses `PluginDefinition.transformRequest` to inject the key declaratively:
 
 ```ts
-// Override: inject API key as query parameter
-const origRequest = this.rest.request;
-this.rest.request = async (req) => {
-  req.query = { ...req.query, key: config.apiKey };
-  return origRequest(req);
-};
+// Declarative request transformation via PlatformPlugin.create()
+transformRequest: (req) => ({
+  ...req,
+  query: { ...req.query, key: config.apiKey },
+}),
 ```
 
 ### Rate Limiting
@@ -142,12 +141,8 @@ Two modes:
 - Requests require both `Authorization: Bearer <token>` and `Client-Id: <clientId>` headers
 
 ```ts
-// Override: add Client-Id header
-const origCreateHeaders = this.rest.createHeaders;
-this.rest.createHeaders = async (req) => {
-  const headers = await origCreateHeaders(req);
-  return { ...headers, "Client-Id": config.clientId };
-};
+// Declarative headers via PluginDefinition
+headers: { "Client-Id": config.clientId },
 ```
 
 **User Access Token (Phase 2)**: Authorization Code Grant
@@ -262,14 +257,9 @@ Two modes:
 ### Required Headers
 
 ```ts
-this.rest.createHeaders = async (req) => {
-  const auth = await this.tokenManager.getAuthHeader();
-  return {
-    "Accept": "application/json",
-    "X-Api-Version": "2.0",  // Required by TwitCasting API
-    "Authorization": auth,
-  };
-};
+// Declarative headers via PluginDefinition
+headers: { "X-Api-Version": "2.0" },
+// Auth is handled automatically via tokenManager
 ```
 
 ### Rate Limiting

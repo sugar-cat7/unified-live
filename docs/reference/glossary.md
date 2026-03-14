@@ -22,6 +22,9 @@
 | TokenManager | An abstraction for per-platform authentication credential management. Provides `getAuthHeader()` for transparent token acquisition and refresh. | `TokenManager` |
 | Page | A cursor-based pagination envelope containing `items`, optional `cursor` for next page, and optional `total` count. | `Page<T>` |
 | ResolvedUrl | The result of parsing a platform URL: contains `platform`, `type` (content or channel), and extracted `id`. | `ResolvedUrl` |
+| Companion Object | A TypeScript pattern where a type and a value share the same name. Used for attaching factory methods, type guards, and static operations to types. Example: `type Content` + `const Content = { isLive, isVideo }`. | `Content`, `PlatformPlugin` |
+| PluginDefinition | Declarative configuration for creating a PlatformPlugin via `PlatformPlugin.create()`. Replaces manual RestManager overrides with properties like `transformRequest`, `handleRateLimit`, `headers`. | `PluginDefinition` |
+| PluginMethods | Pure functions that implement platform-specific data access. Receive `RestManager` as first argument for testability. | `PluginMethods` |
 | UnifiedClient | The main entry point for SDK consumers. Orchestrates plugin lookup, delegates to platform plugins, and manages plugin registration. | `UnifiedClient` |
 
 ## Naming Rules

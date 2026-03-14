@@ -1,0 +1,35 @@
+{
+  "name": "@unified-live/twitcasting",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "test:run": "vitest run",
+    "format": "biome format --write .",
+    "format:check": "biome check ."
+  },
+  "dependencies": {
+    "@unified-live/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.12",
+    "@types/node": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -107,58 +107,43 @@ request(req)
   +-- span end (OTel: status, rate_limit.remaining, metrics)
 ```
 
-### Override Examples
+### Declarative Plugin Configuration
 
-Plugins customize RestManager by overriding specific methods:
+Since `PlatformPlugin.create()` (see `docs/plan/plugin-companion-object/`), plugins declare customizations via `PluginDefinition` instead of manual overrides:
 
 ```ts
-// YouTube: inject API key as query param
-const origRequest = this.rest.request;
-this.rest.request = async (req) => {
-  req.query = { ...req.query, key: config.apiKey };
-  return origRequest(req);
-};
+// YouTube: declarative configuration
+PlatformPlugin.create(
+  {
+    name: "youtube",
+    baseUrl: "https://www.googleapis.com/youtube/v3",
+    rateLimitStrategy: quotaStrategy,
+    matchUrl: matchYouTubeUrl,
+    transformRequest: (req) => ({                    // API key injection
+      ...req,
+      query: { ...req.query, key: config.apiKey },
+    }),
+    handleRateLimit: createYouTubeRateLimitHandler(quotaStrategy),  // 403 handling
+  },
+  { getContent, getChannel, getLiveStreams, getVideos, resolveArchive },
+);
 
-// Twitch: add Client-Id header
-const origCreateHeaders = this.rest.createHeaders;
-this.rest.createHeaders = async (req) => {
-  const headers = await origCreateHeaders(req);
-  return { ...headers, "Client-Id": config.clientId };
-};
-
-// TwitCasting: add X-Api-Version header
-this.rest.createHeaders = async (req) => {
-  const auth = await this.tokenManager.getAuthHeader();
-  return {
-    "Accept": "application/json",
-    "X-Api-Version": "2.0",
-    "Authorization": auth,
-  };
-};
-
-// YouTube: handle 403 quotaExceeded
-this.rest.handleRateLimit = async (response, req, attempt) => {
-  if (response.status === 403) {
-    const body = await response.clone().json().catch(() => null);
-    const reason = body?.error?.errors?.[0]?.reason;
-    if (reason === "quotaExceeded" || reason === "dailyLimitExceeded") {
-      throw new QuotaExhaustedError({ ... });
-    }
-    if (reason === "rateLimitExceeded") {
-      const retryAfter = parseInt(response.headers.get("Retry-After") ?? "5");
-      await sleep(retryAfter * 1000);
-      return true; // retry
-    }
-  }
-  // Standard 429 handling
-  if (response.status === 429) {
-    const retryAfter = parseInt(response.headers.get("Retry-After") ?? "1");
-    await sleep(retryAfter * 1000);
-    return attempt < maxRetries;
-  }
-  return false;
-};
+// Twitch: declarative headers + auth
+PlatformPlugin.create(
+  {
+    name: "twitch",
+    baseUrl: "https://api.twitch.tv/helix",
+    rateLimitStrategy: createTokenBucketStrategy({ ... }),
+    tokenManager: createClientCredentialsTokenManager(config),
+    headers: { "Client-Id": config.clientId },       // Static headers
+    parseRateLimitHeaders: parseTwitchRateLimitHeaders,
+    matchUrl: matchTwitchUrl,
+  },
+  { getContent, getChannel, getLiveStreams, getVideos, resolveArchive },
+);
 ```
+
+Direct RestManager method overrides remain available for advanced cases not covered by `PluginDefinition`.
 
 ---
 

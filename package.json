@@ -21,7 +21,6 @@
   "devDependencies": {
     "@textlint/textlint-plugin-markdown": "^15.5.2",
     "@types/node": "catalog:",
-    "esbuild": "^0.25.0",
     "knip": "^5.82.1",
     "oxfmt": "^0.40.0",
     "oxlint": "^1.51.0",

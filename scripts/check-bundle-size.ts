@@ -1,14 +1,12 @@
 /**
- * Measure minified + gzipped bundle size for each package using esbuild.
- * Outputs JSON for custom metrics or a human-readable table.
+ * Measure dist bundle sizes for each package (raw + gzip).
+ * Measures the actual files shipped to npm — no re-bundling.
  *
  * Usage:
  *   npx tsx scripts/check-bundle-size.ts [--json]
  */
-import * as esbuild from "esbuild";
 import { gzipSync } from "node:zlib";
-import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,9 +15,8 @@ const jsonMode = process.argv.includes("--json");
 
 type PackageEntry = {
   name: string;
-  entryPoint: string;
+  file: string;
   rawBytes: number;
-  minifiedBytes: number;
   gzipBytes: number;
 };
 
@@ -34,48 +31,30 @@ const missing: string[] = [];
 const results: PackageEntry[] = [];
 
 for (const pkg of packages) {
-  const distEntry = join(root, pkg.dir, "dist", "index.mjs");
+  const distDir = join(root, pkg.dir, "dist");
 
-  try {
-    statSync(distEntry);
-  } catch {
-    missing.push(pkg.name);
-    continue;
-  }
+  for (const filename of ["index.mjs", "index.cjs"]) {
+    const filePath = join(distDir, filename);
 
-  const rawBytes = statSync(distEntry).size;
+    try {
+      statSync(filePath);
+    } catch {
+      missing.push(`${pkg.name}/${filename}`);
+      continue;
+    }
 
-  const tmpDir = mkdtempSync(join(tmpdir(), "bundle-check-"));
-  const outFile = join(tmpDir, "bundle.min.mjs");
-
-  try {
-    esbuild.buildSync({
-      entryPoints: [distEntry],
-      bundle: true,
-      minify: true,
-      format: "esm",
-      outfile: outFile,
-      external: ["@opentelemetry/*", "zod", "@unified-live/*"],
-    });
-
-    const minifiedBytes = statSync(outFile).size;
-    const minifiedContent = readFileSync(outFile);
-    const gzipBytes = gzipSync(minifiedContent).length;
-
+    const content = readFileSync(filePath);
     results.push({
       name: pkg.name,
-      entryPoint: "dist/index.mjs",
-      rawBytes,
-      minifiedBytes,
-      gzipBytes,
+      file: filename,
+      rawBytes: content.length,
+      gzipBytes: gzipSync(content).length,
     });
-  } finally {
-    rmSync(tmpDir, { recursive: true, force: true });
   }
 }
 
 if (missing.length > 0) {
-  console.error(`Missing dist for: ${missing.join(", ")}. Run pnpm build first.`);
+  console.error(`Missing dist files: ${missing.join(", ")}. Run pnpm build first.`);
   process.exit(1);
 }
 
@@ -87,19 +66,21 @@ const formatSize = (bytes: number): string => {
 };
 
 if (jsonMode) {
-  const metrics = results.map((r) => ({
-    key: r.name.replace("@unified-live/", ""),
-    value: r.gzipBytes,
-    unit: "bytes",
-  }));
+  const metrics = results
+    .filter((r) => r.file === "index.mjs")
+    .map((r) => ({
+      key: r.name.replace("@unified-live/", ""),
+      value: r.gzipBytes,
+      unit: "bytes",
+    }));
   console.log(JSON.stringify(metrics));
 } else {
   console.log("## Bundle Size\n");
-  console.log("| Package | Raw | Minified | Gzip |");
-  console.log("|---------|----:|---------:|-----:|");
+  console.log("| Package | File | Size | Gzip |");
+  console.log("|---------|------|-----:|-----:|");
   for (const r of results) {
     console.log(
-      `| \`${r.name}\` | ${formatSize(r.rawBytes)} | ${formatSize(r.minifiedBytes)} | ${formatSize(r.gzipBytes)} |`,
+      `| \`${r.name}\` | ${r.file} | ${formatSize(r.rawBytes)} | ${formatSize(r.gzipBytes)} |`,
     );
   }
 }

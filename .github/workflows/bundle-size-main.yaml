@@ -27,8 +27,4 @@ jobs:
         run: pnpm build
 
       - name: Check bundle size
-        run: |
-          npx tsx scripts/check-bundle-size.ts
-          npx tsx scripts/check-bundle-size.ts --json > bundle-size.json
-
-      - uses: k1LoW/octocov-action@v1
+        run: npx tsx scripts/check-bundle-size.ts | tee "$GITHUB_STEP_SUMMARY"

@@ -7,9 +7,9 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "unified-live",
-      defaultLocale: "en",
+      defaultLocale: "root",
       locales: {
-        en: { label: "English" },
+        root: { label: "English", lang: "en" },
         ja: { label: "日本語" },
       },
       social: [

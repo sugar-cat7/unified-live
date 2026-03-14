@@ -130,7 +130,9 @@ describe("createYouTubePlugin", () => {
       fetch: createMockFetch([]),
     });
 
-    const resolved = plugin.match("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    const resolved = plugin.match(
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // codeql[js/incomplete-hostname-regexp] — URL literal, not a regex
+    );
     expect(resolved).toEqual({
       platform: "youtube",
       type: "content",

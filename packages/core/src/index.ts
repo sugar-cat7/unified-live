@@ -1,7 +1,6 @@
-export { createStaticTokenManager } from "./auth/static.js";
-export type { TokenManager } from "./auth/types.js";
-export type { UnifiedClient, UnifiedClientOptions } from "./client.js";
-export { createClient } from "./client.js";
+export { TokenManager } from "./auth/types.js";
+export type { UnifiedClientOptions } from "./client.js";
+export { UnifiedClient } from "./client.js";
 export type {
   ErrorCode,
   ErrorContext,
@@ -47,7 +46,6 @@ export { getTracer, SpanAttributes } from "./telemetry/traces.js";
 export type {
   BroadcastSession,
   Channel,
-  Content as ContentType,
   LiveStream,
   Page,
   ResolvedUrl,

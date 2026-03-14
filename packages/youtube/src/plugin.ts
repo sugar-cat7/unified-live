@@ -1,4 +1,4 @@
-import { PlatformPlugin } from "@unified-live/core";
+import { PlatformPlugin, QuotaExhaustedError } from "@unified-live/core";
 import {
   youtubeGetChannel,
   youtubeGetContent,
@@ -7,7 +7,6 @@ import {
   youtubeResolveArchive,
 } from "./methods.js";
 import { createYouTubeQuotaStrategy } from "./quota.js";
-import { createYouTubeRateLimitHandler } from "./rate-limit.js";
 import { matchYouTubeUrl } from "./urls.js";
 
 const YOUTUBE_BASE_URL = "https://www.googleapis.com/youtube/v3";
@@ -44,7 +43,47 @@ export function createYouTubePlugin(
         ...req,
         query: { ...req.query, key: config.apiKey },
       }),
-      handleRateLimit: createYouTubeRateLimitHandler(quotaStrategy),
+      handleRateLimit: async (response, _req, _attempt) => {
+        if (response.status === 403) {
+          const body = (await response
+            .clone()
+            .json()
+            .catch(() => null)) as {
+            error?: { errors?: Array<{ reason?: string }> };
+          } | null;
+          const reason = body?.error?.errors?.[0]?.reason;
+
+          if (reason === "quotaExceeded" || reason === "dailyLimitExceeded") {
+            const status = quotaStrategy.getStatus();
+            throw new QuotaExhaustedError("youtube", {
+              consumed: status.limit - status.remaining,
+              limit: status.limit,
+              resetsAt: status.resetsAt,
+              requestedCost: 0,
+            });
+          }
+
+          if (reason === "rateLimitExceeded") {
+            const retryAfter = Number.parseInt(
+              response.headers.get("Retry-After") ?? "5",
+              10,
+            );
+            await new Promise((r) => setTimeout(r, retryAfter * 1000));
+            return true;
+          }
+        }
+
+        if (response.status === 429) {
+          const retryAfter = Number.parseInt(
+            response.headers.get("Retry-After") ?? "1",
+            10,
+          );
+          await new Promise((r) => setTimeout(r, retryAfter * 1000));
+          return true;
+        }
+
+        return false;
+      },
     },
     {
       getContent: youtubeGetContent,

@@ -22,7 +22,7 @@ export function createClientCredentialsTokenManager(config: {
   let expiresAt: Date | null = null;
   let refreshPromise: Promise<string> | null = null;
 
-  async function fetchToken(): Promise<string> {
+  async function fetchAndCacheToken(): Promise<string> {
     let res: Response;
     try {
       res = await fetchFn("https://id.twitch.tv/oauth2/token", {
@@ -56,23 +56,20 @@ export function createClientCredentialsTokenManager(config: {
     return token;
   }
 
-  async function getToken(): Promise<string> {
-    if (token && expiresAt && new Date() < expiresAt) {
-      return token;
-    }
-    if (refreshPromise) return refreshPromise;
-    refreshPromise = fetchToken();
-    try {
-      return await refreshPromise;
-    } finally {
-      refreshPromise = null;
-    }
-  }
-
   return {
     async getAuthHeader(): Promise<string> {
-      const t = await getToken();
-      return `Bearer ${t}`;
+      if (token && expiresAt && new Date() < expiresAt) {
+        return `Bearer ${token}`;
+      }
+      if (!refreshPromise) {
+        refreshPromise = fetchAndCacheToken();
+      }
+      try {
+        const t = await refreshPromise;
+        return `Bearer ${t}`;
+      } finally {
+        refreshPromise = null;
+      }
     },
     invalidate(): void {
       token = null;

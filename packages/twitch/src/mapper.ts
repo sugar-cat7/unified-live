@@ -1,4 +1,4 @@
-import type { Channel, Content, LiveStream, Video } from "@unified-live/core";
+import type { Channel, LiveStream, Video } from "@unified-live/core";
 
 /** Subset of Twitch Helix Stream resource fields actually used. */
 export type TwitchStream = {
@@ -90,14 +90,6 @@ export function videoToVideo(video: TwitchVideo): Video {
     publishedAt: new Date(video.published_at),
     raw: video,
   };
-}
-
-/**
- * Convert a Twitch Video to a unified Content.
- * Delegates to videoToVideo since Twitch GET /videos only returns videos.
- */
-export function videoToContent(video: TwitchVideo): Content {
-  return videoToVideo(video);
 }
 
 /**

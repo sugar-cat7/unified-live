@@ -5,6 +5,7 @@ import {
   NetworkError,
   NotFoundError,
   ParseError,
+  RateLimitError,
   UnifiedLiveError,
 } from "../errors.js";
 import { getTracer, SpanAttributes } from "../telemetry/traces.js";
@@ -126,7 +127,13 @@ export function createRestManager(options: RestManagerOptions): RestManager {
           try {
             for (let attempt = 0; attempt <= maxRetries; attempt++) {
               const headers = await manager.createHeaders(req);
-              const url = buildUrl(manager.baseUrl, req.path, req.query);
+              const reqUrl = new URL(req.path, manager.baseUrl);
+              if (req.query) {
+                for (const [key, value] of Object.entries(req.query)) {
+                  reqUrl.searchParams.set(key, value);
+                }
+              }
+              const url = reqUrl.toString();
 
               const init: RequestInit = {
                 method: req.method,
@@ -153,7 +160,7 @@ export function createRestManager(options: RestManagerOptions): RestManager {
               }
               span.setAttribute(SpanAttributes.HTTP_STATUS, response.status);
 
-              // Rate limit handling (429 or custom)
+              // Rate limit handling (429 or 403)
               if (response.status === 429 || response.status === 403) {
                 const shouldRetry = await manager.handleRateLimit(
                   response,
@@ -163,9 +170,10 @@ export function createRestManager(options: RestManagerOptions): RestManager {
                 if (shouldRetry && attempt < maxRetries) {
                   continue;
                 }
+                throw new RateLimitError(manager.platform);
               }
 
-              // Auth error
+              // Auth error (401)
               if (response.status === 401) {
                 manager.tokenManager?.invalidate();
                 if (attempt < maxRetries) {
@@ -176,17 +184,22 @@ export function createRestManager(options: RestManagerOptions): RestManager {
                 });
               }
 
-              // Not found
+              // Not found (404)
               if (response.status === 404) {
                 throw new NotFoundError(manager.platform, req.path);
               }
 
-              // Retryable server errors
+              // Retryable server errors (5xx)
               if (retryableStatuses.includes(response.status)) {
                 if (attempt < maxRetries) {
                   await sleep(baseDelay * 2 ** attempt);
                   continue;
                 }
+                throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
+                  message: `Request failed after ${maxRetries} retries`,
+                  path: req.path,
+                  method: req.method,
+                });
               }
 
               const result = await manager.handleResponse<T>(response, req);
@@ -207,7 +220,6 @@ export function createRestManager(options: RestManagerOptions): RestManager {
               return result;
             }
 
-            // Exhausted retries
             throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
               message: `Request failed after ${maxRetries} retries`,
               path: req.path,
@@ -299,20 +311,6 @@ export function createRestManager(options: RestManagerOptions): RestManager {
   };
 
   return manager;
-}
-
-function buildUrl(
-  base: string,
-  path: string,
-  query?: Record<string, string>,
-): string {
-  const url = new URL(path, base);
-  if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      url.searchParams.set(key, value);
-    }
-  }
-  return url.toString();
 }
 
 function sleep(ms: number): Promise<void> {

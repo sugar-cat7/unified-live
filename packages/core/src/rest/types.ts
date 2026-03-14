@@ -1,3 +1,6 @@
+import type { TokenManager } from "../auth/types.js";
+import type { RateLimitStrategy } from "./strategy.js";
+
 export type RestRequest = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
@@ -37,11 +40,6 @@ export type RetryConfig = {
   baseDelay?: number;
   retryableStatuses?: number[];
 };
-
-// Re-export for convenience
-import type { TokenManager } from "../auth/types.js";
-import type { RateLimitStrategy } from "./strategy.js";
-export type { TokenManager, RateLimitStrategy };
 
 /**
  * Creates a rate limit header parser from header name mappings.

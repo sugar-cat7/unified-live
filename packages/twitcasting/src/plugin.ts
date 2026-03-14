@@ -31,6 +31,8 @@ const parseTwitCastingRateLimitHeaders = createRateLimitHeaderParser({
 /**
  * Creates a TwitCasting platform plugin.
  *
+ * @param config - TwitCasting plugin configuration including client credentials
+ * @returns configured PlatformPlugin for TwitCasting
  * @precondition config.clientId and config.clientSecret are valid TwitCasting app credentials
  * @postcondition returns a PlatformPlugin that handles TwitCasting URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance

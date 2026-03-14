@@ -59,6 +59,8 @@ export type YTPlaylistItemResource = {
 /**
  * Convert a YouTube Video resource to a unified Content type.
  *
+ * @param item - YouTube video resource from the API
+ * @returns unified Content (LiveStream if live, Video otherwise)
  * @precondition item has all required fields (snippet, contentDetails, statistics)
  * @postcondition returns LiveStream if currently live, Video otherwise
  */
@@ -120,6 +122,8 @@ export const toContent = (item: YTVideoResource): Content => {
 /**
  * Convert a YouTube Channel resource to a unified Channel type.
  *
+ * @param item - YouTube channel resource from the API
+ * @returns unified Channel
  * @precondition item has at least id and snippet fields
  * @postcondition returns a Channel with thumbnail undefined if none available
  * @idempotency Safe — pure function
@@ -144,6 +148,8 @@ export const toChannel = (item: YTChannelResource): Channel => {
 /**
  * Parse an ISO 8601 duration string (e.g., "PT1H2M3S") into seconds.
  *
+ * @param duration - ISO 8601 duration string
+ * @returns total seconds
  * @precondition duration is a valid ISO 8601 duration
  * @postcondition returns total seconds as a number >= 0
  * @idempotency Safe — pure function

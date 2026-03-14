@@ -15,6 +15,8 @@ export const YOUTUBE_COST_MAP: Record<string, number> = {
 /**
  * Creates a QuotaBudgetStrategy configured for YouTube.
  *
+ * @param dailyLimit - optional daily quota cap (defaults to 10,000)
+ * @returns rate limit strategy tracking YouTube quota
  * @precondition dailyLimit > 0
  * @postcondition returns a strategy that tracks YouTube quota consumption
  */

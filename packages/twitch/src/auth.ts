@@ -9,6 +9,8 @@ type TwitchTokenResponse = {
 /**
  * Creates a TokenManager for Twitch Client Credentials Grant flow.
  *
+ * @param config - Twitch client credentials and optional fetch override
+ * @returns token manager that auto-refreshes before expiry
  * @precondition clientId and clientSecret are valid Twitch app credentials
  * @postcondition auto-fetches app access token and refreshes before expiry
  */

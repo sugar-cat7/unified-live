@@ -42,6 +42,8 @@ export type TwitchUser = {
 /**
  * Convert a Twitch Stream to a unified LiveStream.
  *
+ * @param stream - Twitch stream resource from Helix API
+ * @returns unified LiveStream
  * @precondition stream.type === "live"
  * @postcondition returns LiveStream with sessionId set to stream.id
  */
@@ -68,6 +70,8 @@ export const streamToLive = (stream: TwitchStream): LiveStream => {
 /**
  * Convert a Twitch Video to a unified Video.
  *
+ * @param video - Twitch video resource from Helix API
+ * @returns unified Video
  * @precondition video has all required fields
  * @postcondition returns Video with sessionId set to stream_id (if available)
  */
@@ -94,6 +98,9 @@ export const videoToVideo = (video: TwitchVideo): Video => {
 
 /**
  * Convert a Twitch User to a unified Channel.
+ *
+ * @param user - Twitch user resource from Helix API
+ * @returns unified Channel
  */
 export const userToChannel = (user: TwitchUser): Channel => {
   return {
@@ -112,6 +119,8 @@ export const userToChannel = (user: TwitchUser): Channel => {
 /**
  * Parse Twitch duration format (e.g., "3h2m1s", "45m30s", "30s") into seconds.
  *
+ * @param duration - Twitch duration string
+ * @returns total seconds
  * @idempotency Safe — pure function
  */
 export const parseTwitchDuration = (duration: string): number => {

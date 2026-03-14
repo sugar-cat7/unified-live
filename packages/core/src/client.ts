@@ -10,6 +10,7 @@ export type UnifiedClient = {
   /**
    * Register a platform plugin.
    *
+   * @param plugin - the platform plugin to register
    * @precondition plugin.name is unique across registered plugins
    * @postcondition plugin is available for URL matching and API calls
    * @idempotency Re-registering the same name overwrites the previous plugin
@@ -19,6 +20,8 @@ export type UnifiedClient = {
   /**
    * Retrieve content by URL. Automatically routes to the correct plugin.
    *
+   * @param url - content URL to resolve and fetch
+   * @returns the resolved content (LiveStream or Video)
    * @precondition url matches a registered plugin
    * @postcondition returns Content (LiveStream or Video)
    * @throws PlatformNotFoundError if no plugin matches the URL
@@ -28,6 +31,9 @@ export type UnifiedClient = {
   /**
    * Retrieve content by platform name and ID.
    *
+   * @param platform - platform name
+   * @param id - content identifier
+   * @returns the resolved content (LiveStream or Video)
    * @precondition platform is registered
    * @postcondition returns Content (LiveStream or Video)
    * @throws PlatformNotFoundError if platform is not registered
@@ -37,6 +43,9 @@ export type UnifiedClient = {
   /**
    * List currently active live streams for a channel.
    *
+   * @param platform - platform name
+   * @param channelId - channel identifier
+   * @returns active live streams for the channel
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
@@ -45,6 +54,10 @@ export type UnifiedClient = {
   /**
    * List videos for a channel with cursor-based pagination.
    *
+   * @param platform - platform name
+   * @param channelId - channel identifier
+   * @param cursor - pagination cursor
+   * @returns paginated list of videos
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
@@ -53,6 +66,9 @@ export type UnifiedClient = {
   /**
    * Retrieve channel information.
    *
+   * @param platform - platform name
+   * @param id - channel identifier
+   * @returns channel information
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
@@ -61,6 +77,8 @@ export type UnifiedClient = {
   /**
    * Access a specific platform plugin.
    *
+   * @param name - platform name to look up
+   * @returns the registered platform plugin
    * @throws PlatformNotFoundError if platform is not registered
    */
   platform(name: string): PlatformPlugin;
@@ -69,6 +87,8 @@ export type UnifiedClient = {
    * Parse a URL to determine which platform and resource it refers to.
    * No network calls.
    *
+   * @param url - URL to match against registered plugins
+   * @returns resolved URL info, or null if no plugin matches
    * @postcondition returns ResolvedUrl or null if no plugin matches
    */
   match(url: string): ResolvedUrl | null;
@@ -94,6 +114,8 @@ export const UnifiedClient = {
   /**
    * Creates the main SDK client that manages plugins and routes requests.
    *
+   * @param options - client configuration with optional plugins
+   * @returns a new UnifiedClient instance
    * @precondition none
    * @postcondition returns a fully functional UnifiedClient
    * @idempotency Not idempotent — each call creates a new client

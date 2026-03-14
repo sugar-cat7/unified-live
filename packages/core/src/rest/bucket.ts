@@ -9,6 +9,8 @@ export type TokenBucketConfig = {
 /**
  * Creates a header-driven token bucket strategy (used by Twitch, TwitCasting).
  *
+ * @param config - token bucket configuration with limits and header parser
+ * @returns a RateLimitStrategy backed by a token bucket
  * @precondition global.requests > 0 and global.perMs > 0
  * @postcondition acquire() blocks when no tokens are available, resolves on refill
  * @idempotency Not idempotent — each acquire() consumes a token

@@ -7,6 +7,8 @@ const CHANNEL_PATTERN = /^https?:\/\/(?:www\.)?twitcasting\.tv\/([a-zA-Z0-9_]+)\
 /**
  * Match a URL to a TwitCasting content or channel resource.
  *
+ * @param url - URL string to match
+ * @returns resolved TwitCasting URL or null if not a TwitCasting URL
  * @precondition url is a valid URL string
  * @postcondition returns ResolvedUrl for TwitCasting URLs, null otherwise
  * @idempotency Safe — no side effects

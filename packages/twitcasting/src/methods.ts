@@ -31,6 +31,9 @@ type TCMoviesResponse = {
 };
 
 /**
+ * @param rest - REST manager for API requests
+ * @param id - TwitCasting movie ID
+ * @returns unified Content for the movie
  * @precondition id is a valid TwitCasting movie ID
  * @postcondition returns Content (live or video) for the movie
  */
@@ -45,6 +48,9 @@ export const twitcastingGetContent = async (rest: RestManager, id: string): Prom
 };
 
 /**
+ * @param rest - REST manager for API requests
+ * @param id - TwitCasting user_id or screen_id
+ * @returns unified Channel for the user
  * @precondition id is a valid TwitCasting user_id or screen_id
  * @postcondition returns Channel for the user
  */
@@ -63,6 +69,9 @@ export const twitcastingGetChannel = async (rest: RestManager, id: string): Prom
 };
 
 /**
+ * @param rest - REST manager for API requests
+ * @param channelId - TwitCasting user_id or screen_id
+ * @returns array of live streams (0 or 1 items)
  * @precondition channelId is a valid TwitCasting user_id or screen_id
  * @postcondition returns live streams (0 or 1 for TwitCasting, since a user can only have one live)
  */
@@ -95,6 +104,10 @@ export const twitcastingGetLiveStreams = async (
 };
 
 /**
+ * @param rest - REST manager for API requests
+ * @param channelId - TwitCasting user_id or screen_id
+ * @param cursor - optional pagination cursor (slice_id)
+ * @returns paginated list of videos
  * @precondition channelId is a valid TwitCasting user_id or screen_id
  * @postcondition returns paginated videos using slice_id for deep pagination
  */
@@ -138,6 +151,10 @@ export const twitcastingGetVideos = async (
 /**
  * TwitCasting uses the same ID for live and archive.
  * resolveArchive checks if the movie has ended and returns the video.
+ *
+ * @param rest - REST manager for API requests
+ * @param live - live stream to check for archive
+ * @returns archived Video or null if still live
  */
 export const twitcastingResolveArchive = async (
   rest: RestManager,

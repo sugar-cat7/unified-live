@@ -33,6 +33,9 @@ export type TCUser = {
 /**
  * Convert a TwitCasting live Movie to a unified LiveStream.
  *
+ * @param movie - TwitCasting movie resource
+ * @param user - TwitCasting user who owns the movie
+ * @returns unified LiveStream
  * @precondition movie.is_live === true
  * @postcondition returns LiveStream with sessionId set to movie.id
  */
@@ -63,6 +66,9 @@ export const movieToLive = (movie: TCMovie, user: TCUser): LiveStream => {
 /**
  * Convert a TwitCasting Movie to a unified Video.
  *
+ * @param movie - TwitCasting movie resource
+ * @param user - TwitCasting user who owns the movie
+ * @returns unified Video
  * @precondition movie.is_live === false
  * @postcondition returns Video with sessionId set to movie.id
  */
@@ -93,6 +99,10 @@ export const movieToVideo = (movie: TCMovie, user: TCUser): Video => {
 
 /**
  * Convert a TwitCasting Movie to unified Content (live or video).
+ *
+ * @param movie - TwitCasting movie resource
+ * @param user - TwitCasting user who owns the movie
+ * @returns unified Content (LiveStream if live, Video otherwise)
  */
 export const movieToContent = (movie: TCMovie, user: TCUser): Content => {
   if (movie.is_live) {
@@ -103,6 +113,9 @@ export const movieToContent = (movie: TCMovie, user: TCUser): Content => {
 
 /**
  * Convert a TwitCasting User to a unified Channel.
+ *
+ * @param user - TwitCasting user resource
+ * @returns unified Channel
  */
 export const userToChannel = (user: TCUser): Channel => {
   return {

@@ -2,10 +2,8 @@ import { Content, UnifiedClient } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
 
-/**
- * Integration test: Full consumer flow with mock fetch.
- * Tests the complete path: UnifiedClient.create -> createYouTubePlugin -> URL routing -> API call -> response mapping.
- */
+// Integration test: Full consumer flow with mock fetch.
+// Tests the complete path: UnifiedClient.create -> createYouTubePlugin -> URL routing -> API call -> response mapping.
 
 const createMockFetch = (
   handler: (url: string) => { body: unknown; status?: number },

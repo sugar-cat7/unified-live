@@ -23,6 +23,8 @@ export type YouTubePluginConfig = {
 /**
  * Creates a YouTube platform plugin.
  *
+ * @param config - YouTube plugin configuration including API key
+ * @returns configured PlatformPlugin for YouTube
  * @precondition config.apiKey is a valid YouTube Data API v3 key
  * @postcondition returns a PlatformPlugin that handles YouTube URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance

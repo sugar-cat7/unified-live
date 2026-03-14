@@ -30,6 +30,8 @@ const CHANNEL_PATTERNS = [
 /**
  * Match a URL to a YouTube content or channel resource.
  *
+ * @param url - URL string to match
+ * @returns resolved YouTube URL or null if not a YouTube URL
  * @precondition url is a valid URL string
  * @postcondition returns ResolvedUrl for YouTube URLs, null otherwise
  * @idempotency Safe — no side effects

@@ -84,6 +84,8 @@ export type RestManager = {
 /**
  * Creates a discordeno-style RestManager with overridable function properties.
  *
+ * @param options - REST manager configuration
+ * @returns a new RestManager instance
  * @precondition options.rateLimitStrategy is initialized
  * @postcondition returns a RestManager with all methods set
  * @idempotency Not idempotent — each call creates a new manager instance

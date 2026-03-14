@@ -9,7 +9,11 @@ export type QuotaBudgetConfig = {
   platform?: string;
 };
 
-/** Pacific time midnight (Google's quota reset schedule). */
+/**
+ * Pacific time midnight (Google's quota reset schedule).
+ *
+ * @returns the next midnight PT as a Date
+ */
 const nextResetTime = (): Date => {
   const now = new Date();
   const formatter = new Intl.DateTimeFormat("en-US", {
@@ -45,6 +49,8 @@ const nextResetTime = (): Date => {
 /**
  * Creates a cost-based daily quota strategy (used by YouTube).
  *
+ * @param config - quota budget configuration with limits and cost map
+ * @returns a RateLimitStrategy backed by daily quota tracking
  * @precondition costMap maps bucketId strings to their quota costs
  * @postcondition acquire() throws QuotaExhaustedError when quota is exceeded
  * @idempotency Not idempotent — each acquire() consumes quota

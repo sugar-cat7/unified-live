@@ -7,6 +7,8 @@ const CHANNEL_PATTERN = /^https?:\/\/(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]{1,25})$
 /**
  * Match a URL to a Twitch content or channel resource.
  *
+ * @param url - URL string to match
+ * @returns resolved Twitch URL or null if not a Twitch URL
  * @precondition url is a valid URL string
  * @postcondition returns ResolvedUrl for Twitch URLs, null otherwise
  * @idempotency Safe — no side effects

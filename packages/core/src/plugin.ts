@@ -124,6 +124,9 @@ export const PlatformPlugin = {
   /**
    * Create a PlatformPlugin from a declarative definition and methods.
    *
+   * @param definition - declarative plugin configuration
+   * @param methods - platform-specific data access implementations
+   * @returns a fully wired PlatformPlugin
    * @precondition definition.rateLimitStrategy is initialized
    * @postcondition returns a fully functional PlatformPlugin with wired RestManager
    */
@@ -175,6 +178,8 @@ export const PlatformPlugin = {
   /**
    * Type guard for PlatformPlugin.
    *
+   * @param value - the value to check
+   * @returns true if value implements PlatformPlugin
    * @postcondition returns true if value has all required PlatformPlugin properties
    */
   is(value: unknown): value is PlatformPlugin {

@@ -64,7 +64,11 @@ export class UnifiedLiveError extends Error {
     this.context = context;
   }
 
-  /** Backward-compatible getter for context.platform. */
+  /**
+   * Backward-compatible getter for context.platform.
+   *
+   * @returns the platform name
+   */
   get platform(): string {
     return this.context.platform;
   }
@@ -237,6 +241,8 @@ export class PlatformNotFoundError extends UnifiedLiveError {
 /**
  * Classify a fetch error into a specific NetworkCode.
  *
+ * @param error - the caught fetch exception
+ * @returns the classified network error code
  * @precondition error is a caught fetch exception
  * @postcondition returns one of NETWORK_ABORT, NETWORK_TIMEOUT, NETWORK_DNS, NETWORK_CONNECTION
  * @idempotent same error always produces same code

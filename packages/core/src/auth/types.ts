@@ -28,6 +28,9 @@ export const TokenManager = {
   /**
    * Creates a TokenManager for static credentials that never change.
    *
+   * @param header - auth header value (e.g., "Basic abc123")
+   * @param platform - platform identifier for error messages
+   * @returns a TokenManager with fixed credentials
    * @precondition header is a non-empty auth header value (e.g., "Basic abc123")
    * @postcondition getAuthHeader always returns the same header
    * @postcondition invalidate always throws AuthenticationError

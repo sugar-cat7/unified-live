@@ -22,6 +22,8 @@
     "oxlint": "^1.51.0",
     "textlint": "^15.5.2",
     "textlint-rule-preset-ja-technical-writing": "^12.0.2",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.0",
     "turbo": "2.6.3",
     "vitest": "catalog:",
     "typescript": "catalog:"

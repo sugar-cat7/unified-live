@@ -7,7 +7,7 @@ export const sharedTestConfig: UserConfig["test"] = {
     provider: "v8",
     include: ["src/**/*.ts"],
     exclude: ["src/**/*.test.ts", "src/index.ts"],
-    reporter: ["text", "lcov"],
+    reporter: ["json", "text", "lcov"],
     reportsDirectory: "coverage",
   },
 };

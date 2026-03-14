@@ -1,9 +1,17 @@
+# octocov is used for bundle size tracking only.
+# Coverage reporting is handled by Codecov.
 coverage:
-  paths:
-    - packages/core/coverage/lcov.info
-    - packages/youtube/coverage/lcov.info
-    - packages/twitch/coverage/lcov.info
-    - packages/twitcasting/coverage/lcov.info
+  acceptable: 0%
+
+codeToTestRatio:
+  acceptable: 0%
+
+testExecutionTime:
+  acceptable: 0 sec
+
+diff:
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
 
 comment:
   enable: true

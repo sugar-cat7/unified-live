@@ -1,0 +1,17 @@
+# Coverage exclusions are managed in vitest.shared.ts to keep local and CI results consistent.
+coverage:
+  status:
+    project:
+      default:
+        target: 75%
+        threshold: 1%
+        informational: true
+    patch:
+      default:
+        target: 80%
+        informational: true
+
+comment:
+  layout: "condensed_header, condensed_files, condensed_footer"
+  behavior: default
+  require_changes: true

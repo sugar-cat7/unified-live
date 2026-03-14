@@ -58,9 +58,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -76,7 +73,13 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test:coverage
 
-      - uses: k1LoW/octocov-action@v1
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: packages/core/coverage/lcov.info,packages/youtube/coverage/lcov.info,packages/twitch/coverage/lcov.info,packages/twitcasting/coverage/lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   bundle-size:
     runs-on: ubuntu-latest
@@ -96,19 +99,12 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Report bundle size
-        id: bundle
-        run: |
-          report=$(bash scripts/report-bundle-size.sh)
-          delimiter="BUNDLE_REPORT_$(date +%s)"
-          {
-            echo "report<<${delimiter}"
-            echo "$report"
-            echo "${delimiter}"
-          } >> "$GITHUB_OUTPUT"
+      - name: Check bundle size
+        run: npx tsx scripts/check-bundle-size.ts
 
-      - name: Comment bundle size on PR
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: bundle-size
-          message: ${{ steps.bundle.outputs.report }}
+      - name: Generate octocov custom metrics
+        run: |
+          metrics=$(npx tsx scripts/check-bundle-size.ts --json)
+          echo "OCTOCOV_CUSTOM_METRICS_BUNDLE_SIZE=${metrics}" >> "$GITHUB_ENV"
+
+      - uses: k1LoW/octocov-action@v1

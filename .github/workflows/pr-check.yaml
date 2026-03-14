@@ -58,23 +58,6 @@ jobs:
       - name: Lint (oxlint)
         run: pnpm lint
 
-  format-check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.24.0
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Format Check (Biome)
-        run: pnpm format:check
-
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10

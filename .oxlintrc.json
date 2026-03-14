@@ -19,6 +19,7 @@
     "node_modules",
     "coverage",
     ".turbo",
+    ".astro",
     "*.config.js",
     "*.config.ts"
   ]

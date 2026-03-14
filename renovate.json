@@ -55,9 +55,9 @@
       "automerge": true
     },
     {
-      "description": "Linting & Formatting (oxlint + Biome)",
+      "description": "Linting (oxlint)",
       "groupName": "shared-linting",
-      "matchPackageNames": ["/^@biomejs//", "oxlint"],
+      "matchPackageNames": ["oxlint"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },

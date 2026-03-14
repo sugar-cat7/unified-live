@@ -5,7 +5,6 @@ set -e
 
 pnpm build
 pnpm lint
-pnpm format:check
 # textlint skipped: no rules configured yet (see .textlintrc.json)
 pnpm knip
 pnpm type-check

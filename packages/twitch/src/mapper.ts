@@ -115,7 +115,7 @@ export const userToChannel = (user: TwitchUser): Channel => {
  * @idempotency Safe — pure function
  */
 export const parseTwitchDuration = (duration: string): number => {
-  const match = duration.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/);
+  const match = duration.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
   if (!match) return 0;
 
   const hours = Number.parseInt(match[1] ?? "0", 10);

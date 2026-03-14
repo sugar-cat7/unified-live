@@ -107,7 +107,7 @@ jobs:
 
       - name: Generate octocov custom metrics
         run: |
-          metrics=$(npx tsx scripts/check-bundle-size.ts --json)
+          metrics=$(npx tsx scripts/check-bundle-size.ts --json | jq -c .)
           echo "OCTOCOV_CUSTOM_METRICS_BUNDLE_SIZE=${metrics}" >> "$GITHUB_ENV"
 
       - uses: k1LoW/octocov-action@v1

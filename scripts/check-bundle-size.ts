@@ -5,8 +5,9 @@
  * Usage:
  *   npx tsx scripts/check-bundle-size.ts [--json]
  */
-import { execSync } from "node:child_process";
-import { mkdtempSync, rmSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { gzipSync } from "node:zlib";
+import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,20 +48,32 @@ for (const pkg of packages) {
   const outFile = join(tmpDir, "bundle.min.mjs");
 
   try {
-    execSync(
-      `npx esbuild ${distEntry} --bundle --minify --format=esm --outfile=${outFile} --external:@opentelemetry/* --external:zod --external:@unified-live/*`,
+    execFileSync(
+      "npx",
+      [
+        "esbuild",
+        distEntry,
+        "--bundle",
+        "--minify",
+        "--format=esm",
+        `--outfile=${outFile}`,
+        "--external:@opentelemetry/*",
+        "--external:zod",
+        "--external:@unified-live/*",
+      ],
       { cwd: root, stdio: "pipe" },
     );
 
     const minifiedBytes = statSync(outFile).size;
-    const gzipBytes = execSync(`gzip -c ${outFile} | wc -c`).toString().trim();
+    const minifiedContent = readFileSync(outFile);
+    const gzipBytes = gzipSync(minifiedContent).length;
 
     results.push({
       name: pkg.name,
       entryPoint: "dist/index.mjs",
       rawBytes,
       minifiedBytes,
-      gzipBytes: Number.parseInt(gzipBytes, 10),
+      gzipBytes,
     });
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
@@ -75,15 +88,13 @@ const formatSize = (bytes: number): string => {
 };
 
 if (jsonMode) {
-  // Output for octocov custom metrics
   const metrics = results.map((r) => ({
     key: r.name.replace("@unified-live/", ""),
     value: r.gzipBytes,
     unit: "bytes",
   }));
-  console.log(JSON.stringify(metrics, null, 2));
+  console.log(JSON.stringify(metrics));
 } else {
-  // Human-readable table
   console.log("## Bundle Size\n");
   console.log("| Package | Raw | Minified | Gzip |");
   console.log("|---------|----:|---------:|-----:|");

@@ -55,7 +55,7 @@ export type RestManagerOptions = {
   baseUrl: string;
   rateLimitStrategy: RateLimitStrategy;
   tokenManager?: TokenManager;
-  headers?: Record<string, string>;  // Already supported
+  headers?: Record<string, string>; // Already supported
   fetch?: typeof globalThis.fetch;
   retry?: RetryConfig;
 };

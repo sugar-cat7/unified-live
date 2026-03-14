@@ -74,11 +74,7 @@ export class UnifiedLiveError extends Error {
 export class NotFoundError extends UnifiedLiveError {
   declare readonly code: "NOT_FOUND";
 
-  constructor(
-    platform: string,
-    resourceId: string,
-    options?: { cause?: Error },
-  ) {
+  constructor(platform: string, resourceId: string, options?: { cause?: Error }) {
     super(
       `Resource "${resourceId}" not found on ${platform}`,
       "NOT_FOUND",
@@ -118,14 +114,9 @@ export class RateLimitError extends UnifiedLiveError {
   declare readonly code: "RATE_LIMIT_EXCEEDED";
   readonly retryAfter?: number;
 
-  constructor(
-    platform: string,
-    options?: { retryAfter?: number; cause?: Error },
-  ) {
+  constructor(platform: string, options?: { retryAfter?: number; cause?: Error }) {
     super(
-      options?.retryAfter
-        ? `Rate limited, retry after ${options.retryAfter}s`
-        : "Rate limited",
+      options?.retryAfter ? `Rate limited, retry after ${options.retryAfter}s` : "Rate limited",
       "RATE_LIMIT_EXCEEDED",
       { platform },
       { cause: options?.cause },
@@ -147,11 +138,7 @@ export class QuotaExhaustedError extends UnifiedLiveError {
   declare readonly code: "QUOTA_EXHAUSTED";
   readonly details: QuotaDetails;
 
-  constructor(
-    platform: string,
-    details: QuotaDetails,
-    options?: { cause?: Error },
-  ) {
+  constructor(platform: string, details: QuotaDetails, options?: { cause?: Error }) {
     super(
       `Quota exhausted: ${details.consumed}/${details.limit} used, resets at ${details.resetsAt.toISOString()}`,
       "QUOTA_EXHAUSTED",
@@ -230,12 +217,7 @@ export class ValidationError extends UnifiedLiveError {
     message: string,
     options?: { platform?: string; cause?: Error },
   ) {
-    super(
-      message,
-      code,
-      { platform: options?.platform ?? "unknown" },
-      { cause: options?.cause },
-    );
+    super(message, code, { platform: options?.platform ?? "unknown" }, { cause: options?.cause });
     this.name = "ValidationError";
   }
 }
@@ -261,10 +243,8 @@ export class PlatformNotFoundError extends UnifiedLiveError {
  */
 export const classifyNetworkError = (error: Error): NetworkCode => {
   const msg = error.message.toLowerCase();
-  if (error.name === "AbortError" || msg.includes("abort"))
-    return "NETWORK_ABORT";
-  if (msg.includes("timeout") || error.name === "TimeoutError")
-    return "NETWORK_TIMEOUT";
+  if (error.name === "AbortError" || msg.includes("abort")) return "NETWORK_ABORT";
+  if (msg.includes("timeout") || error.name === "TimeoutError") return "NETWORK_TIMEOUT";
   if (msg.includes("dns") || msg.includes("getaddrinfo")) return "NETWORK_DNS";
   return "NETWORK_CONNECTION";
 };

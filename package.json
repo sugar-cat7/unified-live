@@ -1,12 +1,14 @@
 {
   "name": "unified-live",
-  "description": "A TypeScript SDK providing a unified interface for live streaming platform APIs",
   "private": true,
+  "description": "A TypeScript SDK providing a unified interface for live streaming platform APIs",
   "scripts": {
     "build": "turbo build",
     "type-check": "turbo type-check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
     "textlint": "textlint \"{README.md,docs/**/*.md}\"",
     "textlint:fix": "textlint --fix \"{README.md,docs/**/*.md}\"",
     "knip": "knip",
@@ -21,6 +23,7 @@
     "@types/node": "catalog:",
     "esbuild": "^0.25.0",
     "knip": "^5.82.1",
+    "oxfmt": "^0.40.0",
     "oxlint": "^1.51.0",
     "textlint": "^15.5.2",
     "textlint-rule-preset-ja-technical-writing": "^12.0.2",

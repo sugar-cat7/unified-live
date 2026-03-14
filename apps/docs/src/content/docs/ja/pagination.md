@@ -11,9 +11,9 @@ sidebar:
 ```ts
 const page = await client.getVideos("youtube", channelId);
 
-console.log(page.items);   // Video[]
-console.log(page.cursor);  // string | undefined — 次ページ取得用
-console.log(page.total);   // number | undefined — 総数（取得可能な場合）
+console.log(page.items); // Video[]
+console.log(page.cursor); // string | undefined — 次ページ取得用
+console.log(page.total); // number | undefined — 総数（取得可能な場合）
 ```
 
 ## 複数ページの取得

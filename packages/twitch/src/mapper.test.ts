@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
-import {
-  parseTwitchDuration,
-  streamToLive,
-  userToChannel,
-  videoToVideo,
-} from "./mapper";
+import { parseTwitchDuration, streamToLive, userToChannel, videoToVideo } from "./mapper";
 
 const mockStream: TwitchStream = {
   id: "stream123",
@@ -32,8 +27,7 @@ const mockVideo: TwitchVideo = {
   view_count: 5678,
   created_at: "2026-03-07T12:00:00Z",
   published_at: "2026-03-07T15:00:00Z",
-  thumbnail_url:
-    "https://static-cdn.jtvnw.net/cf_vods/testuser/thumb-{width}x{height}.jpg",
+  thumbnail_url: "https://static-cdn.jtvnw.net/cf_vods/testuser/thumb-{width}x{height}.jpg",
   type: "archive",
   url: "https://www.twitch.tv/videos/789",
 };
@@ -88,9 +82,7 @@ describe("userToChannel", () => {
     expect(result.platform).toBe("twitch");
     expect(result.name).toBe("TestUser");
     expect(result.url).toBe("https://www.twitch.tv/testuser");
-    expect(result.thumbnail?.url).toBe(
-      "https://static-cdn.jtvnw.net/user-default.png",
-    );
+    expect(result.thumbnail?.url).toBe("https://static-cdn.jtvnw.net/user-default.png");
   });
 });
 

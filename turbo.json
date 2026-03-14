@@ -24,11 +24,7 @@
     },
     "//#knip": {
       "cache": false,
-      "inputs": [
-        "knip.json",
-        "packages/*/src/**",
-        "packages/*/package.json"
-      ]
+      "inputs": ["knip.json", "packages/*/src/**", "packages/*/package.json"]
     },
     "//#knip:fix": {
       "cache": false

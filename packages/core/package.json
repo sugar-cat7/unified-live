@@ -1,7 +1,13 @@
 {
   "name": "@unified-live/core",
   "version": "0.1.0",
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
       "types": {
@@ -12,12 +18,6 @@
       "require": "./dist/index.cjs"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsdown",
     "type-check": "tsc --noEmit",
@@ -27,6 +27,14 @@
   "dependencies": {
     "zod": "catalog:"
   },
+  "devDependencies": {
+    "@opentelemetry/api": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
   "peerDependencies": {
     "@opentelemetry/api": "^1.0.0"
   },
@@ -34,13 +42,5 @@
     "@opentelemetry/api": {
       "optional": true
     }
-  },
-  "devDependencies": {
-    "@opentelemetry/api": "catalog:",
-    "@types/node": "catalog:",
-    "tsdown": "catalog:",
-    "typescript": "catalog:",
-    "@vitest/coverage-v8": "catalog:",
-    "vitest": "catalog:"
   }
 }

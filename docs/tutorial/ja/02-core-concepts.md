@@ -9,12 +9,12 @@ const content = await client.getContent(url);
 
 if (content.type === "live") {
   console.log(content.viewerCount); // 視聴者数
-  console.log(content.startedAt);   // 配信開始日時
+  console.log(content.startedAt); // 配信開始日時
 }
 
 if (content.type === "video") {
-  console.log(content.duration);    // 再生時間（秒）
-  console.log(content.viewCount);   // 再生回数
+  console.log(content.duration); // 再生時間（秒）
+  console.log(content.viewCount); // 再生回数
   console.log(content.publishedAt); // 公開日時
 }
 ```
@@ -41,16 +41,16 @@ if (Content.isVideo(content)) {
 
 `LiveStream` と `Video` は以下のフィールドを共有します:
 
-| フィールド | 型 | 説明 |
-|-----------|-----|------|
-| `id` | `string` | プラットフォーム固有のコンテンツ ID |
-| `platform` | `string` | `"youtube"`, `"twitch"`, `"twitcasting"` |
-| `title` | `string` | コンテンツのタイトル |
-| `url` | `string` | コンテンツの URL |
-| `thumbnail` | `Thumbnail` | サムネイル画像（`url`, `width`, `height`） |
-| `channel` | `ChannelRef` | チャンネル参照（`id`, `name`, `url`） |
-| `sessionId` | `string?` | ライブとアーカイブを紐付ける ID（後述） |
-| `raw` | `unknown` | プラットフォーム API の生レスポンス |
+| フィールド  | 型           | 説明                                       |
+| ----------- | ------------ | ------------------------------------------ |
+| `id`        | `string`     | プラットフォーム固有のコンテンツ ID        |
+| `platform`  | `string`     | `"youtube"`, `"twitch"`, `"twitcasting"`   |
+| `title`     | `string`     | コンテンツのタイトル                       |
+| `url`       | `string`     | コンテンツの URL                           |
+| `thumbnail` | `Thumbnail`  | サムネイル画像（`url`, `width`, `height`） |
+| `channel`   | `ChannelRef` | チャンネル参照（`id`, `name`, `url`）      |
+| `sessionId` | `string?`    | ライブとアーカイブを紐付ける ID（後述）    |
+| `raw`       | `unknown`    | プラットフォーム API の生レスポンス        |
 
 ## Channel
 
@@ -59,10 +59,10 @@ if (Content.isVideo(content)) {
 ```ts
 const channel = await client.getChannel("youtube", "UC_x5XG1OV2P6uZZ5FSM9Ttw");
 
-console.log(channel.id);        // "UC_x5XG1OV2P6uZZ5FSM9Ttw"
-console.log(channel.platform);  // "youtube"
-console.log(channel.name);      // チャンネル名
-console.log(channel.url);       // チャンネル URL
+console.log(channel.id); // "UC_x5XG1OV2P6uZZ5FSM9Ttw"
+console.log(channel.platform); // "youtube"
+console.log(channel.name); // チャンネル名
+console.log(channel.url); // チャンネル URL
 console.log(channel.thumbnail); // サムネイル（任意）
 ```
 
@@ -87,6 +87,7 @@ const resolved = client.match("https://www.twitch.tv/username");
 ### 対応 URL 形式
 
 **YouTube:**
+
 - `youtube.com/watch?v=VIDEO_ID`
 - `youtu.be/VIDEO_ID`
 - `youtube.com/channel/CHANNEL_ID`
@@ -94,10 +95,12 @@ const resolved = client.match("https://www.twitch.tv/username");
 - `youtube.com/live/VIDEO_ID`
 
 **Twitch:**
+
 - `twitch.tv/videos/VIDEO_ID`
 - `twitch.tv/USERNAME`
 
 **TwitCasting:**
+
 - `twitcasting.tv/USER_ID/movie/MOVIE_ID`
 - `twitcasting.tv/USER_ID`
 

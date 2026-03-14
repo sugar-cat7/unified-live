@@ -55,15 +55,15 @@ Follow the checklist and implement phase by phase.
 
 ## Specification File Overview
 
-| File | Contents | Layer |
-| --- | --- | --- |
-| `00_OVERVIEW.md` | Feature purpose, background, scope, success criteria | - |
-| `01_TYPES.md` | Type definitions, Zod schemas, type guards | Types |
-| `02_PLUGINS.md` | Platform plugin specifications, response mapping | Plugins |
-| `03_CLIENT_API.md` | Public API surface, error types, usage examples | Client |
-| `04_INFRASTRUCTURE.md` | RestManager, rate limiting, auth, OTel | Infrastructure |
-| `05_PACKAGE_STRUCTURE.md` | Monorepo layout, build config, packaging | Package |
-| `CHECKLIST.md` | Phased implementation checklist, session notes | - |
+| File                      | Contents                                             | Layer          |
+| ------------------------- | ---------------------------------------------------- | -------------- |
+| `00_OVERVIEW.md`          | Feature purpose, background, scope, success criteria | -              |
+| `01_TYPES.md`             | Type definitions, Zod schemas, type guards           | Types          |
+| `02_PLUGINS.md`           | Platform plugin specifications, response mapping     | Plugins        |
+| `03_CLIENT_API.md`        | Public API surface, error types, usage examples      | Client         |
+| `04_INFRASTRUCTURE.md`    | RestManager, rate limiting, auth, OTel               | Infrastructure |
+| `05_PACKAGE_STRUCTURE.md` | Monorepo layout, build config, packaging             | Package        |
+| `CHECKLIST.md`            | Phased implementation checklist, session notes       | -              |
 
 ## Checklist Structure
 
@@ -75,21 +75,26 @@ Follow the checklist and implement phase by phase.
 Spec: `docs/plan/<feature>/`
 
 ## Phase 1: Types
+
 Document: `01_TYPES.md`
 Status: Not started
 
 ### Goal
+
 Implement type definitions and unit tests
 
 ### Checklist
+
 - [ ] Zod Schema definitions
 - [ ] Type guard functions
 - [ ] Type unit tests
 
 ### Testing
+
 pnpm test --filter @unified-live/core
 
 ### Session Notes
+
 - Done:
 - Next:
 - Risks/TODO:
@@ -97,13 +102,16 @@ pnpm test --filter @unified-live/core
 ---
 
 ## Phase 2: Infrastructure
+
 Document: `04_INFRASTRUCTURE.md`
 Status: Not started
 
 ### Goal
+
 RestManager, rate limiting, auth implementations and tests
 
 ### Checklist
+
 - [ ] RestManager implementation
 - [ ] RateLimitStrategy implementations (TokenBucket, QuotaBudget)
 - [ ] TokenManager implementations
@@ -111,9 +119,11 @@ RestManager, rate limiting, auth implementations and tests
 - [ ] Unit tests
 
 ### Testing
+
 pnpm test --filter @unified-live/core
 
 ### Session Notes
+
 - Done:
 - Next:
 - Risks/TODO:
@@ -121,24 +131,29 @@ pnpm test --filter @unified-live/core
 ---
 
 ## Phase 3: Platform Plugins
+
 Document: `02_PLUGINS.md`
 Status: Not started
 
 ### Goal
+
 Platform plugin implementations and integration tests
 
 ### Checklist
+
 - [ ] YouTubePlugin implementation
 - [ ] TwitchPlugin implementation
 - [ ] TwitCastingPlugin implementation
 - [ ] Integration tests with recorded HTTP responses
 
 ### Testing
+
 pnpm test --filter @unified-live/youtube
 pnpm test --filter @unified-live/twitch
 pnpm test --filter @unified-live/twitcasting
 
 ### Session Notes
+
 - Done:
 - Next:
 - Risks/TODO:
@@ -146,21 +161,26 @@ pnpm test --filter @unified-live/twitcasting
 ---
 
 ## Phase 4: Client API
+
 Document: `03_CLIENT_API.md`
 Status: Not started
 
 ### Goal
+
 UnifiedClient implementation and end-to-end tests
 
 ### Checklist
+
 - [ ] UnifiedClient implementation
 - [ ] PluginRegistry implementation
 - [ ] End-to-end integration tests
 
 ### Testing
+
 pnpm test --filter @unified-live/core
 
 ### Session Notes
+
 - Done:
 - Next:
 - Risks/TODO:
@@ -174,7 +194,9 @@ Always record the following 3 items in the Session Notes of each phase.
 
 ```markdown
 ### Session Notes
+
 YYYY-MM-DD
+
 - Done: What was completed
 - Next: What to do next
 - Risks/TODO: Unresolved issues

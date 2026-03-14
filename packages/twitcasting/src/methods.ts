@@ -34,10 +34,7 @@ type TCMoviesResponse = {
  * @precondition id is a valid TwitCasting movie ID
  * @postcondition returns Content (live or video) for the movie
  */
-export const twitcastingGetContent = async (
-  rest: RestManager,
-  id: string,
-): Promise<Content> => {
+export const twitcastingGetContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<TCMovieResponse>({
     method: "GET",
     path: `/movies/${id}`,
@@ -51,10 +48,7 @@ export const twitcastingGetContent = async (
  * @precondition id is a valid TwitCasting user_id or screen_id
  * @postcondition returns Channel for the user
  */
-export const twitcastingGetChannel = async (
-  rest: RestManager,
-  id: string,
-): Promise<Channel> => {
+export const twitcastingGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const res = await rest.request<TCUserResponse>({
     method: "GET",
     path: `/users/${id}`,
@@ -136,9 +130,7 @@ export const twitcastingGetVideos = async (
   return {
     items: videos,
     cursor:
-      videos.length > 0 && moviesRes.data.movies.length === 50
-        ? videos.at(-1)!.id
-        : undefined,
+      videos.length > 0 && moviesRes.data.movies.length === 50 ? videos.at(-1)!.id : undefined,
     total: moviesRes.data.total_count,
   };
 };

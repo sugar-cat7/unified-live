@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  PlatformPlugin,
-  type PluginDefinition,
-  type PluginMethods,
-} from "./plugin";
+import { PlatformPlugin, type PluginDefinition, type PluginMethods } from "./plugin";
 import type { RateLimitHandle, RateLimitStrategy } from "./rest/strategy";
 import type { ResolvedUrl } from "./types";
 
@@ -58,9 +54,7 @@ const createMockMethods = (): PluginMethods => {
   };
 };
 
-const createMinimalDefinition = (
-  overrides?: Partial<PluginDefinition>,
-): PluginDefinition => {
+const createMinimalDefinition = (overrides?: Partial<PluginDefinition>): PluginDefinition => {
   return {
     name: "test",
     baseUrl: "https://api.example.com",
@@ -80,10 +74,7 @@ describe("PlatformPlugin.create", () => {
   });
 
   it("creates a plugin with required fields only", () => {
-    plugin = PlatformPlugin.create(
-      createMinimalDefinition(),
-      createMockMethods(),
-    );
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 
     expect(plugin.name).toBe("test");
     expect(plugin.rest).toBeDefined();
@@ -92,10 +83,7 @@ describe("PlatformPlugin.create", () => {
   });
 
   it("wires match and resolveUrl to definition.matchUrl", () => {
-    plugin = PlatformPlugin.create(
-      createMinimalDefinition(),
-      createMockMethods(),
-    );
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 
     const matched = plugin.match("https://example.com/video");
     expect(matched).toEqual({ platform: "test", type: "content", id: "123" });
@@ -107,15 +95,33 @@ describe("PlatformPlugin.create", () => {
   });
 
   it.each([
-    { name: "getContent", methodName: "getContent" as const, args: ["v1"], expectedPluginArgs: ["v1"] },
-    { name: "getChannel", methodName: "getChannel" as const, args: ["ch1"], expectedPluginArgs: ["ch1"] },
-    { name: "getLiveStreams", methodName: "getLiveStreams" as const, args: ["ch1"], expectedPluginArgs: ["ch1"] },
-  ])("delegates $name to methods with rest injected", async ({ methodName, args, expectedPluginArgs }) => {
-    const methods = createMockMethods();
-    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-    await (plugin[methodName] as Function)(...args);
-    expect(methods[methodName]).toHaveBeenCalledWith(plugin.rest, ...expectedPluginArgs);
-  });
+    {
+      name: "getContent",
+      methodName: "getContent" as const,
+      args: ["v1"],
+      expectedPluginArgs: ["v1"],
+    },
+    {
+      name: "getChannel",
+      methodName: "getChannel" as const,
+      args: ["ch1"],
+      expectedPluginArgs: ["ch1"],
+    },
+    {
+      name: "getLiveStreams",
+      methodName: "getLiveStreams" as const,
+      args: ["ch1"],
+      expectedPluginArgs: ["ch1"],
+    },
+  ])(
+    "delegates $name to methods with rest injected",
+    async ({ methodName, args, expectedPluginArgs }) => {
+      const methods = createMockMethods();
+      plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+      await (plugin[methodName] as Function)(...args);
+      expect(methods[methodName]).toHaveBeenCalledWith(plugin.rest, ...expectedPluginArgs);
+    },
+  );
 
   it("delegates getVideos to methods with rest and cursor injected", async () => {
     const methods = createMockMethods();
@@ -123,11 +129,7 @@ describe("PlatformPlugin.create", () => {
 
     await plugin.getVideos("ch1", "cursor123");
 
-    expect(methods.getVideos).toHaveBeenCalledWith(
-      plugin.rest,
-      "ch1",
-      "cursor123",
-    );
+    expect(methods.getVideos).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123");
   });
 
   it("wires resolveArchive when provided", async () => {
@@ -162,16 +164,13 @@ describe("PlatformPlugin.create", () => {
     const methods = createMockMethods();
     methods.getContent = async (rest, id) => {
       await rest.request({ method: "GET", path: "/videos", query: { id } });
-      return { type: "video", id } as Awaited<
-        ReturnType<typeof methods.getContent>
-      >;
+      return { type: "video", id } as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
     await plugin.getContent("v1");
 
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0] as string;
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("key")).toBe("API_KEY");
     expect(url.searchParams.get("id")).toBe("v1");
@@ -210,16 +209,13 @@ describe("PlatformPlugin.create", () => {
     const methods = createMockMethods();
     methods.getContent = async (rest, id) => {
       await rest.request({ method: "GET", path: "/test" });
-      return { type: "video", id } as Awaited<
-        ReturnType<typeof methods.getContent>
-      >;
+      return { type: "video", id } as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
     await plugin.getContent("v1");
 
-    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[1] as RequestInit;
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
     const headers = calledInit.headers as Record<string, string>;
     expect(headers["X-Custom-Header"]).toBe("custom-value");
   });
@@ -237,26 +233,20 @@ describe("PlatformPlugin.create", () => {
     const methods = createMockMethods();
     methods.getContent = async (rest, id) => {
       await rest.request({ method: "GET", path: "/test" });
-      return { type: "video", id } as Awaited<
-        ReturnType<typeof methods.getContent>
-      >;
+      return { type: "video", id } as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
     await plugin.getContent("v1");
 
     expect(tokenManager.getAuthHeader).toHaveBeenCalled();
-    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[1] as RequestInit;
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
     const headers = calledInit.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer test-token");
   });
 
   it("forwards retry config to RestManager", async () => {
-    const fetchFn = createMockFetch([
-      { status: 500 },
-      { status: 200, body: { ok: true } },
-    ]);
+    const fetchFn = createMockFetch([{ status: 500 }, { status: 200, body: { ok: true } }]);
     const definition = createMinimalDefinition({
       fetch: fetchFn,
       retry: { maxRetries: 1, baseDelay: 1 },
@@ -267,9 +257,7 @@ describe("PlatformPlugin.create", () => {
         method: "GET",
         path: "/test",
       });
-      return { type: "video", id } as unknown as Awaited<
-        ReturnType<typeof methods.getContent>
-      >;
+      return { type: "video", id } as unknown as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
@@ -316,10 +304,7 @@ describe("PlatformPlugin.is", () => {
   });
 
   it("returns true for a valid PlatformPlugin", () => {
-    const plugin = PlatformPlugin.create(
-      createMinimalDefinition(),
-      createMockMethods(),
-    );
+    const plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 
     expect(PlatformPlugin.is(plugin)).toBe(true);
 

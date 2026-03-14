@@ -1,9 +1,5 @@
 import { QuotaExhaustedError } from "../errors";
-import type {
-  RateLimitHandle,
-  RateLimitStatus,
-  RateLimitStrategy,
-} from "./strategy";
+import type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./strategy";
 import type { RestRequest } from "./types";
 
 export type QuotaBudgetConfig = {
@@ -53,9 +49,7 @@ const nextResetTime = (): Date => {
  * @postcondition acquire() throws QuotaExhaustedError when quota is exceeded
  * @idempotency Not idempotent — each acquire() consumes quota
  */
-export const createQuotaBudgetStrategy = (
-  config: QuotaBudgetConfig,
-): RateLimitStrategy => {
+export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitStrategy => {
   const dailyLimit = config.dailyLimit ?? 10_000;
   const defaultCost = config.defaultCost ?? 1;
   const platform = config.platform ?? "unknown";
@@ -87,9 +81,7 @@ export const createQuotaBudgetStrategy = (
   return {
     acquire(req: RestRequest): Promise<RateLimitHandle> {
       const cost: number =
-        req.bucketId !== undefined
-          ? (config.costMap[req.bucketId] ?? defaultCost)
-          : defaultCost;
+        req.bucketId !== undefined ? (config.costMap[req.bucketId] ?? defaultCost) : defaultCost;
 
       if (consumed + cost > dailyLimit) {
         return Promise.reject(

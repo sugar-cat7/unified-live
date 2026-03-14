@@ -21,10 +21,7 @@ type TwitchResponse<T> = {
   pagination?: { cursor?: string };
 };
 
-export const twitchGetContent = async (
-  rest: RestManager,
-  id: string,
-): Promise<Content> => {
+export const twitchGetContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<TwitchResponse<TwitchVideo>>({
     method: "GET",
     path: "/videos",
@@ -40,10 +37,7 @@ export const twitchGetContent = async (
   return videoToVideo(item);
 };
 
-export const twitchGetChannel = async (
-  rest: RestManager,
-  id: string,
-): Promise<Channel> => {
+export const twitchGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const query: Record<string, string> = {};
 
   // Numeric IDs use id param, login names use login param

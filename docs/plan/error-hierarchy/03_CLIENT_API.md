@@ -15,9 +15,9 @@ export {
   AuthenticationError,
   RateLimitError,
   QuotaExhaustedError,
-  NetworkError,        // new
-  ParseError,          // new
-  ValidationError,     // new
+  NetworkError, // new
+  ParseError, // new
+  ValidationError, // new
   PlatformNotFoundError,
 } from "./errors";
 
@@ -34,8 +34,8 @@ try {
   const content = await client.getContent(url);
 } catch (error) {
   if (error instanceof NotFoundError) {
-    console.log(error.code);              // "NOT_FOUND"
-    console.log(error.context.platform);  // "youtube"
+    console.log(error.code); // "NOT_FOUND"
+    console.log(error.context.platform); // "youtube"
     console.log(error.context.resourceId); // "abc123"
   }
 }
@@ -140,10 +140,10 @@ The `platform` getter on `UnifiedLiveError` ensures existing code works:
 
 ```ts
 // Old code — still works
-error.platform // returns error.context.platform
+error.platform; // returns error.context.platform
 
 // New code — more structured
-error.context.platform
-error.context.path
-error.context.status
+error.context.platform;
+error.context.path;
+error.context.status;
 ```

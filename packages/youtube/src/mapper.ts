@@ -95,10 +95,7 @@ export const toContent = (item: YTVideoResource): Content => {
       channel,
       sessionId: item.id,
       type: "live",
-      viewerCount: Number.parseInt(
-        item.liveStreamingDetails.concurrentViewers ?? "0",
-        10,
-      ),
+      viewerCount: Number.parseInt(item.liveStreamingDetails.concurrentViewers ?? "0", 10),
       startedAt: new Date(item.liveStreamingDetails.actualStartTime),
       raw: item,
     } satisfies LiveStream;

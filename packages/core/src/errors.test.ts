@@ -63,25 +63,21 @@ describe("UnifiedLiveError hierarchy", () => {
     },
     {
       name: "ValidationError",
-      error: new ValidationError(
-        "VALIDATION_INVALID_INPUT",
-        "URL must be a non-empty string",
-      ),
+      error: new ValidationError("VALIDATION_INVALID_INPUT", "URL must be a non-empty string"),
       code: "VALIDATION_INVALID_INPUT",
       platform: "unknown",
     },
-  ])("$name is instanceof UnifiedLiveError with correct code and platform", ({
-    error,
-    code,
-    platform,
-  }) => {
-    expect(error).toBeInstanceOf(UnifiedLiveError);
-    expect(error).toBeInstanceOf(Error);
-    expect(error.code).toBe(code);
-    expect(error.platform).toBe(platform);
-    expect(error.context.platform).toBe(platform);
-    expect(error.message).toBeTruthy();
-  });
+  ])(
+    "$name is instanceof UnifiedLiveError with correct code and platform",
+    ({ error, code, platform }) => {
+      expect(error).toBeInstanceOf(UnifiedLiveError);
+      expect(error).toBeInstanceOf(Error);
+      expect(error.code).toBe(code);
+      expect(error.platform).toBe(platform);
+      expect(error.context.platform).toBe(platform);
+      expect(error.message).toBeTruthy();
+    },
+  );
 });
 
 describe("UnifiedLiveError base", () => {
@@ -212,17 +208,15 @@ describe("QuotaExhaustedError", () => {
 });
 
 describe("NetworkError", () => {
-  it.each([
-    "NETWORK_TIMEOUT",
-    "NETWORK_CONNECTION",
-    "NETWORK_DNS",
-    "NETWORK_ABORT",
-  ] as const)("creates with code %s", (code) => {
-    const error = new NetworkError("youtube", code);
-    expect(error.code).toBe(code);
-    expect(error.message).toContain(code);
-    expect(error.name).toBe("NetworkError");
-  });
+  it.each(["NETWORK_TIMEOUT", "NETWORK_CONNECTION", "NETWORK_DNS", "NETWORK_ABORT"] as const)(
+    "creates with code %s",
+    (code) => {
+      const error = new NetworkError("youtube", code);
+      expect(error.code).toBe(code);
+      expect(error.message).toContain(code);
+      expect(error.name).toBe("NetworkError");
+    },
+  );
 
   it("sets path, method, and cause", () => {
     const cause = new TypeError("fetch failed");
@@ -240,10 +234,7 @@ describe("NetworkError", () => {
 });
 
 describe("ParseError", () => {
-  it.each([
-    "PARSE_JSON",
-    "PARSE_RESPONSE",
-  ] as const)("creates with code %s", (code) => {
+  it.each(["PARSE_JSON", "PARSE_RESPONSE"] as const)("creates with code %s", (code) => {
     const error = new ParseError("youtube", code);
     expect(error.code).toBe(code);
     expect(error.name).toBe("ParseError");
@@ -264,15 +255,15 @@ describe("ParseError", () => {
 });
 
 describe("ValidationError", () => {
-  it.each([
-    "VALIDATION_INVALID_URL",
-    "VALIDATION_INVALID_INPUT",
-  ] as const)("creates with code %s", (code) => {
-    const error = new ValidationError(code, "Invalid input");
-    expect(error.code).toBe(code);
-    expect(error.name).toBe("ValidationError");
-    expect(error.platform).toBe("unknown");
-  });
+  it.each(["VALIDATION_INVALID_URL", "VALIDATION_INVALID_INPUT"] as const)(
+    "creates with code %s",
+    (code) => {
+      const error = new ValidationError(code, "Invalid input");
+      expect(error.code).toBe(code);
+      expect(error.name).toBe("ValidationError");
+      expect(error.platform).toBe("unknown");
+    },
+  );
 
   it("accepts optional platform", () => {
     const error = new ValidationError("VALIDATION_INVALID_URL", "Bad URL", {
@@ -292,13 +283,37 @@ describe("PlatformNotFoundError", () => {
 
 describe("classifyNetworkError", () => {
   it.each([
-    { name: "AbortError", error: new DOMException("The operation was aborted", "AbortError"), expected: "NETWORK_ABORT" },
-    { name: "abort in message", error: new Error("Request aborted by user"), expected: "NETWORK_ABORT" },
-    { name: "TimeoutError", error: new DOMException("Signal timed out", "TimeoutError"), expected: "NETWORK_TIMEOUT" },
-    { name: "timeout in message", error: new Error("request timeout"), expected: "NETWORK_TIMEOUT" },
-    { name: "DNS ENOTFOUND", error: new Error("getaddrinfo ENOTFOUND example.com"), expected: "NETWORK_DNS" },
+    {
+      name: "AbortError",
+      error: new DOMException("The operation was aborted", "AbortError"),
+      expected: "NETWORK_ABORT",
+    },
+    {
+      name: "abort in message",
+      error: new Error("Request aborted by user"),
+      expected: "NETWORK_ABORT",
+    },
+    {
+      name: "TimeoutError",
+      error: new DOMException("Signal timed out", "TimeoutError"),
+      expected: "NETWORK_TIMEOUT",
+    },
+    {
+      name: "timeout in message",
+      error: new Error("request timeout"),
+      expected: "NETWORK_TIMEOUT",
+    },
+    {
+      name: "DNS ENOTFOUND",
+      error: new Error("getaddrinfo ENOTFOUND example.com"),
+      expected: "NETWORK_DNS",
+    },
     { name: "dns in message", error: new Error("DNS lookup failed"), expected: "NETWORK_DNS" },
-    { name: "default connection", error: new TypeError("fetch failed"), expected: "NETWORK_CONNECTION" },
+    {
+      name: "default connection",
+      error: new TypeError("fetch failed"),
+      expected: "NETWORK_CONNECTION",
+    },
   ])("classifies $name as $expected", ({ error, expected }) => {
     expect(classifyNetworkError(error)).toBe(expected);
   });

@@ -174,9 +174,7 @@ describe("createTwitCastingPlugin", () => {
   });
 
   it("includes X-Api-Version header in requests", async () => {
-    const fetchFn = createMockFetch([
-      { status: 200, body: { user: mockUser } },
-    ]);
+    const fetchFn = createMockFetch([{ status: 200, body: { user: mockUser } }]);
 
     const plugin = createTwitCastingPlugin({
       clientId: "test-id",
@@ -187,10 +185,7 @@ describe("createTwitCastingPlugin", () => {
     await plugin.getChannel("testuser");
 
     const calls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls;
-    const headers = (calls[0]?.[1] as RequestInit)?.headers as Record<
-      string,
-      string
-    >;
+    const headers = (calls[0]?.[1] as RequestInit)?.headers as Record<string, string>;
     expect(headers["X-Api-Version"]).toBe("2.0");
 
     plugin.dispose();

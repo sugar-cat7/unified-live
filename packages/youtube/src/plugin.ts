@@ -27,9 +27,7 @@ export type YouTubePluginConfig = {
  * @postcondition returns a PlatformPlugin that handles YouTube URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
-export const createYouTubePlugin = (
-  config: YouTubePluginConfig,
-): PlatformPlugin => {
+export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin => {
   const quotaStrategy = createYouTubeQuotaStrategy(config.quota?.dailyLimit);
 
   return PlatformPlugin.create(
@@ -64,20 +62,14 @@ export const createYouTubePlugin = (
           }
 
           if (reason === "rateLimitExceeded") {
-            const retryAfter = Number.parseInt(
-              response.headers.get("Retry-After") ?? "5",
-              10,
-            );
+            const retryAfter = Number.parseInt(response.headers.get("Retry-After") ?? "5", 10);
             await new Promise((r) => setTimeout(r, retryAfter * 1000));
             return true;
           }
         }
 
         if (response.status === 429) {
-          const retryAfter = Number.parseInt(
-            response.headers.get("Retry-After") ?? "1",
-            10,
-          );
+          const retryAfter = Number.parseInt(response.headers.get("Retry-After") ?? "1", 10);
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           return true;
         }

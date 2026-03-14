@@ -2,13 +2,13 @@
 
 ## Project Basic Information
 
-| Item | Details |
-| --- | --- |
-| Project Name | unified-live |
-| Repository Identifier | `@unified-live/*` |
-| Domain | Live streaming platform API abstraction |
-| Created | 2026-03-05 |
-| Last Updated | 2026-03-05 |
+| Item                  | Details                                 |
+| --------------------- | --------------------------------------- |
+| Project Name          | unified-live                            |
+| Repository Identifier | `@unified-live/*`                       |
+| Domain                | Live streaming platform API abstraction |
+| Created               | 2026-03-05                              |
+| Last Updated          | 2026-03-05                              |
 
 ## Summary
 
@@ -18,11 +18,11 @@
 
 ## Target Users
 
-| User Type | Problem | Expected Outcome |
-| --- | --- | --- |
-| Multi-platform aggregator developers | Need to integrate with 3+ streaming APIs, each with different auth/rate limits/data models | Single SDK call returns normalized data from any platform |
-| Bot / tool developers | Need cross-platform content lookup (e.g., "is this streamer live?") | `client.getContent(url)` works regardless of platform |
-| Data pipeline developers | Need to collect streaming metadata across platforms | Consistent data model with session tracking for live-to-archive correlation |
+| User Type                            | Problem                                                                                    | Expected Outcome                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Multi-platform aggregator developers | Need to integrate with 3+ streaming APIs, each with different auth/rate limits/data models | Single SDK call returns normalized data from any platform                   |
+| Bot / tool developers                | Need cross-platform content lookup (e.g., "is this streamer live?")                        | `client.getContent(url)` works regardless of platform                       |
+| Data pipeline developers             | Need to collect streaming metadata across platforms                                        | Consistent data model with session tracking for live-to-archive correlation |
 
 ## Scope
 
@@ -46,12 +46,12 @@
 
 ## Success Metrics (MVP)
 
-| Metric | Target | Measurement Method |
-| --- | --- | --- |
-| Platform coverage | YouTube, Twitch, TwitCasting | All 3 platform plugins pass integration tests |
-| API transparency | Consumer never sees 429/rate limit errors | Rate limit handling is fully automatic |
-| Auth transparency | Consumer never manually refreshes tokens | Token refresh is automatic (Twitch Client Credentials) |
-| Observability | Every platform API call emits OTel trace span | Verify spans in test collector |
+| Metric            | Target                                        | Measurement Method                                     |
+| ----------------- | --------------------------------------------- | ------------------------------------------------------ |
+| Platform coverage | YouTube, Twitch, TwitCasting                  | All 3 platform plugins pass integration tests          |
+| API transparency  | Consumer never sees 429/rate limit errors     | Rate limit handling is fully automatic                 |
+| Auth transparency | Consumer never manually refreshes tokens      | Token refresh is automatic (Twitch Client Credentials) |
+| Observability     | Every platform API call emits OTel trace span | Verify spans in test collector                         |
 
 ## Non-Functional Requirements
 

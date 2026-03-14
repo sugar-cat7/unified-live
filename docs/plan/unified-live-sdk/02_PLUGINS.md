@@ -47,13 +47,13 @@ Package: `packages/youtube/`
 
 ### API Endpoints Used
 
-| Endpoint | Method | Quota Cost | Purpose |
-| --- | --- | --- | --- |
-| `videos.list` | GET | 1 unit | Fetch video/live stream by ID |
-| `channels.list` | GET | 1 unit | Fetch channel info |
-| `search.list` | GET | 100 units | Search for content (high cost!) |
-| `liveBroadcasts.list` | GET | 1 unit | List live broadcasts for a channel |
-| `playlistItems.list` | GET | 1 unit | List videos in a channel's uploads playlist |
+| Endpoint              | Method | Quota Cost | Purpose                                     |
+| --------------------- | ------ | ---------- | ------------------------------------------- |
+| `videos.list`         | GET    | 1 unit     | Fetch video/live stream by ID               |
+| `channels.list`       | GET    | 1 unit     | Fetch channel info                          |
+| `search.list`         | GET    | 100 units  | Search for content (high cost!)             |
+| `liveBroadcasts.list` | GET    | 1 unit     | List live broadcasts for a channel          |
+| `playlistItems.list`  | GET    | 1 unit     | List videos in a channel's uploads playlist |
 
 ### Base URL
 
@@ -85,11 +85,11 @@ transformRequest: (req) => ({
 
 ### Response Mapping
 
-| YouTube API Object | SDK Type | Key Mapping |
-| --- | --- | --- |
+| YouTube API Object                                    | SDK Type     | Key Mapping                               |
+| ----------------------------------------------------- | ------------ | ----------------------------------------- |
 | `Video` (with `liveStreamingDetails.actualStartTime`) | `LiveStream` | `snippet.liveBroadcastContent === "live"` |
-| `Video` (without live details, or ended) | `Video` | `contentDetails.duration` > 0 |
-| `Channel` | `Channel` | `snippet.title`, `snippet.thumbnails` |
+| `Video` (without live details, or ended)              | `Video`      | `contentDetails.duration` > 0             |
+| `Channel`                                             | `Channel`    | `snippet.title`, `snippet.thumbnails`     |
 
 ### Pagination
 
@@ -99,14 +99,14 @@ transformRequest: (req) => ({
 
 ### URL Patterns
 
-| Pattern | Type | ID Extraction |
-| --- | --- | --- |
-| `youtube.com/watch?v=<id>` | content | `v` query parameter |
-| `youtu.be/<id>` | content | path segment |
-| `youtube.com/live/<id>` | content | path segment |
-| `youtube.com/channel/<id>` | channel | path segment |
-| `youtube.com/@<handle>` | channel | `@handle` (requires resolution) |
-| `youtube.com/c/<name>` | channel | custom URL (requires resolution) |
+| Pattern                    | Type    | ID Extraction                    |
+| -------------------------- | ------- | -------------------------------- |
+| `youtube.com/watch?v=<id>` | content | `v` query parameter              |
+| `youtu.be/<id>`            | content | path segment                     |
+| `youtube.com/live/<id>`    | content | path segment                     |
+| `youtube.com/channel/<id>` | channel | path segment                     |
+| `youtube.com/@<handle>`    | channel | `@handle` (requires resolution)  |
+| `youtube.com/c/<name>`     | channel | custom URL (requires resolution) |
 
 ### resolveArchive
 
@@ -120,12 +120,12 @@ Package: `packages/twitch/`
 
 ### API Endpoints Used
 
-| Endpoint | Method | Purpose |
-| --- | --- | --- |
-| `GET /streams` | GET | List active streams (by `user_id` or `user_login`) |
-| `GET /videos` | GET | List videos (archives, highlights, uploads) for a user |
-| `GET /users` | GET | Fetch user/channel info |
-| `GET /channels` | GET | Fetch channel info (broadcaster-specific) |
+| Endpoint        | Method | Purpose                                                |
+| --------------- | ------ | ------------------------------------------------------ |
+| `GET /streams`  | GET    | List active streams (by `user_id` or `user_login`)     |
+| `GET /videos`   | GET    | List videos (archives, highlights, uploads) for a user |
+| `GET /users`    | GET    | Fetch user/channel info                                |
+| `GET /channels` | GET    | Fetch channel info (broadcaster-specific)              |
 
 ### Base URL
 
@@ -169,16 +169,16 @@ parseHeaders: (headers: Headers) => {
     remaining: parseInt(remaining, 10),
     resetsAt: new Date(parseInt(reset!, 10) * 1000),
   };
-}
+};
 ```
 
 ### Response Mapping
 
-| Twitch API Object | SDK Type | Key Mapping |
-| --- | --- | --- |
-| `Stream` | `LiveStream` | `viewer_count`, `started_at` |
-| `Video` (type: "archive") | `Video` | `duration` (ISO 8601 format: "3h2m1s"), `view_count` |
-| `User` | `Channel` | `display_name`, `profile_image_url` |
+| Twitch API Object         | SDK Type     | Key Mapping                                          |
+| ------------------------- | ------------ | ---------------------------------------------------- |
+| `Stream`                  | `LiveStream` | `viewer_count`, `started_at`                         |
+| `Video` (type: "archive") | `Video`      | `duration` (ISO 8601 format: "3h2m1s"), `view_count` |
+| `User`                    | `Channel`    | `display_name`, `profile_image_url`                  |
 
 ### Pagination
 
@@ -188,10 +188,10 @@ parseHeaders: (headers: Headers) => {
 
 ### URL Patterns
 
-| Pattern | Type | ID Extraction |
-| --- | --- | --- |
-| `twitch.tv/<username>` | channel | path segment (user_login) |
-| `twitch.tv/videos/<id>` | content | path segment (video_id) |
+| Pattern                 | Type    | ID Extraction             |
+| ----------------------- | ------- | ------------------------- |
+| `twitch.tv/<username>`  | channel | path segment (user_login) |
+| `twitch.tv/videos/<id>` | content | path segment (video_id)   |
 
 Note: `twitch.tv/<username>` when user is live could resolve to either LiveStream or Channel. The Twitch plugin resolves to channel by default; consumers use `getLiveStreams()` to check if the channel is live.
 
@@ -228,11 +228,11 @@ Package: `packages/twitcasting/`
 
 ### API Endpoints Used
 
-| Endpoint | Method | Purpose |
-| --- | --- | --- |
-| `GET /users/:user_id` | GET | Fetch user/channel info |
-| `GET /users/:user_id/movies` | GET | List movies (live/archive) for a user |
-| `GET /movies/:movie_id` | GET | Fetch a single movie |
+| Endpoint                     | Method | Purpose                               |
+| ---------------------------- | ------ | ------------------------------------- |
+| `GET /users/:user_id`        | GET    | Fetch user/channel info               |
+| `GET /users/:user_id/movies` | GET    | List movies (live/archive) for a user |
+| `GET /movies/:movie_id`      | GET    | Fetch a single movie                  |
 
 ### Base URL
 
@@ -281,23 +281,23 @@ parseHeaders: (headers: Headers) => {
     remaining: parseInt(remaining, 10),
     resetsAt: new Date(parseInt(reset, 10) * 1000),
   };
-}
+};
 ```
 
 ### Response Mapping
 
-| TwitCasting API Object | SDK Type | Key Mapping |
-| --- | --- | --- |
-| `Movie` (is_live: true) | `LiveStream` | `current_view_count`, `created` (Unix timestamp) |
-| `Movie` (is_live: false) | `Video` | `duration`, `total_view_count`, `created` |
-| `User` | `Channel` | `name`, `screen_id`, `image` |
+| TwitCasting API Object   | SDK Type     | Key Mapping                                      |
+| ------------------------ | ------------ | ------------------------------------------------ |
+| `Movie` (is_live: true)  | `LiveStream` | `current_view_count`, `created` (Unix timestamp) |
+| `Movie` (is_live: false) | `Video`      | `duration`, `total_view_count`, `created`        |
+| `User`                   | `Channel`    | `name`, `screen_id`, `image`                     |
 
 ```ts
 function movieToContent(movie: TCMovie, broadcaster: TCUser): Content {
   const base = {
     id: movie.id,
     platform: "twitcasting",
-    sessionId: movie.id,  // TwitCasting: id === sessionId
+    sessionId: movie.id, // TwitCasting: id === sessionId
     title: movie.title,
     url: movie.link,
     thumbnail: { url: movie.large_thumbnail, width: 640, height: 360 },
@@ -363,10 +363,10 @@ async getVideos(channelId: string, cursor?: string): Promise<Page<Video>> {
 
 ### URL Patterns
 
-| Pattern | Type | ID Extraction |
-| --- | --- | --- |
-| `twitcasting.tv/<screen_id>` | channel | path segment (screen_id / user_login) |
-| `twitcasting.tv/<screen_id>/movie/<movie_id>` | content | `movie_id` from path |
+| Pattern                                       | Type    | ID Extraction                         |
+| --------------------------------------------- | ------- | ------------------------------------- |
+| `twitcasting.tv/<screen_id>`                  | channel | path segment (screen_id / user_login) |
+| `twitcasting.tv/<screen_id>/movie/<movie_id>` | content | `movie_id` from path                  |
 
 ### resolveArchive
 
@@ -382,14 +382,14 @@ TwitCasting uses the same ID for live and archive. `resolveArchive(live)` is equ
 
 ## Platform Comparison Summary
 
-| Aspect | YouTube | Twitch | TwitCasting |
-| --- | --- | --- | --- |
-| Base URL | `googleapis.com/youtube/v3` | `api.twitch.tv/helix` | `apiv2.twitcasting.tv` |
-| Auth (MVP) | API Key (query param) | Client Credentials (Bearer + Client-Id) | Basic Auth |
-| Rate Limit Model | Cost-based daily quota (10K units) | Token bucket (800 req/60s) | Token bucket (60 req/60s) |
-| Rate Limit Headers | None | `Ratelimit-*` | `X-RateLimit-*` |
-| Pagination | `pageToken` | cursor (`after`) | `offset` + `slice_id` |
-| Live/Archive ID | Same | **Different** | Same |
-| `sessionId` Mapping | `id` | `stream.id` / `video.stream_id` | `id` |
-| Type Generation | openapi-typescript | openapi-typescript | Manual (no OpenAPI spec) |
-| API Docs Language | English | English | **Japanese only** |
+| Aspect              | YouTube                            | Twitch                                  | TwitCasting               |
+| ------------------- | ---------------------------------- | --------------------------------------- | ------------------------- |
+| Base URL            | `googleapis.com/youtube/v3`        | `api.twitch.tv/helix`                   | `apiv2.twitcasting.tv`    |
+| Auth (MVP)          | API Key (query param)              | Client Credentials (Bearer + Client-Id) | Basic Auth                |
+| Rate Limit Model    | Cost-based daily quota (10K units) | Token bucket (800 req/60s)              | Token bucket (60 req/60s) |
+| Rate Limit Headers  | None                               | `Ratelimit-*`                           | `X-RateLimit-*`           |
+| Pagination          | `pageToken`                        | cursor (`after`)                        | `offset` + `slice_id`     |
+| Live/Archive ID     | Same                               | **Different**                           | Same                      |
+| `sessionId` Mapping | `id`                               | `stream.id` / `video.stream_id`         | `id`                      |
+| Type Generation     | openapi-typescript                 | openapi-typescript                      | Manual (no OpenAPI spec)  |
+| API Docs Language   | English                            | English                                 | **Japanese only**         |

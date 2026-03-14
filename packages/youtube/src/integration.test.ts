@@ -12,11 +12,7 @@ const createMockFetch = (
 ): typeof globalThis.fetch => {
   return vi.fn(async (input: string | URL | Request) => {
     const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const { body, status } = handler(url);
     return new Response(JSON.stringify(body), {
       status: status ?? 200,
@@ -63,9 +59,7 @@ describe("YouTube Integration", () => {
     const plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContent(
-      "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    );
+    const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");

@@ -75,8 +75,8 @@ interface RestManagerOptions {
 }
 
 interface RetryConfig {
-  maxRetries?: number;        // Default: 3
-  baseDelay?: number;         // Default: 1000ms
+  maxRetries?: number; // Default: 3
+  baseDelay?: number; // Default: 1000ms
   retryableStatuses?: number[]; // Default: [500, 502, 503, 504]
 }
 ```
@@ -201,6 +201,7 @@ interface TokenBucketConfig {
 ```
 
 **Behavior**:
+
 - On `acquire()`: consume a token. If no tokens available, the Promise blocks until tokens refill.
 - On `handle.complete(headers)`: parse rate limit headers and update the bucket with the actual remaining count (most accurate source).
 - On `handle.release()`: return the token (used during retry).
@@ -209,10 +210,10 @@ interface TokenBucketConfig {
 
 **Platform Configurations**:
 
-| Platform | Global Limit | Window | Headers |
-| --- | --- | --- | --- |
-| Twitch | 800 requests | 60,000ms | `Ratelimit-Limit`, `Ratelimit-Remaining`, `Ratelimit-Reset` |
-| TwitCasting | 60 requests | 60,000ms | `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` |
+| Platform    | Global Limit | Window   | Headers                                                           |
+| ----------- | ------------ | -------- | ----------------------------------------------------------------- |
+| Twitch      | 800 requests | 60,000ms | `Ratelimit-Limit`, `Ratelimit-Remaining`, `Ratelimit-Reset`       |
+| TwitCasting | 60 requests  | 60,000ms | `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` |
 
 ### QuotaBudgetStrategy
 
@@ -224,25 +225,26 @@ Cost-based daily quota tracking. Since YouTube doesn't return remaining quota in
 
 ```ts
 interface QuotaBudgetConfig {
-  dailyLimit: number;          // Default: 10,000
+  dailyLimit: number; // Default: 10,000
   costMap: Record<string, number>;
-  defaultCost: number;         // Default: 1
+  defaultCost: number; // Default: 1
 }
 ```
 
 **YouTube Quota Cost Map**:
 
-| Endpoint (bucketId) | Cost |
-| --- | --- |
-| `videos:list` | 1 |
-| `channels:list` | 1 |
-| `playlists:list` | 1 |
-| `playlistItems:list` | 1 |
-| `liveBroadcasts:list` | 1 |
-| `liveStreams:list` | 1 |
-| `search:list` | **100** |
+| Endpoint (bucketId)   | Cost    |
+| --------------------- | ------- |
+| `videos:list`         | 1       |
+| `channels:list`       | 1       |
+| `playlists:list`      | 1       |
+| `playlistItems:list`  | 1       |
+| `liveBroadcasts:list` | 1       |
+| `liveStreams:list`    | 1       |
+| `search:list`         | **100** |
 
 **Behavior**:
+
 - On `acquire()`: check if `consumed + cost <= dailyLimit`. If yes, optimistically increment `consumed`. If no, throw `QuotaExhaustedError` immediately (no point waiting — reset is hours away).
 - On `handle.complete()`: no-op (YouTube doesn't provide quota info in headers).
 - On `handle.release()`: decrement `consumed` (used during retry).
@@ -265,11 +267,11 @@ private nextResetTime(): Date {
 
 ### Platform Rate Limit Summary
 
-| Platform | Strategy | Model | Header Update | Reset | Exhaustion Behavior |
-| --- | --- | --- | --- | --- | --- |
-| YouTube | QuotaBudgetStrategy | Cost-based (1 or 100 units) | No (local tracking) | Pacific midnight | `QuotaExhaustedError` immediately |
-| Twitch | TokenBucketStrategy | 800 req/min | Header-driven | 60s window | Promise waits (auto-queue) |
-| TwitCasting | TokenBucketStrategy | 60 req/60s | Header-driven | 60s window | Promise waits (auto-queue) |
+| Platform    | Strategy            | Model                       | Header Update       | Reset            | Exhaustion Behavior               |
+| ----------- | ------------------- | --------------------------- | ------------------- | ---------------- | --------------------------------- |
+| YouTube     | QuotaBudgetStrategy | Cost-based (1 or 100 units) | No (local tracking) | Pacific midnight | `QuotaExhaustedError` immediately |
+| Twitch      | TokenBucketStrategy | 800 req/min                 | Header-driven       | 60s window       | Promise waits (auto-queue)        |
+| TwitCasting | TokenBucketStrategy | 60 req/60s                  | Header-driven       | 60s window       | Promise waits (auto-queue)        |
 
 ---
 
@@ -301,7 +303,9 @@ For credentials that never change (API keys, static tokens).
 ```ts
 class StaticTokenManager implements TokenManager {
   constructor(private header: string) {}
-  async getAuthHeader(): Promise<string> { return this.header; }
+  async getAuthHeader(): Promise<string> {
+    return this.header;
+  }
   invalidate(): void {
     throw new AuthenticationError("Static token invalidated. Check credentials.");
   }
@@ -313,6 +317,7 @@ class StaticTokenManager implements TokenManager {
 Package: `packages/twitch/src/auth.ts`
 
 Twitch Client Credentials Grant Flow:
+
 - Fetches App Access Token from `https://id.twitch.tv/oauth2/token`
 - Token expires in ~58 days (`expires_in` ~5,011,271 seconds)
 - No refresh_token — re-fetches before expiry
@@ -323,7 +328,7 @@ Twitch Client Credentials Grant Flow:
 class ClientCredentialsTokenManager implements TokenManager {
   private token: string | null = null;
   private expiresAt: Date | null = null;
-  private refreshPromise: Promise<string> | null = null;  // Dedup
+  private refreshPromise: Promise<string> | null = null; // Dedup
 
   async getAuthHeader(): Promise<string> {
     const token = await this.getToken();
@@ -334,10 +339,13 @@ class ClientCredentialsTokenManager implements TokenManager {
     if (this.token && this.expiresAt && new Date() < this.expiresAt) {
       return this.token;
     }
-    if (this.refreshPromise) return this.refreshPromise;  // Join in-flight
+    if (this.refreshPromise) return this.refreshPromise; // Join in-flight
     this.refreshPromise = this.fetchToken();
-    try { return await this.refreshPromise; }
-    finally { this.refreshPromise = null; }
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
   }
 
   invalidate(): void {
@@ -350,6 +358,7 @@ class ClientCredentialsTokenManager implements TokenManager {
 #### UserAccessTokenManager (Twitch, Phase 2)
 
 Twitch User Access Token with refresh_token flow:
+
 - Token expires in ~4 hours
 - Automatic refresh via refresh_token
 - Twitch returns new refresh_token on each refresh
@@ -359,6 +368,7 @@ Twitch User Access Token with refresh_token flow:
 Package: `packages/twitcasting/src/auth.ts`
 
 TwitCasting Basic Authentication:
+
 - `Authorization: Basic base64(clientId:clientSecret)`
 - Never expires
 - `invalidate()` throws (credentials are static)
@@ -366,18 +376,19 @@ TwitCasting Basic Authentication:
 #### TwitCastingBearerTokenManager (TwitCasting, Phase 2)
 
 TwitCasting OAuth2 Bearer Token:
+
 - Expires in ~180 days
 - No refresh_token — re-authorization required on expiry
 - `invalidate()` marks token as expired
 
 ### Platform Auth Summary
 
-| Platform | TokenManager | Expiry | Auto-Refresh |
-| --- | --- | --- | --- |
-| YouTube | N/A (API key via query param) | Never | N/A |
-| Twitch (App) | ClientCredentialsTokenManager | ~58 days | Re-fetch at 90% expiry |
-| Twitch (User) | UserAccessTokenManager (Phase 2) | ~4 hours | refresh_token |
-| TwitCasting (App) | BasicAuthTokenManager | Never | N/A |
+| Platform           | TokenManager                            | Expiry    | Auto-Refresh           |
+| ------------------ | --------------------------------------- | --------- | ---------------------- |
+| YouTube            | N/A (API key via query param)           | Never     | N/A                    |
+| Twitch (App)       | ClientCredentialsTokenManager           | ~58 days  | Re-fetch at 90% expiry |
+| Twitch (User)      | UserAccessTokenManager (Phase 2)        | ~4 hours  | refresh_token          |
+| TwitCasting (App)  | BasicAuthTokenManager                   | Never     | N/A                    |
 | TwitCasting (User) | TwitCastingBearerTokenManager (Phase 2) | ~180 days | Not possible (re-auth) |
 
 ---
@@ -413,16 +424,16 @@ unified-live.client getContent
 
 **Span Attributes** (following OpenTelemetry semantic conventions):
 
-| Attribute | Type | Description |
-| --- | --- | --- |
-| `unified_live.platform` | string | Platform name |
-| `http.request.method` | string | HTTP method |
-| `url.path` | string | API path |
-| `http.response.status_code` | int | Response status |
-| `unified_live.rate_limit.remaining` | int | Remaining rate limit tokens |
-| `unified_live.rate_limit.limit` | int | Rate limit ceiling |
-| `unified_live.quota.consumed` | int | YouTube quota units consumed (YouTube only) |
-| `unified_live.quota.daily_remaining` | int | YouTube remaining daily quota (YouTube only) |
+| Attribute                            | Type   | Description                                  |
+| ------------------------------------ | ------ | -------------------------------------------- |
+| `unified_live.platform`              | string | Platform name                                |
+| `http.request.method`                | string | HTTP method                                  |
+| `url.path`                           | string | API path                                     |
+| `http.response.status_code`          | int    | Response status                              |
+| `unified_live.rate_limit.remaining`  | int    | Remaining rate limit tokens                  |
+| `unified_live.rate_limit.limit`      | int    | Rate limit ceiling                           |
+| `unified_live.quota.consumed`        | int    | YouTube quota units consumed (YouTube only)  |
+| `unified_live.quota.daily_remaining` | int    | YouTube remaining daily quota (YouTube only) |
 
 ### Metrics (Deferred)
 
@@ -452,6 +463,6 @@ const client = createClient({ ... });
 
 ### Implementation Files
 
-| File | Purpose |
-| --- | --- |
+| File                                    | Purpose                                 |
+| --------------------------------------- | --------------------------------------- |
 | `packages/core/src/telemetry/traces.ts` | Tracer creation, span attribute helpers |

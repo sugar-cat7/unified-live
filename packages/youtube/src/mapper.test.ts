@@ -92,9 +92,7 @@ describe("toContent", () => {
         thumbnails: {},
       },
     };
-    expect(() => toContent(noThumb)).toThrow(
-      "YouTube resource has no thumbnail",
-    );
+    expect(() => toContent(noThumb)).toThrow("YouTube resource has no thumbnail");
   });
 
   it("uses best available thumbnail", () => {

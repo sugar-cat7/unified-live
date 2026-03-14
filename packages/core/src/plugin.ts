@@ -2,14 +2,7 @@ import type { TokenManager } from "./auth/types";
 import { createRestManager, type RestManager } from "./rest/manager";
 import type { RateLimitStrategy } from "./rest/strategy";
 import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
-import type {
-  Channel,
-  Content,
-  LiveStream,
-  Page,
-  ResolvedUrl,
-  Video,
-} from "./types";
+import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
 
 /**
  * Declarative configuration for creating a PlatformPlugin via `PlatformPlugin.create()`.
@@ -38,11 +31,7 @@ export type PluginDefinition = {
   headers?: Record<string, string>;
 
   /** Platform-specific rate limit handling (e.g., YouTube 403 quota detection). */
-  handleRateLimit?: (
-    response: Response,
-    req: RestRequest,
-    attempt: number,
-  ) => Promise<boolean>;
+  handleRateLimit?: (response: Response, req: RestRequest, attempt: number) => Promise<boolean>;
 
   /** Parse rate limit info from response headers. */
   parseRateLimitHeaders?: (headers: Headers) => RateLimitInfo | undefined;
@@ -67,23 +56,13 @@ export type PluginMethods = {
   getChannel: (rest: RestManager, id: string) => Promise<Channel>;
 
   /** List live streams for a channel. */
-  getLiveStreams: (
-    rest: RestManager,
-    channelId: string,
-  ) => Promise<LiveStream[]>;
+  getLiveStreams: (rest: RestManager, channelId: string) => Promise<LiveStream[]>;
 
   /** List videos for a channel with pagination. */
-  getVideos: (
-    rest: RestManager,
-    channelId: string,
-    cursor?: string,
-  ) => Promise<Page<Video>>;
+  getVideos: (rest: RestManager, channelId: string, cursor?: string) => Promise<Page<Video>>;
 
   /** Resolve archive for a live stream (optional). */
-  resolveArchive?: (
-    rest: RestManager,
-    live: LiveStream,
-  ) => Promise<Video | null>;
+  resolveArchive?: (rest: RestManager, live: LiveStream) => Promise<Video | null>;
 };
 
 /**
@@ -183,8 +162,7 @@ export const PlatformPlugin = {
       getContent: (id) => methods.getContent(rest, id),
       getChannel: (id) => methods.getChannel(rest, id),
       getLiveStreams: (channelId) => methods.getLiveStreams(rest, channelId),
-      getVideos: (channelId, cursor) =>
-        methods.getVideos(rest, channelId, cursor),
+      getVideos: (channelId, cursor) => methods.getVideos(rest, channelId, cursor),
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,

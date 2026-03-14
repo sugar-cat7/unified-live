@@ -35,9 +35,7 @@ const createMockPlugin = (name: string): PlatformPlugin => {
   };
 
   const matchUrl = (url: string) =>
-    url.includes(name)
-      ? { platform: name, type: "content" as const, id: "test-id" }
-      : null;
+    url.includes(name) ? { platform: name, type: "content" as const, id: "test-id" } : null;
 
   return {
     name,
@@ -121,16 +119,14 @@ describe("UnifiedClient.create", () => {
       args: ["youtube", "ch1", "cursor1"],
       pluginMethod: "getVideos" as const,
       pluginArgs: ["ch1", "cursor1"],
-      assertion: (result: { items: unknown[] }) =>
-        expect(result.items).toEqual([]),
+      assertion: (result: { items: unknown[] }) => expect(result.items).toEqual([]),
     },
     {
       method: "getChannel" as const,
       args: ["youtube", "ch1"],
       pluginMethod: "getChannel" as const,
       pluginArgs: ["ch1"],
-      assertion: (result: Channel) =>
-        expect(result.name).toBe("Test Channel"),
+      assertion: (result: Channel) => expect(result.name).toBe("Test Channel"),
     },
   ])(
     "$method delegates to plugin.$pluginMethod",
@@ -161,9 +157,7 @@ describe("UnifiedClient.create", () => {
     const client = UnifiedClient.create();
 
     await expect(client.getContent("")).rejects.toThrow(ValidationError);
-    await expect(client.getContent("")).rejects.toThrow(
-      "URL must be a non-empty string",
-    );
+    await expect(client.getContent("")).rejects.toThrow("URL must be a non-empty string");
 
     client.dispose();
   });
@@ -171,9 +165,9 @@ describe("UnifiedClient.create", () => {
   it("getContent throws PlatformNotFoundError for unknown URL", async () => {
     const client = UnifiedClient.create();
 
-    await expect(
-      client.getContent("https://unknown.com/video/123"),
-    ).rejects.toThrow(PlatformNotFoundError);
+    await expect(client.getContent("https://unknown.com/video/123")).rejects.toThrow(
+      PlatformNotFoundError,
+    );
 
     client.dispose();
   });

@@ -199,13 +199,8 @@ describe("createTwitchPlugin", () => {
 
     // Find the API call (not the token call)
     const calls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls;
-    const apiCall = calls.find(
-      (c) => !(c[0] as string).includes("oauth2/token"),
-    );
-    const headers = (apiCall?.[1] as RequestInit)?.headers as Record<
-      string,
-      string
-    >;
+    const apiCall = calls.find((c) => !(c[0] as string).includes("oauth2/token"));
+    const headers = (apiCall?.[1] as RequestInit)?.headers as Record<string, string>;
     expect(headers["Client-Id"]).toBe("my-client-id");
 
     plugin.dispose();

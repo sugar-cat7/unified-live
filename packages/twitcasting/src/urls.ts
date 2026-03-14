@@ -1,10 +1,8 @@
 import type { ResolvedUrl } from "@unified-live/core";
 
-const CONTENT_PATTERN =
-  /^https?:\/\/(?:www\.)?twitcasting\.tv\/([a-zA-Z0-9_]+)\/movie\/(\d+)/;
+const CONTENT_PATTERN = /^https?:\/\/(?:www\.)?twitcasting\.tv\/([a-zA-Z0-9_]+)\/movie\/(\d+)/;
 
-const CHANNEL_PATTERN =
-  /^https?:\/\/(?:www\.)?twitcasting\.tv\/([a-zA-Z0-9_]+)\/?$/;
+const CHANNEL_PATTERN = /^https?:\/\/(?:www\.)?twitcasting\.tv\/([a-zA-Z0-9_]+)\/?$/;
 
 /**
  * Match a URL to a TwitCasting content or channel resource.

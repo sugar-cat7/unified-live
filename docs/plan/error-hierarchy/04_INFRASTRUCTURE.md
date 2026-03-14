@@ -5,12 +5,18 @@
 ### handleResponse
 
 Current (manager.ts):
+
 ```ts
 // JSON parse failure
-throw new UnifiedLiveError(`Failed to parse response from ${manager.platform}`, manager.platform, "PARSE_ERROR");
+throw new UnifiedLiveError(
+  `Failed to parse response from ${manager.platform}`,
+  manager.platform,
+  "PARSE_ERROR",
+);
 ```
 
 After:
+
 ```ts
 throw new ParseError(manager.platform, "PARSE_JSON", {
   message: `Failed to parse JSON response from ${manager.platform}`,
@@ -23,6 +29,7 @@ throw new ParseError(manager.platform, "PARSE_JSON", {
 ### request (retry loop)
 
 Current error flow:
+
 ```
 401 → AuthenticationError(platform)
 404 → NotFoundError(platform, req.path)
@@ -30,6 +37,7 @@ Current error flow:
 ```
 
 After:
+
 ```
 401 → AuthenticationError(platform, { code: "AUTHENTICATION_EXPIRED", cause })
 404 → NotFoundError(platform, req.path, { cause })
@@ -79,9 +87,9 @@ Add error code to OTel spans:
 
 ```ts
 span.setAttributes({
-  "error.code": error.code,           // ErrorCode literal
-  "error.type": error.name,           // Class name
-  "error.has_cause": !!error.cause,   // Whether cause chain exists
+  "error.code": error.code, // ErrorCode literal
+  "error.type": error.name, // Class name
+  "error.has_cause": !!error.cause, // Whether cause chain exists
 });
 ```
 
@@ -90,12 +98,14 @@ span.setAttributes({
 ### Twitch (auth.ts)
 
 Current:
+
 ```ts
 throw new AuthenticationError("twitch", `Token fetch failed: ${(e as Error).message}`);
 throw new AuthenticationError("twitch", `Token fetch failed: ${res.status}`);
 ```
 
 After:
+
 ```ts
 // fetch exception
 throw new AuthenticationError("twitch", {
@@ -114,11 +124,13 @@ throw new AuthenticationError("twitch", {
 ### Static Token (auth/static.ts)
 
 Current:
+
 ```ts
 throw new AuthenticationError("unknown", "Static token invalidated.");
 ```
 
 After:
+
 ```ts
 throw new AuthenticationError("unknown", {
   code: "AUTHENTICATION_EXPIRED",
@@ -129,11 +141,13 @@ throw new AuthenticationError("unknown", {
 ## YouTube Rate Limit Handler
 
 Current (rate-limit.ts):
+
 ```ts
 throw new QuotaExhaustedError("youtube", { consumed, limit, resetsAt, requestedCost: 0 });
 ```
 
 After (no change to QuotaExhaustedError usage, constructor signature updated):
+
 ```ts
 throw new QuotaExhaustedError("youtube", {
   consumed: status.limit - status.remaining,
@@ -146,11 +160,13 @@ throw new QuotaExhaustedError("youtube", {
 ## YouTube Mapper
 
 Current (mapper.ts:138) — **GENERIC ERROR**:
+
 ```ts
 throw new Error("YouTube resource has no thumbnail");
 ```
 
 After:
+
 ```ts
 throw new ParseError("youtube", "PARSE_RESPONSE", {
   message: "YouTube resource has no thumbnail",

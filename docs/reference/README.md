@@ -4,11 +4,11 @@ Reference documentation for the unified-live SDK.
 
 ## Structure
 
-| File | Contents |
-| --- | --- |
-| `overview.md` | Project overview, vision, target users, non-functional requirements |
-| `glossary.md` | Glossary of SDK terms |
-| `decisions.md` | Architecture decision log (rationale behind each decision) |
+| File           | Contents                                                            |
+| -------------- | ------------------------------------------------------------------- |
+| `overview.md`  | Project overview, vision, target users, non-functional requirements |
+| `glossary.md`  | Glossary of SDK terms                                               |
+| `decisions.md` | Architecture decision log (rationale behind each decision)          |
 
 ## Policies
 

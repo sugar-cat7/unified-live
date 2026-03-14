@@ -43,14 +43,14 @@ console.log(content.title, content.platform, content.sessionId);
 
 ## Success Criteria
 
-| Criteria | Verification |
-| --- | --- |
-| `getContent(url)` returns normalized Content from any platform | Integration tests with recorded API responses |
+| Criteria                                                        | Verification                                          |
+| --------------------------------------------------------------- | ----------------------------------------------------- |
+| `getContent(url)` returns normalized Content from any platform  | Integration tests with recorded API responses         |
 | Rate limits are invisible to consumer (no 429 errors bubble up) | Unit tests for TokenBucket and QuotaBudget strategies |
-| Twitch token refresh is automatic | Unit test for ClientCredentialsTokenManager |
-| `sessionId` links live and archive across platforms | Unit tests for plugin mapping |
-| OTel spans emitted for every platform API call | Integration test with test OTel collector |
-| YouTube `QuotaExhaustedError` is thrown clearly | Unit test for QuotaBudget exhaustion |
+| Twitch token refresh is automatic                               | Unit test for ClientCredentialsTokenManager           |
+| `sessionId` links live and archive across platforms             | Unit tests for plugin mapping                         |
+| OTel spans emitted for every platform API call                  | Integration test with test OTel collector             |
+| YouTube `QuotaExhaustedError` is thrown clearly                 | Unit test for QuotaBudget exhaustion                  |
 
 ## Non-Goals (v1)
 

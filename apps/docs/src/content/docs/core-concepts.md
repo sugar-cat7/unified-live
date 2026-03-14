@@ -13,12 +13,12 @@ const content = await client.getContent(url);
 
 if (content.type === "live") {
   console.log(content.viewerCount); // number
-  console.log(content.startedAt);   // Date
+  console.log(content.startedAt); // Date
 }
 
 if (content.type === "video") {
-  console.log(content.duration);    // seconds
-  console.log(content.viewCount);   // number
+  console.log(content.duration); // seconds
+  console.log(content.viewCount); // number
   console.log(content.publishedAt); // Date
 }
 ```
@@ -45,16 +45,16 @@ if (Content.isVideo(content)) {
 
 Both `LiveStream` and `Video` share these fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | Platform-specific content ID |
-| `platform` | `string` | `"youtube"`, `"twitch"`, or `"twitcasting"` |
-| `title` | `string` | Content title |
-| `url` | `string` | URL to the content |
-| `thumbnail` | `Thumbnail` | Thumbnail image with `url`, `width`, `height` |
-| `channel` | `ChannelRef` | Channel reference with `id`, `name`, `url` |
-| `sessionId` | `string?` | Links a live broadcast to its archive (see below) |
-| `raw` | `unknown` | Original API response for advanced use |
+| Field       | Type         | Description                                       |
+| ----------- | ------------ | ------------------------------------------------- |
+| `id`        | `string`     | Platform-specific content ID                      |
+| `platform`  | `string`     | `"youtube"`, `"twitch"`, or `"twitcasting"`       |
+| `title`     | `string`     | Content title                                     |
+| `url`       | `string`     | URL to the content                                |
+| `thumbnail` | `Thumbnail`  | Thumbnail image with `url`, `width`, `height`     |
+| `channel`   | `ChannelRef` | Channel reference with `id`, `name`, `url`        |
+| `sessionId` | `string?`    | Links a live broadcast to its archive (see below) |
+| `raw`       | `unknown`    | Original API response for advanced use            |
 
 ## Channel
 
@@ -63,10 +63,10 @@ A `Channel` represents a streaming channel or user account:
 ```ts
 const channel = await client.getChannel("youtube", "UC_x5XG1OV2P6uZZ5FSM9Ttw");
 
-console.log(channel.id);        // "UC_x5XG1OV2P6uZZ5FSM9Ttw"
-console.log(channel.platform);  // "youtube"
-console.log(channel.name);      // Channel name
-console.log(channel.url);       // Channel URL
+console.log(channel.id); // "UC_x5XG1OV2P6uZZ5FSM9Ttw"
+console.log(channel.platform); // "youtube"
+console.log(channel.name); // Channel name
+console.log(channel.url); // Channel URL
 console.log(channel.thumbnail); // Thumbnail (optional)
 ```
 
@@ -91,6 +91,7 @@ const resolved = client.match("https://www.twitch.tv/username");
 ### Supported URL Formats
 
 **YouTube:**
+
 - `youtube.com/watch?v=VIDEO_ID`
 - `youtu.be/VIDEO_ID`
 - `youtube.com/channel/CHANNEL_ID`
@@ -98,10 +99,12 @@ const resolved = client.match("https://www.twitch.tv/username");
 - `youtube.com/live/VIDEO_ID`
 
 **Twitch:**
+
 - `twitch.tv/videos/VIDEO_ID`
 - `twitch.tv/USERNAME`
 
 **TwitCasting:**
+
 - `twitcasting.tv/USER_ID/movie/MOVIE_ID`
 - `twitcasting.tv/USER_ID`
 

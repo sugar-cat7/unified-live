@@ -61,10 +61,7 @@ export type Video = z.infer<typeof videoSchema>;
 ### Content (Discriminated Union)
 
 ```ts
-export const contentSchema = z.discriminatedUnion("type", [
-  liveStreamSchema,
-  videoSchema,
-]);
+export const contentSchema = z.discriminatedUnion("type", [liveStreamSchema, videoSchema]);
 
 export type Content = z.infer<typeof contentSchema>;
 ```
@@ -134,11 +131,11 @@ export const Content = {
 
 ## Session Tracking: sessionId Mapping
 
-| Platform | Live Content | Archive Content | sessionId Source |
-| --- | --- | --- | --- |
-| YouTube | `id = "dQw4w9WgXcQ"` | `id = "dQw4w9WgXcQ"` | `sessionId = id` (same for both) |
-| Twitch | `id = "44567123"` (stream_id) | `id = "11223344"` (video_id) | `sessionId = stream.id` (live) / `video.stream_id` (archive) |
-| TwitCasting | `id = "789012"` (movie_id) | `id = "789012"` (movie_id) | `sessionId = id` (same for both) |
+| Platform    | Live Content                  | Archive Content              | sessionId Source                                             |
+| ----------- | ----------------------------- | ---------------------------- | ------------------------------------------------------------ |
+| YouTube     | `id = "dQw4w9WgXcQ"`          | `id = "dQw4w9WgXcQ"`         | `sessionId = id` (same for both)                             |
+| Twitch      | `id = "44567123"` (stream_id) | `id = "11223344"` (video_id) | `sessionId = stream.id` (live) / `video.stream_id` (archive) |
+| TwitCasting | `id = "789012"` (movie_id)    | `id = "789012"` (movie_id)   | `sessionId = id` (same for both)                             |
 
 ### Plugin Mapping Examples
 
@@ -159,8 +156,8 @@ function toContent(raw: YTVideo): Content {
 ```ts
 function streamToLive(raw: TwitchStream): LiveStream {
   return {
-    id: raw.id,          // stream_id
-    sessionId: raw.id,   // stream_id
+    id: raw.id, // stream_id
+    sessionId: raw.id, // stream_id
     // ...
   };
 }
@@ -171,7 +168,7 @@ function streamToLive(raw: TwitchStream): LiveStream {
 ```ts
 function videoToVideo(raw: TwitchVideo): Video {
   return {
-    id: raw.id,              // video_id (different from stream_id)
+    id: raw.id, // video_id (different from stream_id)
     sessionId: raw.stream_id, // links back to the stream
     // ...
   };

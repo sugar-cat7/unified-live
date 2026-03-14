@@ -1,13 +1,6 @@
 import { PlatformNotFoundError, ValidationError } from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import type {
-  Channel,
-  Content,
-  LiveStream,
-  Page,
-  ResolvedUrl,
-  Video,
-} from "./types";
+import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
 
 export type UnifiedClientOptions = {
   plugins?: PlatformPlugin[];
@@ -55,11 +48,7 @@ export type UnifiedClient = {
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getVideos(
-    platform: string,
-    channelId: string,
-    cursor?: string,
-  ): Promise<Page<Video>>;
+  getVideos(platform: string, channelId: string, cursor?: string): Promise<Page<Video>>;
 
   /**
    * Retrieve channel information.
@@ -143,10 +132,7 @@ export const UnifiedClient = {
 
       async getContent(url: string): Promise<Content> {
         if (!url) {
-          throw new ValidationError(
-            "VALIDATION_INVALID_INPUT",
-            "URL must be a non-empty string",
-          );
+          throw new ValidationError("VALIDATION_INVALID_INPUT", "URL must be a non-empty string");
         }
         const resolved = matchUrl(url);
         if (!resolved) {
@@ -161,19 +147,12 @@ export const UnifiedClient = {
         return plugin.getContent(id);
       },
 
-      async getLiveStreams(
-        platform: string,
-        channelId: string,
-      ): Promise<LiveStream[]> {
+      async getLiveStreams(platform: string, channelId: string): Promise<LiveStream[]> {
         const plugin = getPlugin(platform);
         return plugin.getLiveStreams(channelId);
       },
 
-      async getVideos(
-        platform: string,
-        channelId: string,
-        cursor?: string,
-      ): Promise<Page<Video>> {
+      async getVideos(platform: string, channelId: string, cursor?: string): Promise<Page<Video>> {
         const plugin = getPlugin(platform);
         return plugin.getVideos(channelId, cursor);
       },

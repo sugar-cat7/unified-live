@@ -21,10 +21,7 @@ type YTListResponse<T> = {
   nextPageToken?: string;
 };
 
-export const youtubeGetContent = async (
-  rest: RestManager,
-  id: string,
-): Promise<Content> => {
+export const youtubeGetContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<YTListResponse<YTVideoResource>>({
     method: "GET",
     path: "/videos",
@@ -43,10 +40,7 @@ export const youtubeGetContent = async (
   return toContent(item);
 };
 
-export const youtubeGetChannel = async (
-  rest: RestManager,
-  id: string,
-): Promise<Channel> => {
+export const youtubeGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const query: Record<string, string> = {
     part: "snippet,contentDetails",
   };
@@ -106,9 +100,7 @@ export const youtubeGetLiveStreams = async (
     bucketId: "videos:list",
   });
 
-  return videosRes.data.items
-    .map(toContent)
-    .filter((c): c is LiveStream => c.type === "live");
+  return videosRes.data.items.map(toContent).filter((c): c is LiveStream => c.type === "live");
 };
 
 export const youtubeGetVideos = async (
@@ -142,9 +134,7 @@ export const youtubeGetVideos = async (
     query.pageToken = cursor;
   }
 
-  const playlistRes = await rest.request<
-    YTListResponse<YTPlaylistItemResource>
-  >({
+  const playlistRes = await rest.request<YTListResponse<YTPlaylistItemResource>>({
     method: "GET",
     path: "/playlistItems",
     query,
@@ -155,9 +145,7 @@ export const youtubeGetVideos = async (
     return { items: [] };
   }
 
-  const videoIds = playlistRes.data.items
-    .map((item) => item.snippet.resourceId.videoId)
-    .join(",");
+  const videoIds = playlistRes.data.items.map((item) => item.snippet.resourceId.videoId).join(",");
 
   const videosRes = await rest.request<YTListResponse<YTVideoResource>>({
     method: "GET",
@@ -169,9 +157,7 @@ export const youtubeGetVideos = async (
     bucketId: "videos:list",
   });
 
-  const videos = videosRes.data.items
-    .map(toContent)
-    .filter((c): c is Video => c.type === "video");
+  const videos = videosRes.data.items.map(toContent).filter((c): c is Video => c.type === "video");
 
   return {
     items: videos,

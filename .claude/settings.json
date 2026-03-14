@@ -26,12 +26,7 @@
       "Bash(pnpm test:run)",
       "Bash(pnpm security-scan)"
     ],
-    "deny": [
-      "Read(.env*)",
-      "Read(**/.env*)",
-      "Read(*.pem)",
-      "Read(*.key)"
-    ]
+    "deny": ["Read(.env*)", "Read(**/.env*)", "Read(*.pem)", "Read(*.key)"]
   },
   "hooks": {
     "PreToolUse": [

@@ -12,17 +12,17 @@ This directory is the Single Source of Truth for implementation policies per tes
 
 ## Test Types and Responsibilities
 
-| Type | Purpose | Primary Tools | Policy |
-| --- | --- | --- | --- |
-| Unit | Verify Zod schemas, mappers, URL parsers, rate limit strategies, error classes | Vitest | Fast, pure, minimal side effects |
-| Integration | Verify plugin + RestManager + client end-to-end flow | Vitest + mock fetch | Real SDK wiring with mocked HTTP responses |
+| Type        | Purpose                                                                        | Primary Tools       | Policy                                     |
+| ----------- | ------------------------------------------------------------------------------ | ------------------- | ------------------------------------------ |
+| Unit        | Verify Zod schemas, mappers, URL parsers, rate limit strategies, error classes | Vitest              | Fast, pure, minimal side effects           |
+| Integration | Verify plugin + RestManager + client end-to-end flow                           | Vitest + mock fetch | Real SDK wiring with mocked HTTP responses |
 
 ## Coverage Policy
 
-| Target Package | Minimum Coverage | CI Enforced |
-| --- | --- | --- |
-| `packages/core/**` | 60% | Yes |
-| `packages/youtube/**` | 60% | Yes |
+| Target Package        | Minimum Coverage | CI Enforced |
+| --------------------- | ---------------- | ----------- |
+| `packages/core/**`    | 60%              | Yes         |
+| `packages/youtube/**` | 60%              | Yes         |
 
 - PRs that fall below coverage thresholds will fail in CI
 - Thresholds will be raised incrementally (initial settings are conservative)

@@ -149,9 +149,7 @@ describe("contentSchema (discriminated union)", () => {
   });
 
   it("rejects invalid type", () => {
-    expect(() =>
-      contentSchema.parse({ ...baseLiveStream, type: "unknown" }),
-    ).toThrow();
+    expect(() => contentSchema.parse({ ...baseLiveStream, type: "unknown" })).toThrow();
   });
 });
 

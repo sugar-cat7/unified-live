@@ -39,11 +39,11 @@ See [docs/security/textlint.md](./textlint.md) for textlint operational guidelin
 The following rules cannot be fully detected by automated linting, but are verified during code review.
 The `/code-review` skill checks these rules.
 
-| Rule | Target | Detection Method |
-| --- | --- | --- |
-| JSDoc (preconditions/postconditions) required for public functions | `packages/*/src/` | AI review |
-| Direct interface definitions prohibited (Zod Schema First) | Entire codebase | AI review |
-| Error hierarchy must extend `UnifiedLiveError` | `packages/*/src/` | AI review |
+| Rule                                                               | Target            | Detection Method |
+| ------------------------------------------------------------------ | ----------------- | ---------------- |
+| JSDoc (preconditions/postconditions) required for public functions | `packages/*/src/` | AI review        |
+| Direct interface definitions prohibited (Zod Schema First)         | Entire codebase   | AI review        |
+| Error hierarchy must extend `UnifiedLiveError`                     | `packages/*/src/` | AI review        |
 
 See the following for details.
 

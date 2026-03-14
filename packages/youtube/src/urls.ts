@@ -12,8 +12,7 @@ const CONTENT_PATTERNS = [
 const CHANNEL_PATTERNS = [
   // youtube.com/channel/<id>
   {
-    pattern:
-      /^https?:\/\/(?:www\.)?youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{22})/,
+    pattern: /^https?:\/\/(?:www\.)?youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{22})/,
     type: "id" as const,
   },
   // youtube.com/@<handle>

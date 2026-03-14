@@ -90,11 +90,11 @@ export const Content = {
 
 **When to use:**
 
-| Use Case | Companion Object Method | Example |
-| --- | --- | --- |
-| Discriminated union narrowing | Type guards (`isX`) | `Content.isLive(c)` |
-| Constructing instances from config | Factory (`create`) | `PlatformPlugin.create(def, methods)` |
-| Runtime type checking | Type guard (`is`) | `PlatformPlugin.is(value)` |
+| Use Case                           | Companion Object Method | Example                               |
+| ---------------------------------- | ----------------------- | ------------------------------------- |
+| Discriminated union narrowing      | Type guards (`isX`)     | `Content.isLive(c)`                   |
+| Constructing instances from config | Factory (`create`)      | `PlatformPlugin.create(def, methods)` |
+| Runtime type checking              | Type guard (`is`)       | `PlatformPlugin.is(value)`            |
 
 **Conventions:**
 
@@ -106,10 +106,10 @@ export const Content = {
 
 **Current companion objects in the SDK:**
 
-| Name | Location | Methods |
-| --- | --- | --- |
-| `Content` | `core/src/types.ts` | `isLive`, `isVideo` |
-| `PlatformPlugin` | `core/src/plugin.ts` | `create`, `is` |
+| Name             | Location             | Methods             |
+| ---------------- | -------------------- | ------------------- |
+| `Content`        | `core/src/types.ts`  | `isLive`, `isVideo` |
+| `PlatformPlugin` | `core/src/plugin.ts` | `create`, `is`      |
 
 ### 2. Function Objects Over Classes (discordeno Pattern)
 
@@ -245,14 +245,14 @@ Every API call emits OpenTelemetry traces with attributes for platform, HTTP met
 
 ### By Layer
 
-| Layer | Approach | Dependencies |
-| --- | --- | --- |
-| **Types** (schemas, type guards) | Pure unit tests. No mocks. | None |
-| **RateLimitStrategy** | Unit tests. Mock timers for TokenBucket refill. | `vi.useFakeTimers()` |
-| **TokenManager** | Unit tests with mock fetch. Test token refresh, expiry, thundering herd. | Mock `fetch` |
-| **RestManager** | Unit tests with mock fetch. Test request flow, retry, OTel span creation. | Mock `fetch`, mock OTel |
-| **Platform plugins** | Integration tests with recorded HTTP responses. Test response mapping, pagination, URL matching. | Mock `fetch` |
-| **UnifiedClient** | Integration tests. Test full flow: URL -> plugin -> adapter -> response. | Mock plugins |
+| Layer                            | Approach                                                                                         | Dependencies            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------- |
+| **Types** (schemas, type guards) | Pure unit tests. No mocks.                                                                       | None                    |
+| **RateLimitStrategy**            | Unit tests. Mock timers for TokenBucket refill.                                                  | `vi.useFakeTimers()`    |
+| **TokenManager**                 | Unit tests with mock fetch. Test token refresh, expiry, thundering herd.                         | Mock `fetch`            |
+| **RestManager**                  | Unit tests with mock fetch. Test request flow, retry, OTel span creation.                        | Mock `fetch`, mock OTel |
+| **Platform plugins**             | Integration tests with recorded HTTP responses. Test response mapping, pagination, URL matching. | Mock `fetch`            |
+| **UnifiedClient**                | Integration tests. Test full flow: URL -> plugin -> adapter -> response.                         | Mock plugins            |
 
 ### Test Commands
 
@@ -274,6 +274,7 @@ pnpm test --filter @unified-live/twitcasting
 To add a new platform (e.g., Niconico):
 
 1. Create `packages/niconico/` with the standard structure:
+
    ```
    packages/niconico/
    ├── src/
@@ -290,6 +291,7 @@ To add a new platform (e.g., Niconico):
    ```
 
 2. Define the `PluginDefinition`:
+
    ```ts
    PlatformPlugin.create(
      {
@@ -308,6 +310,7 @@ To add a new platform (e.g., Niconico):
    ```
 
 3. Implement `PluginMethods` as pure functions receiving `RestManager` as first argument:
+
    ```ts
    export async function niconicoGetContent(rest: RestManager, id: string): Promise<Content> {
      const res = await rest.request<NiconicoVideoResponse>({ ... });

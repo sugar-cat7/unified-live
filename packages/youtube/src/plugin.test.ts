@@ -1,9 +1,4 @@
-import {
-  Content,
-  type LiveStream,
-  NotFoundError,
-  QuotaExhaustedError,
-} from "@unified-live/core";
+import { Content, type LiveStream, NotFoundError, QuotaExhaustedError } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
 
@@ -105,8 +100,7 @@ describe("createYouTubePlugin", () => {
     expect(Content.isVideo(content)).toBe(true);
 
     // Verify API key was injected as query param
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0] as string;
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
     expect(calledUrl).toContain("key=test-key");
   });
 
@@ -136,9 +130,7 @@ describe("createYouTubePlugin", () => {
       fetch: createMockFetch([]),
     });
 
-    const resolved = plugin.match(
-      "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    );
+    const resolved = plugin.match("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
     expect(resolved).toEqual({
       platform: "youtube",
       type: "content",
@@ -182,9 +174,7 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    await expect(plugin.getContent("nonexistent")).rejects.toThrow(
-      NotFoundError,
-    );
+    await expect(plugin.getContent("nonexistent")).rejects.toThrow(NotFoundError);
   });
 
   it("getChannel returns a channel by @handle", async () => {
@@ -204,8 +194,7 @@ describe("createYouTubePlugin", () => {
     expect(channel.platform).toBe("youtube");
     expect(channel.name).toBe("Test Channel");
 
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0] as string;
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
     expect(calledUrl).toContain("forHandle=%40testchannel");
   });
 
@@ -222,8 +211,7 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     await plugin.getChannel("UC123");
 
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0] as string;
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
     expect(calledUrl).toContain("id=UC123");
   });
 
@@ -238,9 +226,7 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    await expect(plugin.getChannel("@nonexistent")).rejects.toThrow(
-      NotFoundError,
-    );
+    await expect(plugin.getChannel("@nonexistent")).rejects.toThrow(NotFoundError);
   });
 
   it("getLiveStreams returns live streams from search + video pipeline", async () => {
@@ -314,9 +300,7 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    await expect(plugin.getVideos("UC_nonexistent")).rejects.toThrow(
-      NotFoundError,
-    );
+    await expect(plugin.getVideos("UC_nonexistent")).rejects.toThrow(NotFoundError);
   });
 
   it("resolveUrl delegates to match", () => {
@@ -325,9 +309,11 @@ describe("createYouTubePlugin", () => {
       fetch: createMockFetch([]),
     });
 
-    expect(
-      plugin.resolveUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
-    ).toEqual({ platform: "youtube", type: "content", id: "dQw4w9WgXcQ" });
+    expect(plugin.resolveUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toEqual({
+      platform: "youtube",
+      type: "content",
+      id: "dQw4w9WgXcQ",
+    });
     expect(plugin.resolveUrl("https://example.com/foo")).toBeNull();
   });
 
@@ -470,9 +456,7 @@ describe("createYouTubePlugin", () => {
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
 
-    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(
-      QuotaExhaustedError,
-    );
+    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(QuotaExhaustedError);
   });
 
   it("dispose releases resources", () => {

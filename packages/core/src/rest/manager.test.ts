@@ -1,14 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  AuthenticationError,
-  NotFoundError,
-  UnifiedLiveError,
-} from "../errors";
+import { AuthenticationError, NotFoundError, UnifiedLiveError } from "../errors";
 import { createRestManager } from "./manager";
-import type {
-  RateLimitHandle,
-  RateLimitStrategy,
-} from "./strategy";
+import type { RateLimitHandle, RateLimitStrategy } from "./strategy";
 import type { RestRequest } from "./types";
 
 const createMockStrategy = (): RateLimitStrategy => {
@@ -76,8 +69,7 @@ describe("createRestManager", () => {
     expect(result.data).toEqual({ id: "abc" });
     expect(fetchFn).toHaveBeenCalledTimes(1);
 
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0] as string;
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
     expect(calledUrl).toBe("https://api.example.com/resources/abc");
   });
 
@@ -98,8 +90,7 @@ describe("createRestManager", () => {
       query: { q: "hello", limit: "10" },
     });
 
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[0] as string;
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("q")).toBe("hello");
     expect(url.searchParams.get("limit")).toBe("10");
@@ -164,9 +155,9 @@ describe("createRestManager", () => {
       fetch: fetchFn,
     });
 
-    await expect(
-      manager.request({ method: "GET", path: "/missing" }),
-    ).rejects.toThrow(NotFoundError);
+    await expect(manager.request({ method: "GET", path: "/missing" })).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("throws AuthenticationError on 401 after retries", async () => {
@@ -185,9 +176,9 @@ describe("createRestManager", () => {
       fetch: fetchFn,
     });
 
-    await expect(
-      manager.request({ method: "GET", path: "/auth" }),
-    ).rejects.toThrow(AuthenticationError);
+    await expect(manager.request({ method: "GET", path: "/auth" })).rejects.toThrow(
+      AuthenticationError,
+    );
   });
 
   it("calls rateLimitStrategy.acquire and handle.complete", async () => {
@@ -246,9 +237,9 @@ describe("createRestManager", () => {
       fetch: fetchFn,
     });
 
-    await expect(
-      manager.request({ method: "GET", path: "/missing" }),
-    ).rejects.toThrow(NotFoundError);
+    await expect(manager.request({ method: "GET", path: "/missing" })).rejects.toThrow(
+      NotFoundError,
+    );
     expect(releaseFn).toHaveBeenCalledTimes(1);
   });
 
@@ -271,8 +262,7 @@ describe("createRestManager", () => {
 
     await manager.request({ method: "GET", path: "/test" });
 
-    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[1] as RequestInit;
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
     const headers = calledInit.headers as Record<string, string>;
     expect(headers["X-Custom"]).toBe("value");
   });
@@ -294,8 +284,7 @@ describe("createRestManager", () => {
 
     await manager.request({ method: "GET", path: "/test" });
 
-    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock
-      .calls[0]?.[1] as RequestInit;
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
     const headers = calledInit.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer test-token");
   });
@@ -316,13 +305,13 @@ describe("createRestManager", () => {
       fetch: fetchFn,
     });
 
-    await expect(
-      manager.request({ method: "GET", path: "/broken" }),
-    ).rejects.toThrow(UnifiedLiveError);
+    await expect(manager.request({ method: "GET", path: "/broken" })).rejects.toThrow(
+      UnifiedLiveError,
+    );
 
-    await expect(
-      manager.request({ method: "GET", path: "/broken" }),
-    ).rejects.toThrow("Failed to parse JSON response");
+    await expect(manager.request({ method: "GET", path: "/broken" })).rejects.toThrow(
+      "Failed to parse JSON response",
+    );
   });
 
   it("dispose cleans up strategy and tokenManager", () => {

@@ -32,17 +32,17 @@ export type ErrorCode =
 
 ### Code Hierarchy
 
-| Category | Codes | Description |
-| --- | --- | --- |
-| `NOT_FOUND` | `NOT_FOUND` | Resource does not exist on platform |
-| `AUTHENTICATION_*` | `AUTHENTICATION_INVALID`, `AUTHENTICATION_EXPIRED` | Credential issues |
-| `RATE_LIMIT_*` | `RATE_LIMIT_EXCEEDED` | Request rate limit after retries |
-| `QUOTA_*` | `QUOTA_EXHAUSTED` | Cost-based quota (YouTube) |
-| `NETWORK_*` | `NETWORK_TIMEOUT`, `NETWORK_CONNECTION`, `NETWORK_DNS`, `NETWORK_ABORT` | Fetch-level failures |
-| `PARSE_*` | `PARSE_JSON`, `PARSE_RESPONSE` | Response parsing failures |
-| `VALIDATION_*` | `VALIDATION_INVALID_URL`, `VALIDATION_INVALID_INPUT` | Input validation |
-| `PLATFORM_*` | `PLATFORM_NOT_FOUND` | Plugin not registered |
-| `INTERNAL` | `INTERNAL` | Unexpected SDK-internal error |
+| Category           | Codes                                                                   | Description                         |
+| ------------------ | ----------------------------------------------------------------------- | ----------------------------------- |
+| `NOT_FOUND`        | `NOT_FOUND`                                                             | Resource does not exist on platform |
+| `AUTHENTICATION_*` | `AUTHENTICATION_INVALID`, `AUTHENTICATION_EXPIRED`                      | Credential issues                   |
+| `RATE_LIMIT_*`     | `RATE_LIMIT_EXCEEDED`                                                   | Request rate limit after retries    |
+| `QUOTA_*`          | `QUOTA_EXHAUSTED`                                                       | Cost-based quota (YouTube)          |
+| `NETWORK_*`        | `NETWORK_TIMEOUT`, `NETWORK_CONNECTION`, `NETWORK_DNS`, `NETWORK_ABORT` | Fetch-level failures                |
+| `PARSE_*`          | `PARSE_JSON`, `PARSE_RESPONSE`                                          | Response parsing failures           |
+| `VALIDATION_*`     | `VALIDATION_INVALID_URL`, `VALIDATION_INVALID_INPUT`                    | Input validation                    |
+| `PLATFORM_*`       | `PLATFORM_NOT_FOUND`                                                    | Plugin not registered               |
+| `INTERNAL`         | `INTERNAL`                                                              | Unexpected SDK-internal error       |
 
 ## ErrorContext
 
@@ -132,11 +132,7 @@ export class UnifiedLiveError extends Error {
 
 ```ts
 export class NotFoundError extends UnifiedLiveError {
-  constructor(
-    platform: string,
-    resourceId: string,
-    options?: { cause?: Error },
-  ) {
+  constructor(platform: string, resourceId: string, options?: { cause?: Error }) {
     super(
       `Resource "${resourceId}" not found on ${platform}`,
       "NOT_FOUND",
@@ -182,14 +178,9 @@ export class RateLimitError extends UnifiedLiveError {
   declare readonly code: "RATE_LIMIT_EXCEEDED";
   readonly retryAfter?: number;
 
-  constructor(
-    platform: string,
-    options?: { retryAfter?: number; cause?: Error },
-  ) {
+  constructor(platform: string, options?: { retryAfter?: number; cause?: Error }) {
     super(
-      options?.retryAfter
-        ? `Rate limited, retry after ${options.retryAfter}s`
-        : "Rate limited",
+      options?.retryAfter ? `Rate limited, retry after ${options.retryAfter}s` : "Rate limited",
       "RATE_LIMIT_EXCEEDED",
       { platform },
       { cause: options?.cause },
@@ -214,11 +205,7 @@ export class QuotaExhaustedError extends UnifiedLiveError {
   declare readonly code: "QUOTA_EXHAUSTED";
   readonly details: QuotaDetails;
 
-  constructor(
-    platform: string,
-    details: QuotaDetails,
-    options?: { cause?: Error },
-  ) {
+  constructor(platform: string, details: QuotaDetails, options?: { cause?: Error }) {
     super(
       `Quota exhausted: ${details.consumed}/${details.limit} used, resets at ${details.resetsAt.toISOString()}`,
       "QUOTA_EXHAUSTED",
@@ -234,11 +221,7 @@ export class QuotaExhaustedError extends UnifiedLiveError {
 ### NetworkError (new)
 
 ```ts
-type NetworkCode =
-  | "NETWORK_TIMEOUT"
-  | "NETWORK_CONNECTION"
-  | "NETWORK_DNS"
-  | "NETWORK_ABORT";
+type NetworkCode = "NETWORK_TIMEOUT" | "NETWORK_CONNECTION" | "NETWORK_DNS" | "NETWORK_ABORT";
 
 export class NetworkError extends UnifiedLiveError {
   declare readonly code: NetworkCode;
@@ -306,12 +289,7 @@ export class ValidationError extends UnifiedLiveError {
     message: string,
     options?: { platform?: string; cause?: Error },
   ) {
-    super(
-      message,
-      code,
-      { platform: options?.platform ?? "unknown" },
-      { cause: options?.cause },
-    );
+    super(message, code, { platform: options?.platform ?? "unknown" }, { cause: options?.cause });
     this.name = "ValidationError";
   }
 }
@@ -324,11 +302,7 @@ export class PlatformNotFoundError extends UnifiedLiveError {
   declare readonly code: "PLATFORM_NOT_FOUND";
 
   constructor(platform: string) {
-    super(
-      `Platform "${platform}" is not registered`,
-      "PLATFORM_NOT_FOUND",
-      { platform },
-    );
+    super(`Platform "${platform}" is not registered`, "PLATFORM_NOT_FOUND", { platform });
     this.name = "PlatformNotFoundError";
   }
 }
@@ -336,13 +310,13 @@ export class PlatformNotFoundError extends UnifiedLiveError {
 
 ## Backward Compatibility
 
-| Old API | New API | Migration |
-| --- | --- | --- |
-| `error.platform` | `error.context.platform` | Add getter for backward compat |
-| `error.code` (string) | `error.code` (ErrorCode) | Narrows existing type |
-| `new AuthenticationError(platform, message?)` | `new AuthenticationError(platform, { message?, code?, cause? })` | Options object |
-| `new RateLimitError(platform, retryAfter?)` | `new RateLimitError(platform, { retryAfter?, cause? })` | Options object |
-| `new NotFoundError(platform, resourceId)` | `new NotFoundError(platform, resourceId, { cause? })` | Optional 3rd arg |
+| Old API                                       | New API                                                          | Migration                      |
+| --------------------------------------------- | ---------------------------------------------------------------- | ------------------------------ |
+| `error.platform`                              | `error.context.platform`                                         | Add getter for backward compat |
+| `error.code` (string)                         | `error.code` (ErrorCode)                                         | Narrows existing type          |
+| `new AuthenticationError(platform, message?)` | `new AuthenticationError(platform, { message?, code?, cause? })` | Options object                 |
+| `new RateLimitError(platform, retryAfter?)`   | `new RateLimitError(platform, { retryAfter?, cause? })`          | Options object                 |
+| `new NotFoundError(platform, resourceId)`     | `new NotFoundError(platform, resourceId, { cause? })`            | Optional 3rd arg               |
 
 ### `platform` Getter
 

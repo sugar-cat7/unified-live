@@ -10,9 +10,7 @@ export type ErrResult<E extends UnifiedLiveError> = {
   err: E;
 };
 
-export type Result<V, E extends UnifiedLiveError = UnifiedLiveError> =
-  | OkResult<V>
-  | ErrResult<E>;
+export type Result<V, E extends UnifiedLiveError = UnifiedLiveError> = OkResult<V> | ErrResult<E>;
 
 export function Ok(): OkResult<never>;
 export function Ok<V>(val: V): OkResult<V>;

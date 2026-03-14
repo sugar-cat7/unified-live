@@ -23,9 +23,7 @@ import { createTwitchPlugin } from "@unified-live/twitch";
 const client = createClient();
 
 // 2. プラットフォームプラグインを登録
-client.register(
-  createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
-);
+client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
 client.register(
   createTwitchPlugin({
     clientId: process.env.TWITCH_CLIENT_ID!,
@@ -36,9 +34,9 @@ client.register(
 // 3. URL からコンテンツを取得 — プラットフォームは自動判別
 const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
-console.log(content.title);     // 動画タイトル
-console.log(content.platform);  // "youtube"
-console.log(content.type);      // "live" または "video"
+console.log(content.title); // 動画タイトル
+console.log(content.platform); // "youtube"
+console.log(content.type); // "live" または "video"
 
 // 4. 使い終わったらリソースを解放
 client.dispose();

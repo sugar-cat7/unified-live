@@ -11,20 +11,20 @@ Explicitly stating preconditions and postconditions makes it easier to design bo
 
 ### Type Operations (Companion Object Methods, Mappers)
 
-| Tag | Description | Required |
-|------|------|------|
-| `@param` | Meaning and constraints of the argument | Yes |
-| `@returns` | Meaning of the return value | Yes |
-| `@precondition` | Conditions that must hold before the call | Yes |
-| `@postcondition` | Conditions guaranteed after the call | Yes |
+| Tag              | Description                               | Required |
+| ---------------- | ----------------------------------------- | -------- |
+| `@param`         | Meaning and constraints of the argument   | Yes      |
+| `@returns`       | Meaning of the return value               | Yes      |
+| `@precondition`  | Conditions that must hold before the call | Yes      |
+| `@postcondition` | Conditions guaranteed after the call      | Yes      |
 
 ### Infrastructure & Plugin Functions
 
 In addition to the above tags, the following is also required.
 
-| Tag | Description | Required |
-|------|------|------|
-| `@idempotency` | Whether the function is idempotent and why | Yes |
+| Tag            | Description                                | Required |
+| -------------- | ------------------------------------------ | -------- |
+| `@idempotency` | Whether the function is idempotent and why | Yes      |
 
 ## Code Examples
 
@@ -79,11 +79,11 @@ export async function youtubeGetContent(rest: RestManager, id: string): Promise<
 
 JSDoc preconditions and postconditions directly inform test design.
 
-| JSDoc | Role in Tests |
-|-------|--------------|
-| `@precondition` | Test case prerequisites. Violation cases should also be added as boundary value tests |
-| `@postcondition` | Basis for assertions. Verified with expect statements in tests |
-| `@idempotent` | If idempotent, test with two executions of the same input; if not, verify duplicate prevention |
+| JSDoc            | Role in Tests                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| `@precondition`  | Test case prerequisites. Violation cases should also be added as boundary value tests          |
+| `@postcondition` | Basis for assertions. Verified with expect statements in tests                                 |
+| `@idempotent`    | If idempotent, test with two executions of the same input; if not, verify duplicate prevention |
 
 ### Example of Test Derivation
 

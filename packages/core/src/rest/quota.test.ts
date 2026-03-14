@@ -50,9 +50,7 @@ describe("createQuotaBudgetStrategy", () => {
       platform: "youtube",
     });
 
-    await expect(strategy.acquire(makeReq("search:list"))).rejects.toThrow(
-      QuotaExhaustedError,
-    );
+    await expect(strategy.acquire(makeReq("search:list"))).rejects.toThrow(QuotaExhaustedError);
   });
 
   it("includes details in QuotaExhaustedError", async () => {
@@ -101,9 +99,7 @@ describe("createQuotaBudgetStrategy", () => {
     }
     expect(strategy.getStatus().remaining).toBe(0);
 
-    await expect(strategy.acquire(makeReq("videos:list"))).rejects.toThrow(
-      QuotaExhaustedError,
-    );
+    await expect(strategy.acquire(makeReq("videos:list"))).rejects.toThrow(QuotaExhaustedError);
   });
 
   it("queued is always 0 (no queuing for quota)", () => {

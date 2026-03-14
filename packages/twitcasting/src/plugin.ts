@@ -35,9 +35,7 @@ const parseTwitCastingRateLimitHeaders = createRateLimitHeaderParser({
  * @postcondition returns a PlatformPlugin that handles TwitCasting URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
-export const createTwitCastingPlugin = (
-  config: TwitCastingPluginConfig,
-): PlatformPlugin => {
+export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): PlatformPlugin => {
   return PlatformPlugin.create(
     {
       name: "twitcasting",

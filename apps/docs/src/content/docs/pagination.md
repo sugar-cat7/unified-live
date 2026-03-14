@@ -11,9 +11,9 @@ sidebar:
 ```ts
 const page = await client.getVideos("youtube", channelId);
 
-console.log(page.items);  // Video[]
-console.log(page.cursor);  // string | undefined — pass to get next page
-console.log(page.total);   // number | undefined — total count (if available)
+console.log(page.items); // Video[]
+console.log(page.cursor); // string | undefined — pass to get next page
+console.log(page.total); // number | undefined — total count (if available)
 ```
 
 ## Fetching Multiple Pages

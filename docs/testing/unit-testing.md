@@ -34,8 +34,16 @@ import { describe, expect, it } from "vitest";
 
 describe("matchYouTubeUrl", () => {
   const cases = [
-    { name: "watch URL", input: "https://www.youtube.com/watch?v=abc", expected: { platform: "youtube", type: "content", id: "abc" } },
-    { name: "short URL", input: "https://youtu.be/abc", expected: { platform: "youtube", type: "content", id: "abc" } },
+    {
+      name: "watch URL",
+      input: "https://www.youtube.com/watch?v=abc",
+      expected: { platform: "youtube", type: "content", id: "abc" },
+    },
+    {
+      name: "short URL",
+      input: "https://youtu.be/abc",
+      expected: { platform: "youtube", type: "content", id: "abc" },
+    },
     { name: "non-YouTube", input: "https://twitch.tv/user", expected: null },
   ];
 

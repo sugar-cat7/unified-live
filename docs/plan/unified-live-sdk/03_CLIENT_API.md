@@ -64,6 +64,7 @@ const live = await client.getContent("https://twitch.tv/videos/12345");
 ```
 
 **Errors**:
+
 - `PlatformNotFoundError` — URL doesn't match any registered plugin
 - `NotFoundError` — Resource not found on the platform
 - `RateLimitError` — Rate limit exceeded after max retries
@@ -248,20 +249,20 @@ See `docs/plan/error-hierarchy/01_TYPES.md` for the full specification.
 
 ```ts
 class UnifiedLiveError extends Error {
-  readonly code: ErrorCode;      // Typed string literal union (15 codes)
+  readonly code: ErrorCode; // Typed string literal union (15 codes)
   readonly context: ErrorContext; // { platform, method?, path?, status?, resourceId? }
-  readonly cause?: Error;        // ES2022 Error.cause chain
-  get platform(): string;        // Backward-compat getter → context.platform
+  readonly cause?: Error; // ES2022 Error.cause chain
+  get platform(): string; // Backward-compat getter → context.platform
 }
 
-class NotFoundError extends UnifiedLiveError {}           // code: "NOT_FOUND"
-class AuthenticationError extends UnifiedLiveError {}     // code: "AUTHENTICATION_INVALID" | "AUTHENTICATION_EXPIRED"
-class RateLimitError extends UnifiedLiveError {}          // code: "RATE_LIMIT_EXCEEDED"
-class QuotaExhaustedError extends UnifiedLiveError {}     // code: "QUOTA_EXHAUSTED", details: QuotaDetails
-class NetworkError extends UnifiedLiveError {}            // code: "NETWORK_TIMEOUT" | "NETWORK_CONNECTION" | "NETWORK_DNS" | "NETWORK_ABORT"
-class ParseError extends UnifiedLiveError {}              // code: "PARSE_JSON" | "PARSE_RESPONSE"
-class ValidationError extends UnifiedLiveError {}         // code: "VALIDATION_INVALID_URL" | "VALIDATION_INVALID_INPUT"
-class PlatformNotFoundError extends UnifiedLiveError {}   // code: "PLATFORM_NOT_FOUND"
+class NotFoundError extends UnifiedLiveError {} // code: "NOT_FOUND"
+class AuthenticationError extends UnifiedLiveError {} // code: "AUTHENTICATION_INVALID" | "AUTHENTICATION_EXPIRED"
+class RateLimitError extends UnifiedLiveError {} // code: "RATE_LIMIT_EXCEEDED"
+class QuotaExhaustedError extends UnifiedLiveError {} // code: "QUOTA_EXHAUSTED", details: QuotaDetails
+class NetworkError extends UnifiedLiveError {} // code: "NETWORK_TIMEOUT" | "NETWORK_CONNECTION" | "NETWORK_DNS" | "NETWORK_ABORT"
+class ParseError extends UnifiedLiveError {} // code: "PARSE_JSON" | "PARSE_RESPONSE"
+class ValidationError extends UnifiedLiveError {} // code: "VALIDATION_INVALID_URL" | "VALIDATION_INVALID_INPUT"
+class PlatformNotFoundError extends UnifiedLiveError {} // code: "PLATFORM_NOT_FOUND"
 ```
 
 ### Error Handling
@@ -289,9 +290,7 @@ const urls = [
   "https://twitcasting.tv/user/movie/67890",
 ];
 
-const contents = await Promise.all(
-  urls.map((url) => client.getContent(url)),
-);
+const contents = await Promise.all(urls.map((url) => client.getContent(url)));
 
 for (const content of contents) {
   console.log(`[${content.platform}] ${content.title} (${content.type})`);

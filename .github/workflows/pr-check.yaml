@@ -55,6 +55,9 @@ jobs:
       - name: Lint (oxlint)
         run: pnpm lint
 
+      - name: Format check (oxfmt)
+        run: pnpm format:check
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10

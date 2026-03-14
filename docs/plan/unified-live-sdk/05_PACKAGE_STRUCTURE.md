@@ -79,6 +79,7 @@ unified-live/
 ```
 
 **Rules**:
+
 - `core` has zero platform-specific code
 - Platform packages depend only on `core`
 - Platform packages do not depend on each other
@@ -163,8 +164,8 @@ unified-live/
 packages:
   - packages/*
 catalog:
-  '@opentelemetry/api': ^1.9.0
-  '@types/node': 20.19.25
+  "@opentelemetry/api": ^1.9.0
+  "@types/node": 20.19.25
   tsdown: 0.21.2
   typescript: 5.9.3
   vitest: 3.2.3
@@ -225,9 +226,7 @@ Per-package tsconfig extends the base and adds project references:
     "rootDir": "./src"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../core" }
-  ]
+  "references": [{ "path": "../core" }]
 }
 ```
 
@@ -275,11 +274,11 @@ The following template artifacts were removed during project initialization:
 
 ## Testing Strategy
 
-| Layer | Test Type | Tool | What to Test |
-| --- | --- | --- | --- |
-| Types (schemas, type guards) | Unit | Vitest | Type guards, factory functions, Zod schema validation |
-| Rate limiting | Unit | Vitest | TokenBucket acquire/release/refill, QuotaBudget cost tracking/exhaustion |
-| Auth | Unit | Vitest (+ mock fetch) | Token fetch, refresh, expiry, thundering herd prevention |
-| Platform plugins | Integration | Vitest + MSW | Response mapping, pagination, URL matching (recorded HTTP responses) |
-| RestManager | Unit | Vitest (+ mock fetch) | Request flow, retry, error handling, OTel span creation |
-| Client (end-to-end) | Integration | Vitest | Full flow: URL -> plugin resolution -> adapter -> response |
+| Layer                        | Test Type   | Tool                  | What to Test                                                             |
+| ---------------------------- | ----------- | --------------------- | ------------------------------------------------------------------------ |
+| Types (schemas, type guards) | Unit        | Vitest                | Type guards, factory functions, Zod schema validation                    |
+| Rate limiting                | Unit        | Vitest                | TokenBucket acquire/release/refill, QuotaBudget cost tracking/exhaustion |
+| Auth                         | Unit        | Vitest (+ mock fetch) | Token fetch, refresh, expiry, thundering herd prevention                 |
+| Platform plugins             | Integration | Vitest + MSW          | Response mapping, pagination, URL matching (recorded HTTP responses)     |
+| RestManager                  | Unit        | Vitest (+ mock fetch) | Request flow, retry, error handling, OTel span creation                  |
+| Client (end-to-end)          | Integration | Vitest                | Full flow: URL -> plugin resolution -> adapter -> response               |

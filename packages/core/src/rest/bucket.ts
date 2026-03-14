@@ -1,8 +1,4 @@
-import type {
-  RateLimitHandle,
-  RateLimitStatus,
-  RateLimitStrategy,
-} from "./strategy";
+import type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestRequest } from "./types";
 
 export type TokenBucketConfig = {
@@ -17,9 +13,7 @@ export type TokenBucketConfig = {
  * @postcondition acquire() blocks when no tokens are available, resolves on refill
  * @idempotency Not idempotent — each acquire() consumes a token
  */
-export const createTokenBucketStrategy = (
-  config: TokenBucketConfig,
-): RateLimitStrategy => {
+export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitStrategy => {
   let remaining = config.global.requests;
   const limit = config.global.requests;
   let resetsAt = new Date(Date.now() + config.global.perMs);

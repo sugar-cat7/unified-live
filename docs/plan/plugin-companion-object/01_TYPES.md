@@ -28,11 +28,9 @@ const pluginDefinitionSchema = z.object({
   headers: z.record(z.string(), z.string()).optional(),
 
   /** Platform-specific rate limit handling (e.g., YouTube 403 quota detection). */
-  handleRateLimit: z.custom<(
-    response: Response,
-    req: RestRequest,
-    attempt: number,
-  ) => Promise<boolean>>().optional(),
+  handleRateLimit: z
+    .custom<(response: Response, req: RestRequest, attempt: number) => Promise<boolean>>()
+    .optional(),
 
   /** Parse rate limit info from response headers. */
   parseRateLimitHeaders: z.custom<(headers: Headers) => RateLimitInfo | undefined>().optional(),
@@ -125,6 +123,7 @@ export type { PluginDefinition, PluginMethods } from "./plugin";
 ```
 
 Consumers can use `PlatformPlugin` as both a type and a value:
+
 ```ts
 import { PlatformPlugin } from "@unified-live/core";
 

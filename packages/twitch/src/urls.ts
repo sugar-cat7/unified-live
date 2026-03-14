@@ -2,8 +2,7 @@ import type { ResolvedUrl } from "@unified-live/core";
 
 const CONTENT_PATTERN = /^https?:\/\/(?:www\.)?twitch\.tv\/videos\/(\d+)/;
 
-const CHANNEL_PATTERN =
-  /^https?:\/\/(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]{1,25})$/;
+const CHANNEL_PATTERN = /^https?:\/\/(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]{1,25})$/;
 
 /**
  * Match a URL to a Twitch content or channel resource.

@@ -9,6 +9,11 @@ codeToTestRatio:
 testExecutionTime:
   acceptable: 0 sec
 
+customMetrics:
+  - key: bundle-size
+    name: Bundle Size (gzip bytes)
+    report: bundle-size.json
+
 diff:
   datastores:
     - artifact://${GITHUB_REPOSITORY}

@@ -103,11 +103,8 @@ jobs:
         run: pnpm build
 
       - name: Check bundle size
-        run: npx tsx scripts/check-bundle-size.ts
-
-      - name: Generate octocov custom metrics
         run: |
-          metrics=$(npx tsx scripts/check-bundle-size.ts --json | jq -c .)
-          echo "OCTOCOV_CUSTOM_METRICS_BUNDLE_SIZE=${metrics}" >> "$GITHUB_ENV"
+          npx tsx scripts/check-bundle-size.ts
+          npx tsx scripts/check-bundle-size.ts --json > bundle-size.json
 
       - uses: k1LoW/octocov-action@v1

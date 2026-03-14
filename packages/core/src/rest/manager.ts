@@ -125,15 +125,37 @@ export function createRestManager(options: RestManagerOptions): RestManager {
           const handle = await manager.rateLimitStrategy.acquire(req);
 
           try {
-            let action: ResponseAction = "success";
-
             for (let attempt = 0; attempt <= maxRetries; attempt++) {
-              const response = await executeRequest(manager, req);
+              const headers = await manager.createHeaders(req);
+              const url = buildUrl(manager.baseUrl, req.path, req.query);
+
+              const init: RequestInit = {
+                method: req.method,
+                headers: { ...headers, ...req.headers },
+              };
+
+              if (req.body !== undefined) {
+                init.body = JSON.stringify(req.body);
+                (init.headers as Record<string, string>)["Content-Type"] =
+                  "application/json";
+              }
+
+              let response: Response;
+              try {
+                response = await manager.runRequest(url, init);
+              } catch (e) {
+                const err = e instanceof Error ? e : new Error(String(e));
+                const code = classifyNetworkError(err);
+                throw new NetworkError(manager.platform, code, {
+                  path: req.path,
+                  method: req.method,
+                  cause: err,
+                });
+              }
               span.setAttribute(SpanAttributes.HTTP_STATUS, response.status);
 
-              action = classifyResponse(response, retryableStatuses);
-
-              if (action === "rate_limit") {
+              // Rate limit handling (429 or 403)
+              if (response.status === 429 || response.status === 403) {
                 const shouldRetry = await manager.handleRateLimit(
                   response,
                   req,
@@ -142,15 +164,11 @@ export function createRestManager(options: RestManagerOptions): RestManager {
                 if (shouldRetry && attempt < maxRetries) {
                   continue;
                 }
-                throw exhaustedRetriesError(
-                  manager.platform,
-                  req,
-                  maxRetries,
-                  action,
-                );
+                throw new RateLimitError(manager.platform);
               }
 
-              if (action === "auth_retry") {
+              // Auth error (401)
+              if (response.status === 401) {
                 manager.tokenManager?.invalidate();
                 if (attempt < maxRetries) {
                   continue;
@@ -160,21 +178,22 @@ export function createRestManager(options: RestManagerOptions): RestManager {
                 });
               }
 
-              if (action === "not_found") {
+              // Not found (404)
+              if (response.status === 404) {
                 throw new NotFoundError(manager.platform, req.path);
               }
 
-              if (action === "server_retry") {
+              // Retryable server errors (5xx)
+              if (retryableStatuses.includes(response.status)) {
                 if (attempt < maxRetries) {
                   await sleep(baseDelay * 2 ** attempt);
                   continue;
                 }
-                throw exhaustedRetriesError(
-                  manager.platform,
-                  req,
-                  maxRetries,
-                  action,
-                );
+                throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
+                  message: `Request failed after ${maxRetries} retries`,
+                  path: req.path,
+                  method: req.method,
+                });
               }
 
               const result = await manager.handleResponse<T>(response, req);
@@ -195,12 +214,11 @@ export function createRestManager(options: RestManagerOptions): RestManager {
               return result;
             }
 
-            throw exhaustedRetriesError(
-              manager.platform,
-              req,
-              maxRetries,
-              action,
-            );
+            throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
+              message: `Request failed after ${maxRetries} retries`,
+              path: req.path,
+              method: req.method,
+            });
           } catch (error) {
             if (error instanceof UnifiedLiveError) {
               span.setAttribute(SpanAttributes.ERROR_CODE, error.code);
@@ -287,76 +305,6 @@ export function createRestManager(options: RestManagerOptions): RestManager {
   };
 
   return manager;
-}
-
-type ResponseAction =
-  | "rate_limit"
-  | "auth_retry"
-  | "not_found"
-  | "server_retry"
-  | "success";
-
-function classifyResponse(
-  response: Response,
-  retryableStatuses: number[],
-): ResponseAction {
-  if (response.status === 429 || response.status === 403) return "rate_limit";
-  if (response.status === 401) return "auth_retry";
-  if (response.status === 404) return "not_found";
-  if (retryableStatuses.includes(response.status)) return "server_retry";
-  return "success";
-}
-
-async function executeRequest(
-  manager: RestManager,
-  req: RestRequest,
-): Promise<Response> {
-  const headers = await manager.createHeaders(req);
-  const url = buildUrl(manager.baseUrl, req.path, req.query);
-
-  const init: RequestInit = {
-    method: req.method,
-    headers: { ...headers, ...req.headers },
-  };
-
-  if (req.body !== undefined) {
-    init.body = JSON.stringify(req.body);
-    (init.headers as Record<string, string>)["Content-Type"] =
-      "application/json";
-  }
-
-  try {
-    return await manager.runRequest(url, init);
-  } catch (e) {
-    const err = e instanceof Error ? e : new Error(String(e));
-    const code = classifyNetworkError(err);
-    throw new NetworkError(manager.platform, code, {
-      path: req.path,
-      method: req.method,
-      cause: err,
-    });
-  }
-}
-
-function exhaustedRetriesError(
-  platform: string,
-  req: RestRequest,
-  maxRetries: number,
-  action: ResponseAction,
-): UnifiedLiveError {
-  if (action === "rate_limit") {
-    return new RateLimitError(platform);
-  }
-  if (action === "auth_retry") {
-    return new AuthenticationError(platform, {
-      code: "AUTHENTICATION_EXPIRED",
-    });
-  }
-  return new NetworkError(platform, "NETWORK_CONNECTION", {
-    message: `Request failed after ${maxRetries} retries`,
-    path: req.path,
-    method: req.method,
-  });
 }
 
 function buildUrl(

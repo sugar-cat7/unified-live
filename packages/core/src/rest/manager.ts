@@ -1,8 +1,10 @@
 import type { TokenManager } from "../auth/types.js";
 import {
   AuthenticationError,
+  classifyNetworkError,
+  NetworkError,
   NotFoundError,
-  RateLimitError,
+  ParseError,
   UnifiedLiveError,
 } from "../errors.js";
 import { getTracer, SpanAttributes } from "../telemetry/traces.js";
@@ -137,7 +139,18 @@ export function createRestManager(options: RestManagerOptions): RestManager {
                   "application/json";
               }
 
-              const response = await manager.runRequest(url, init);
+              let response: Response;
+              try {
+                response = await manager.runRequest(url, init);
+              } catch (e) {
+                const err = e instanceof Error ? e : new Error(String(e));
+                const code = classifyNetworkError(err);
+                throw new NetworkError(manager.platform, code, {
+                  path: req.path,
+                  method: req.method,
+                  cause: err,
+                });
+              }
               span.setAttribute(SpanAttributes.HTTP_STATUS, response.status);
 
               // Rate limit handling (429 or custom)
@@ -158,7 +171,9 @@ export function createRestManager(options: RestManagerOptions): RestManager {
                 if (attempt < maxRetries) {
                   continue;
                 }
-                throw new AuthenticationError(manager.platform);
+                throw new AuthenticationError(manager.platform, {
+                  code: "AUTHENTICATION_EXPIRED",
+                });
               }
 
               // Not found
@@ -193,8 +208,17 @@ export function createRestManager(options: RestManagerOptions): RestManager {
             }
 
             // Exhausted retries
-            throw new RateLimitError(manager.platform);
+            throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
+              message: `Request failed after ${maxRetries} retries`,
+              path: req.path,
+              method: req.method,
+            });
           } catch (error) {
+            if (error instanceof UnifiedLiveError) {
+              span.setAttribute(SpanAttributes.ERROR_CODE, error.code);
+              span.setAttribute(SpanAttributes.ERROR_TYPE, error.name);
+              span.setAttribute(SpanAttributes.ERROR_HAS_CAUSE, !!error.cause);
+            }
             handle.release();
             span.end();
             throw error;
@@ -224,17 +248,19 @@ export function createRestManager(options: RestManagerOptions): RestManager {
 
     handleResponse: async <T>(
       response: Response,
-      _req: RestRequest,
+      req: RestRequest,
     ): Promise<RestResponse<T>> => {
       let data: T;
       try {
         data = (await response.json()) as T;
-      } catch {
-        throw new UnifiedLiveError(
-          `Failed to parse JSON response from ${_req.path}`,
-          manager.platform,
-          "PARSE_ERROR",
-        );
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
+        throw new ParseError(manager.platform, "PARSE_JSON", {
+          message: `Failed to parse JSON response from ${req.path}`,
+          path: req.path,
+          status: response.status,
+          cause: err,
+        });
       }
       const rateLimit = manager.parseRateLimitHeaders(response.headers);
       return {

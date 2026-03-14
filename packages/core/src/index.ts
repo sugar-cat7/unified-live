@@ -2,13 +2,23 @@ export { createStaticTokenManager } from "./auth/static.js";
 export type { TokenManager } from "./auth/types.js";
 export type { UnifiedClient, UnifiedClientOptions } from "./client.js";
 export { createClient } from "./client.js";
+export type {
+  ErrorCode,
+  ErrorContext,
+  NetworkCode,
+  QuotaDetails,
+} from "./errors.js";
 export {
   AuthenticationError,
+  classifyNetworkError,
+  NetworkError,
   NotFoundError,
+  ParseError,
   PlatformNotFoundError,
   QuotaExhaustedError,
   RateLimitError,
   UnifiedLiveError,
+  ValidationError,
 } from "./errors.js";
 export type { PluginDefinition, PluginMethods } from "./plugin.js";
 export { PlatformPlugin } from "./plugin.js";

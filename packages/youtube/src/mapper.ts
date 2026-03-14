@@ -1,4 +1,5 @@
 import type { Channel, Content, LiveStream, Video } from "@unified-live/core";
+import { ParseError } from "@unified-live/core";
 
 /** Subset of YouTube Data API v3 Video resource fields actually used. */
 export type YTVideoResource = {
@@ -135,7 +136,9 @@ function getBestThumbnail(
 ) {
   const thumb = thumbnails.high ?? thumbnails.medium ?? thumbnails.default;
   if (!thumb) {
-    throw new Error("YouTube resource has no thumbnail");
+    throw new ParseError("youtube", "PARSE_RESPONSE", {
+      message: "YouTube resource has no thumbnail",
+    });
   }
   return { url: thumb.url, width: thumb.width, height: thumb.height };
 }

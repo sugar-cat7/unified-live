@@ -26,4 +26,7 @@ export const SpanAttributes = {
   RATE_LIMIT_LIMIT: "unified_live.rate_limit.limit",
   QUOTA_CONSUMED: "unified_live.quota.consumed",
   QUOTA_DAILY_REMAINING: "unified_live.quota.daily_remaining",
+  ERROR_CODE: "error.code",
+  ERROR_TYPE: "error.type",
+  ERROR_HAS_CAUSE: "error.has_cause",
 } as const;

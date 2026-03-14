@@ -1,4 +1,4 @@
-import { PlatformNotFoundError } from "./errors.js";
+import { PlatformNotFoundError, ValidationError } from "./errors.js";
 import type { PlatformPlugin } from "./plugin.js";
 import type {
   Channel,
@@ -132,6 +132,12 @@ export function createClient(options?: UnifiedClientOptions): UnifiedClient {
     },
 
     async getContent(url: string): Promise<Content> {
+      if (!url) {
+        throw new ValidationError(
+          "VALIDATION_INVALID_INPUT",
+          "URL must be a non-empty string",
+        );
+      }
       const resolved = matchUrl(url);
       if (!resolved) {
         throw new PlatformNotFoundError(url);

@@ -1,31 +1,54 @@
-/**
- * Hierarchical error code for all unified-live SDK errors.
- *
- * Categories: NOT_FOUND, AUTHENTICATION_*, RATE_LIMIT_*, QUOTA_*,
- * NETWORK_*, PARSE_*, VALIDATION_*, PLATFORM_*, INTERNAL.
- */
+# Error Hierarchy — Type Definitions
+
+## ErrorCode (String Literal Union)
+
+```ts
 export type ErrorCode =
+  // Not Found
   | "NOT_FOUND"
+  // Authentication
   | "AUTHENTICATION_INVALID"
   | "AUTHENTICATION_EXPIRED"
+  // Rate Limiting
   | "RATE_LIMIT_EXCEEDED"
+  // Quota
   | "QUOTA_EXHAUSTED"
+  // Network
   | "NETWORK_TIMEOUT"
   | "NETWORK_CONNECTION"
   | "NETWORK_DNS"
   | "NETWORK_ABORT"
+  // Parse
   | "PARSE_JSON"
   | "PARSE_RESPONSE"
+  // Validation
   | "VALIDATION_INVALID_URL"
   | "VALIDATION_INVALID_INPUT"
+  // Platform
   | "PLATFORM_NOT_FOUND"
+  // Internal
   | "INTERNAL";
+```
 
-/**
- * Structured metadata attached to every SDK error.
- *
- * @postcondition platform is always present
- */
+### Code Hierarchy
+
+| Category | Codes | Description |
+| --- | --- | --- |
+| `NOT_FOUND` | `NOT_FOUND` | Resource does not exist on platform |
+| `AUTHENTICATION_*` | `AUTHENTICATION_INVALID`, `AUTHENTICATION_EXPIRED` | Credential issues |
+| `RATE_LIMIT_*` | `RATE_LIMIT_EXCEEDED` | Request rate limit after retries |
+| `QUOTA_*` | `QUOTA_EXHAUSTED` | Cost-based quota (YouTube) |
+| `NETWORK_*` | `NETWORK_TIMEOUT`, `NETWORK_CONNECTION`, `NETWORK_DNS`, `NETWORK_ABORT` | Fetch-level failures |
+| `PARSE_*` | `PARSE_JSON`, `PARSE_RESPONSE` | Response parsing failures |
+| `VALIDATION_*` | `VALIDATION_INVALID_URL`, `VALIDATION_INVALID_INPUT` | Input validation |
+| `PLATFORM_*` | `PLATFORM_NOT_FOUND` | Plugin not registered |
+| `INTERNAL` | `INTERNAL` | Unexpected SDK-internal error |
+
+## ErrorContext
+
+Structured metadata attached to every error:
+
+```ts
 export type ErrorContext = {
   /** Platform name (always present). */
   platform: string;
@@ -38,16 +61,46 @@ export type ErrorContext = {
   /** Resource ID that was being accessed. */
   resourceId?: string;
 };
+```
 
-/**
- * Base error for all unified-live SDK errors.
- *
- * @precondition message is a non-empty string
- * @precondition code is a valid ErrorCode
- * @precondition context.platform is a non-empty string
- * @postcondition instanceof UnifiedLiveError === true for all SDK errors
- * @idempotent constructing with the same arguments yields equivalent errors
- */
+## Error Class Hierarchy
+
+```
+UnifiedLiveError (base)
+│  code: ErrorCode
+│  context: ErrorContext
+│  cause?: Error
+│
+├── NotFoundError
+│     code: "NOT_FOUND"
+│
+├── AuthenticationError
+│     code: "AUTHENTICATION_INVALID" | "AUTHENTICATION_EXPIRED"
+│
+├── RateLimitError
+│     code: "RATE_LIMIT_EXCEEDED"
+│     retryAfter?: number
+│
+├── QuotaExhaustedError
+│     code: "QUOTA_EXHAUSTED"
+│     details: { consumed, limit, resetsAt, requestedCost }
+│
+├── NetworkError
+│     code: "NETWORK_TIMEOUT" | "NETWORK_CONNECTION" | "NETWORK_DNS" | "NETWORK_ABORT"
+│
+├── ParseError
+│     code: "PARSE_JSON" | "PARSE_RESPONSE"
+│
+├── ValidationError
+│     code: "VALIDATION_INVALID_URL" | "VALIDATION_INVALID_INPUT"
+│
+└── PlatformNotFoundError
+      code: "PLATFORM_NOT_FOUND"
+```
+
+## Base Class Definition
+
+```ts
 export class UnifiedLiveError extends Error {
   readonly code: ErrorCode;
   readonly context: ErrorContext;
@@ -63,17 +116,22 @@ export class UnifiedLiveError extends Error {
     this.code = code;
     this.context = context;
   }
-
-  /** Backward-compatible getter for context.platform. */
-  get platform(): string {
-    return this.context.platform;
-  }
 }
+```
 
-/** Resource not found on platform. */
+### Key Design Decisions
+
+- **`cause` uses ES2022 `Error.cause`**: Native support, no custom property needed. Supported in Node.js 16.9+, all modern browsers.
+- **`context` replaces the old `platform` field**: `context.platform` is always present. Additional fields are optional.
+- **`code` is typed per subclass**: Each subclass narrows `code` to its specific literal(s) via constructor typing.
+- **`details` on `QuotaExhaustedError` stays separate**: It contains quota-specific data that doesn't fit in `ErrorContext`.
+
+## Subclass Definitions
+
+### NotFoundError
+
+```ts
 export class NotFoundError extends UnifiedLiveError {
-  declare readonly code: "NOT_FOUND";
-
   constructor(
     platform: string,
     resourceId: string,
@@ -88,10 +146,13 @@ export class NotFoundError extends UnifiedLiveError {
     this.name = "NotFoundError";
   }
 }
+```
 
+### AuthenticationError
+
+```ts
 type AuthenticationCode = "AUTHENTICATION_INVALID" | "AUTHENTICATION_EXPIRED";
 
-/** Credentials invalid or expired. */
 export class AuthenticationError extends UnifiedLiveError {
   declare readonly code: AuthenticationCode;
 
@@ -112,8 +173,11 @@ export class AuthenticationError extends UnifiedLiveError {
     this.name = "AuthenticationError";
   }
 }
+```
 
-/** Rate limit exceeded after max retries. */
+### RateLimitError
+
+```ts
 export class RateLimitError extends UnifiedLiveError {
   declare readonly code: "RATE_LIMIT_EXCEEDED";
   readonly retryAfter?: number;
@@ -134,15 +198,18 @@ export class RateLimitError extends UnifiedLiveError {
     this.retryAfter = options?.retryAfter;
   }
 }
+```
 
-export type QuotaDetails = {
+### QuotaExhaustedError
+
+```ts
+type QuotaDetails = {
   consumed: number;
   limit: number;
   resetsAt: Date;
   requestedCost: number;
 };
 
-/** YouTube daily quota exhausted. */
 export class QuotaExhaustedError extends UnifiedLiveError {
   declare readonly code: "QUOTA_EXHAUSTED";
   readonly details: QuotaDetails;
@@ -162,14 +229,17 @@ export class QuotaExhaustedError extends UnifiedLiveError {
     this.details = details;
   }
 }
+```
 
-export type NetworkCode =
+### NetworkError (new)
+
+```ts
+type NetworkCode =
   | "NETWORK_TIMEOUT"
   | "NETWORK_CONNECTION"
   | "NETWORK_DNS"
   | "NETWORK_ABORT";
 
-/** Fetch-level network failure. */
 export class NetworkError extends UnifiedLiveError {
   declare readonly code: NetworkCode;
 
@@ -192,10 +262,13 @@ export class NetworkError extends UnifiedLiveError {
     this.name = "NetworkError";
   }
 }
+```
 
+### ParseError (new)
+
+```ts
 type ParseCode = "PARSE_JSON" | "PARSE_RESPONSE";
 
-/** Response parsing failure. */
 export class ParseError extends UnifiedLiveError {
   declare readonly code: ParseCode;
 
@@ -218,10 +291,13 @@ export class ParseError extends UnifiedLiveError {
     this.name = "ParseError";
   }
 }
+```
 
+### ValidationError (new)
+
+```ts
 type ValidationCode = "VALIDATION_INVALID_URL" | "VALIDATION_INVALID_INPUT";
 
-/** Input validation failure. */
 export class ValidationError extends UnifiedLiveError {
   declare readonly code: ValidationCode;
 
@@ -239,32 +315,55 @@ export class ValidationError extends UnifiedLiveError {
     this.name = "ValidationError";
   }
 }
+```
 
-/** Platform not registered in client. */
+### PlatformNotFoundError
+
+```ts
 export class PlatformNotFoundError extends UnifiedLiveError {
   declare readonly code: "PLATFORM_NOT_FOUND";
 
   constructor(platform: string) {
-    super(`Platform "${platform}" is not registered`, "PLATFORM_NOT_FOUND", {
-      platform,
-    });
+    super(
+      `Platform "${platform}" is not registered`,
+      "PLATFORM_NOT_FOUND",
+      { platform },
+    );
     this.name = "PlatformNotFoundError";
   }
 }
+```
 
-/**
- * Classify a fetch error into a specific NetworkCode.
- *
- * @precondition error is a caught fetch exception
- * @postcondition returns one of NETWORK_ABORT, NETWORK_TIMEOUT, NETWORK_DNS, NETWORK_CONNECTION
- * @idempotent same error always produces same code
- */
+## Backward Compatibility
+
+| Old API | New API | Migration |
+| --- | --- | --- |
+| `error.platform` | `error.context.platform` | Add getter for backward compat |
+| `error.code` (string) | `error.code` (ErrorCode) | Narrows existing type |
+| `new AuthenticationError(platform, message?)` | `new AuthenticationError(platform, { message?, code?, cause? })` | Options object |
+| `new RateLimitError(platform, retryAfter?)` | `new RateLimitError(platform, { retryAfter?, cause? })` | Options object |
+| `new NotFoundError(platform, resourceId)` | `new NotFoundError(platform, resourceId, { cause? })` | Optional 3rd arg |
+
+### `platform` Getter
+
+To avoid breaking `error.platform`, add a getter on `UnifiedLiveError`:
+
+```ts
+get platform(): string {
+  return this.context.platform;
+}
+```
+
+## Helper: classifyNetworkError
+
+Classify fetch errors into specific `NetworkCode` values:
+
+```ts
 export function classifyNetworkError(error: Error): NetworkCode {
   const msg = error.message.toLowerCase();
-  if (error.name === "AbortError" || msg.includes("abort"))
-    return "NETWORK_ABORT";
-  if (msg.includes("timeout") || error.name === "TimeoutError")
-    return "NETWORK_TIMEOUT";
+  if (error.name === "AbortError" || msg.includes("abort")) return "NETWORK_ABORT";
+  if (msg.includes("timeout") || error.name === "TimeoutError") return "NETWORK_TIMEOUT";
   if (msg.includes("dns") || msg.includes("getaddrinfo")) return "NETWORK_DNS";
   return "NETWORK_CONNECTION";
 }
+```

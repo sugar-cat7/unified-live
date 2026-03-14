@@ -132,3 +132,15 @@ Record the rationale behind specification decisions in chronological order.
 - Rationale: (1) `PluginDefinition` captures common customizations declaratively (`transformRequest`, `handleRateLimit`, `parseRateLimitHeaders`, `headers`) — no manual RestManager overrides needed. (2) `PluginMethods` are pure functions receiving `rest` as first argument — easier to test and compose. (3) TypeScript companion object pattern (type + value with same name) is idiomatic. (4) Backward compatible — manual RestManager overrides still work for advanced cases.
 - Alternatives: (1) Keep manual override pattern — rejected because repetitive across platforms. (2) Abstract base class — rejected per D-002 (function objects over classes). (3) Builder pattern — rejected for unnecessary complexity. (4) Middleware/interceptor pattern — rejected for being over-engineered for the use cases.
 - Impact Scope: `packages/core/src/plugin.ts`, `packages/youtube/src/plugin.ts`, all future platform plugins, documentation
+
+---
+
+### D-011: Hierarchical Error Codes with Structured Context
+
+- Date: 2026-03-08
+- Status: Accepted
+- Decision: Replace loose `code: string` and `platform: string` fields on `UnifiedLiveError` with `code: ErrorCode` (15-code string literal union) and `context: ErrorContext` (structured metadata with `platform`, `method?`, `path?`, `status?`, `resourceId?`). Add ES2022 `Error.cause` for error chaining. Add 3 new error classes: `NetworkError`, `ParseError`, `ValidationError`. Add `classifyNetworkError` helper. Add backward-compatible `platform` getter.
+- Context: The original error hierarchy had 5 classes with `code: string` (untyped) and `platform: string` (flat). Network failures propagated as raw `TypeError` from fetch. JSON parse failures threw generic `UnifiedLiveError` with string code `"PARSE_ERROR"`. 5xx retry exhaustion threw `RateLimitError` (misleading). No cause chain support.
+- Rationale: (1) Typed `ErrorCode` union enables exhaustive `switch` statements and IDE autocomplete. (2) `ErrorContext` provides structured metadata for logging and observability. (3) ES2022 `Error.cause` preserves the original error for debugging. (4) `NetworkError` with `classifyNetworkError` gives consumers specific network failure reasons. (5) `ParseError` separates parsing failures from generic errors. (6) `ValidationError` catches invalid input before network calls. (7) `platform` getter ensures backward compatibility.
+- Alternatives: (1) Result types for error handling — rejected per D-008. (2) Numeric error codes — rejected because string literals are more readable and IDE-friendly. (3) Flat error codes without categories — rejected because hierarchical codes (e.g., `NETWORK_TIMEOUT`, `NETWORK_DNS`) enable category-level matching.
+- Impact Scope: `packages/core/src/errors.ts`, `packages/core/src/rest/manager.ts`, `packages/core/src/client.ts`, all platform plugins, OTel spans

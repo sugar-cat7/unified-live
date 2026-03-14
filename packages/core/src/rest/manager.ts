@@ -10,12 +10,7 @@ import {
 } from "../errors";
 import { getTracer, SpanAttributes } from "../telemetry/traces";
 import type { RateLimitStrategy } from "./strategy";
-import type {
-  RateLimitInfo,
-  RestManagerOptions,
-  RestRequest,
-  RestResponse,
-} from "./types";
+import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } from "./types";
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_BASE_DELAY = 1000;
@@ -58,10 +53,7 @@ export type RestManager = {
    * @precondition response.ok or a handled status code
    * @postcondition returns a RestResponse with parsed data and optional rate limit info
    */
-  handleResponse: <T>(
-    response: Response,
-    req: RestRequest,
-  ) => Promise<RestResponse<T>>;
+  handleResponse: <T>(response: Response, req: RestRequest) => Promise<RestResponse<T>>;
 
   /**
    * Handle rate-limited responses (429, 403). Return true to retry.
@@ -70,11 +62,7 @@ export type RestManager = {
    * @precondition response has status 429 or 403
    * @postcondition returns true if the request should be retried, false otherwise
    */
-  handleRateLimit: (
-    response: Response,
-    req: RestRequest,
-    attempt: number,
-  ) => Promise<boolean>;
+  handleRateLimit: (response: Response, req: RestRequest, attempt: number) => Promise<boolean>;
 
   /**
    * Extract rate limit info from response headers. Override per platform.
@@ -96,15 +84,16 @@ export type RestManager = {
 /**
  * Creates a discordeno-style RestManager with overridable function properties.
  *
+ * @param options - REST manager configuration
+ * @returns a new RestManager instance
  * @precondition options.rateLimitStrategy is initialized
  * @postcondition returns a RestManager with all methods set
  * @idempotency Not idempotent — each call creates a new manager instance
  */
-export function createRestManager(options: RestManagerOptions): RestManager {
+export const createRestManager = (options: RestManagerOptions): RestManager => {
   const maxRetries = options.retry?.maxRetries ?? DEFAULT_MAX_RETRIES;
   const baseDelay = options.retry?.baseDelay ?? DEFAULT_BASE_DELAY;
-  const retryableStatuses =
-    options.retry?.retryableStatuses ?? DEFAULT_RETRYABLE_STATUSES;
+  const retryableStatuses = options.retry?.retryableStatuses ?? DEFAULT_RETRYABLE_STATUSES;
   const fetchFn = options.fetch ?? globalThis.fetch;
   const tracer = getTracer();
 
@@ -142,8 +131,7 @@ export function createRestManager(options: RestManagerOptions): RestManager {
 
               if (req.body !== undefined) {
                 init.body = JSON.stringify(req.body);
-                (init.headers as Record<string, string>)["Content-Type"] =
-                  "application/json";
+                (init.headers as Record<string, string>)["Content-Type"] = "application/json";
               }
 
               let response: Response;
@@ -162,11 +150,7 @@ export function createRestManager(options: RestManagerOptions): RestManager {
 
               // Rate limit handling (429 or 403)
               if (response.status === 429 || response.status === 403) {
-                const shouldRetry = await manager.handleRateLimit(
-                  response,
-                  req,
-                  attempt,
-                );
+                const shouldRetry = await manager.handleRateLimit(response, req, attempt);
                 if (shouldRetry && attempt < maxRetries) {
                   continue;
                 }
@@ -205,14 +189,8 @@ export function createRestManager(options: RestManagerOptions): RestManager {
               const result = await manager.handleResponse<T>(response, req);
 
               if (result.rateLimit) {
-                span.setAttribute(
-                  SpanAttributes.RATE_LIMIT_REMAINING,
-                  result.rateLimit.remaining,
-                );
-                span.setAttribute(
-                  SpanAttributes.RATE_LIMIT_LIMIT,
-                  result.rateLimit.limit,
-                );
+                span.setAttribute(SpanAttributes.RATE_LIMIT_REMAINING, result.rateLimit.remaining);
+                span.setAttribute(SpanAttributes.RATE_LIMIT_LIMIT, result.rateLimit.limit);
               }
 
               handle.complete(response.headers);
@@ -239,9 +217,7 @@ export function createRestManager(options: RestManagerOptions): RestManager {
       );
     },
 
-    createHeaders: async (
-      _req: RestRequest,
-    ): Promise<Record<string, string>> => {
+    createHeaders: async (_req: RestRequest): Promise<Record<string, string>> => {
       const headers: Record<string, string> = {
         Accept: "application/json",
         ...options.headers,
@@ -258,10 +234,7 @@ export function createRestManager(options: RestManagerOptions): RestManager {
       return fetchFn(url, init);
     },
 
-    handleResponse: async <T>(
-      response: Response,
-      req: RestRequest,
-    ): Promise<RestResponse<T>> => {
+    handleResponse: async <T>(response: Response, req: RestRequest): Promise<RestResponse<T>> => {
       let data: T;
       try {
         data = (await response.json()) as T;
@@ -290,9 +263,7 @@ export function createRestManager(options: RestManagerOptions): RestManager {
     ): Promise<boolean> => {
       if (response.status === 429) {
         const retryAfterHeader = response.headers.get("Retry-After");
-        const retryAfter = retryAfterHeader
-          ? Number.parseInt(retryAfterHeader, 10)
-          : 1;
+        const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : 1;
         await sleep(retryAfter * 1000);
         return attempt < maxRetries;
       }
@@ -311,8 +282,8 @@ export function createRestManager(options: RestManagerOptions): RestManager {
   };
 
   return manager;
-}
+};
 
-function sleep(ms: number): Promise<void> {
+const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
+};

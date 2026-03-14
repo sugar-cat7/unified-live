@@ -12,8 +12,7 @@ const CONTENT_PATTERNS = [
 const CHANNEL_PATTERNS = [
   // youtube.com/channel/<id>
   {
-    pattern:
-      /^https?:\/\/(?:www\.)?youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{22})/,
+    pattern: /^https?:\/\/(?:www\.)?youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{22})/,
     type: "id" as const,
   },
   // youtube.com/@<handle>
@@ -31,11 +30,13 @@ const CHANNEL_PATTERNS = [
 /**
  * Match a URL to a YouTube content or channel resource.
  *
+ * @param url - URL string to match
+ * @returns resolved YouTube URL or null if not a YouTube URL
  * @precondition url is a valid URL string
  * @postcondition returns ResolvedUrl for YouTube URLs, null otherwise
  * @idempotency Safe — no side effects
  */
-export function matchYouTubeUrl(url: string): ResolvedUrl | null {
+export const matchYouTubeUrl = (url: string): ResolvedUrl | null => {
   for (const pattern of CONTENT_PATTERNS) {
     const match = url.match(pattern);
     if (match?.[1]) {
@@ -51,4 +52,4 @@ export function matchYouTubeUrl(url: string): ResolvedUrl | null {
   }
 
   return null;
-}
+};

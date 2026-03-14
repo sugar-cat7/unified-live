@@ -14,16 +14,17 @@
       "dependsOn": ["^build"],
       "cache": false
     },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "cache": false
+    },
     "//#lint": {
       "cache": false
     },
     "//#knip": {
       "cache": false,
-      "inputs": [
-        "knip.json",
-        "packages/*/src/**",
-        "packages/*/package.json"
-      ]
+      "inputs": ["knip.json", "packages/*/src/**", "packages/*/package.json"]
     },
     "//#knip:fix": {
       "cache": false

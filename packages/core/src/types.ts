@@ -40,10 +40,7 @@ export const videoSchema = contentBaseSchema.extend({
 
 export type Video = z.infer<typeof videoSchema>;
 
-export const contentSchema = z.discriminatedUnion("type", [
-  liveStreamSchema,
-  videoSchema,
-]);
+export const contentSchema = z.discriminatedUnion("type", [liveStreamSchema, videoSchema]);
 
 export type Content = z.infer<typeof contentSchema>;
 

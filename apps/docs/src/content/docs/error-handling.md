@@ -22,16 +22,16 @@ import {
 } from "@unified-live/core";
 ```
 
-| Error | When | What to Do |
-|-------|------|-----------|
-| `NotFoundError` | Content or channel doesn't exist | Check the ID or URL |
-| `QuotaExhaustedError` | YouTube daily quota exceeded | Wait until quota resets |
-| `AuthenticationError` | Invalid or expired credentials | Check your API keys |
-| `RateLimitError` | Rate limit exceeded after all retries | Reduce request frequency |
-| `NetworkError` | Network failure (timeout, DNS, connection) | Check connectivity, retry later |
-| `ParseError` | Failed to parse API response | Report as a bug |
-| `ValidationError` | Invalid input (e.g., empty URL) | Fix the input |
-| `PlatformNotFoundError` | No plugin registered for the platform | Register the plugin |
+| Error                   | When                                       | What to Do                      |
+| ----------------------- | ------------------------------------------ | ------------------------------- |
+| `NotFoundError`         | Content or channel doesn't exist           | Check the ID or URL             |
+| `QuotaExhaustedError`   | YouTube daily quota exceeded               | Wait until quota resets         |
+| `AuthenticationError`   | Invalid or expired credentials             | Check your API keys             |
+| `RateLimitError`        | Rate limit exceeded after all retries      | Reduce request frequency        |
+| `NetworkError`          | Network failure (timeout, DNS, connection) | Check connectivity, retry later |
+| `ParseError`            | Failed to parse API response               | Report as a bug                 |
+| `ValidationError`       | Invalid input (e.g., empty URL)            | Fix the input                   |
+| `PlatformNotFoundError` | No plugin registered for the platform      | Register the plugin             |
 
 ## Basic Error Handling
 

@@ -22,16 +22,16 @@ import {
 } from "@unified-live/core";
 ```
 
-| エラー | 発生タイミング | 対処方法 |
-|--------|--------------|----------|
-| `NotFoundError` | コンテンツやチャンネルが存在しない | ID や URL を確認 |
-| `QuotaExhaustedError` | YouTube の日次クォータ超過 | クォータがリセットされるまで待機 |
-| `AuthenticationError` | 認証情報が無効または期限切れ | API キーを確認 |
-| `RateLimitError` | リトライ上限後もレート制限超過 | リクエスト頻度を下げる |
-| `NetworkError` | ネットワーク障害（タイムアウト、DNS、接続） | 接続を確認、後でリトライ |
-| `ParseError` | API レスポンスのパース失敗 | バグとして報告 |
-| `ValidationError` | 無効な入力（空の URL など） | 入力を修正 |
-| `PlatformNotFoundError` | プラットフォームのプラグインが未登録 | プラグインを登録 |
+| エラー                  | 発生タイミング                              | 対処方法                         |
+| ----------------------- | ------------------------------------------- | -------------------------------- |
+| `NotFoundError`         | コンテンツやチャンネルが存在しない          | ID や URL を確認                 |
+| `QuotaExhaustedError`   | YouTube の日次クォータ超過                  | クォータがリセットされるまで待機 |
+| `AuthenticationError`   | 認証情報が無効または期限切れ                | API キーを確認                   |
+| `RateLimitError`        | リトライ上限後もレート制限超過              | リクエスト頻度を下げる           |
+| `NetworkError`          | ネットワーク障害（タイムアウト、DNS、接続） | 接続を確認、後でリトライ         |
+| `ParseError`            | API レスポンスのパース失敗                  | バグとして報告                   |
+| `ValidationError`       | 無効な入力（空の URL など）                 | 入力を修正                       |
+| `PlatformNotFoundError` | プラットフォームのプラグインが未登録        | プラグインを登録                 |
 
 ## 基本的なエラー処理
 

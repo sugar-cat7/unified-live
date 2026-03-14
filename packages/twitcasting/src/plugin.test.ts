@@ -1,0 +1,193 @@
+import { describe, expect, it, vi } from "vitest";
+import { createTwitCastingPlugin } from "./plugin";
+
+const createMockFetch = (
+  responses: Array<{
+    status: number;
+    body?: unknown;
+    headers?: Record<string, string>;
+  }>,
+): typeof globalThis.fetch => {
+  let callIndex = 0;
+  return vi.fn(async () => {
+    const r = responses[callIndex];
+    if (!r) throw new Error(`Unexpected fetch call #${callIndex}`);
+    callIndex++;
+    return new Response(JSON.stringify(r.body ?? {}), {
+      status: r.status,
+      headers: r.headers,
+    });
+  }) as unknown as typeof globalThis.fetch;
+};
+
+const mockUser = {
+  id: "u1",
+  screen_id: "testuser",
+  name: "TestUser",
+  image: "https://img.twitcasting.tv/user.png",
+  profile: "Hello",
+  level: 5,
+  is_live: false,
+};
+
+describe("createTwitCastingPlugin", () => {
+  it("creates a plugin with correct name", () => {
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([]),
+    });
+
+    expect(plugin.name).toBe("twitcasting");
+    plugin.dispose();
+  });
+
+  it("matches TwitCasting URLs", () => {
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([]),
+    });
+
+    expect(plugin.match("https://twitcasting.tv/user123/movie/789")).toEqual({
+      platform: "twitcasting",
+      type: "content",
+      id: "789",
+    });
+    expect(plugin.match("https://twitcasting.tv/user123")).toEqual({
+      platform: "twitcasting",
+      type: "channel",
+      id: "user123",
+    });
+    expect(plugin.match("https://youtube.com/watch?v=abc")).toBeNull();
+
+    plugin.dispose();
+  });
+
+  it("getContent fetches a movie by ID", async () => {
+    const mockMovie = {
+      id: "m123",
+      user_id: "u1",
+      title: "Test Movie",
+      subtitle: null,
+      last_owner_comment: null,
+      category: null,
+      link: "https://twitcasting.tv/testuser/movie/m123",
+      is_live: false,
+      is_recorded: true,
+      current_view_count: 0,
+      total_view_count: 100,
+      duration: 1800,
+      created: 1741420800,
+      large_thumbnail: "https://img.tv/thumb.jpg",
+      small_thumbnail: "https://img.tv/thumb_s.jpg",
+    };
+
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([
+        {
+          status: 200,
+          body: { movie: mockMovie, broadcaster: mockUser },
+        },
+      ]),
+    });
+
+    const content = await plugin.getContent("m123");
+    expect(content.type).toBe("video");
+    expect(content.id).toBe("m123");
+    expect(content.platform).toBe("twitcasting");
+
+    plugin.dispose();
+  });
+
+  it("getChannel fetches user info", async () => {
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([{ status: 200, body: { user: mockUser } }]),
+    });
+
+    const channel = await plugin.getChannel("testuser");
+    expect(channel.name).toBe("TestUser");
+    expect(channel.platform).toBe("twitcasting");
+
+    plugin.dispose();
+  });
+
+  it("getLiveStreams returns empty when not live", async () => {
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([
+        {
+          status: 200,
+          body: { user: { ...mockUser, is_live: false } },
+        },
+      ]),
+    });
+
+    const streams = await plugin.getLiveStreams("u1");
+    expect(streams).toHaveLength(0);
+
+    plugin.dispose();
+  });
+
+  it("getLiveStreams returns stream when live", async () => {
+    const liveMovie = {
+      id: "m456",
+      user_id: "u1",
+      title: "Live Now!",
+      subtitle: null,
+      last_owner_comment: null,
+      category: null,
+      link: "https://twitcasting.tv/testuser/movie/m456",
+      is_live: true,
+      is_recorded: false,
+      current_view_count: 300,
+      total_view_count: 300,
+      duration: 0,
+      created: 1741420800,
+      large_thumbnail: "https://img.tv/live.jpg",
+      small_thumbnail: "https://img.tv/live_s.jpg",
+    };
+
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([
+        {
+          status: 200,
+          body: { user: { ...mockUser, is_live: true } },
+        },
+        { status: 200, body: { movie: liveMovie } },
+      ]),
+    });
+
+    const streams = await plugin.getLiveStreams("u1");
+    expect(streams).toHaveLength(1);
+    expect(streams[0]!.type).toBe("live");
+    expect(streams[0]!.viewerCount).toBe(300);
+
+    plugin.dispose();
+  });
+
+  it("includes X-Api-Version header in requests", async () => {
+    const fetchFn = createMockFetch([{ status: 200, body: { user: mockUser } }]);
+
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: fetchFn,
+    });
+
+    await plugin.getChannel("testuser");
+
+    const calls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls;
+    const headers = (calls[0]?.[1] as RequestInit)?.headers as Record<string, string>;
+    expect(headers["X-Api-Version"]).toBe("2.0");
+
+    plugin.dispose();
+  });
+});

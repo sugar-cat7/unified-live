@@ -34,12 +34,12 @@ const youtube = createYouTubePlugin({
 
 YouTube uses a cost-based daily quota (default: 10,000 units). Different operations cost different amounts:
 
-| Operation | Cost |
-|-----------|------|
-| `getContent` (videos.list) | 1 unit |
-| `getChannel` (channels.list) | 1 unit |
-| `getVideos` (playlistItems.list + videos.list) | 2 units |
-| `getLiveStreams` (search.list + videos.list) | 101 units |
+| Operation                                      | Cost      |
+| ---------------------------------------------- | --------- |
+| `getContent` (videos.list)                     | 1 unit    |
+| `getChannel` (channels.list)                   | 1 unit    |
+| `getVideos` (playlistItems.list + videos.list) | 2 units   |
+| `getLiveStreams` (search.list + videos.list)   | 101 units |
 
 The SDK tracks quota consumption locally and throws `QuotaExhaustedError` when the limit is reached.
 

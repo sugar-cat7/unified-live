@@ -36,7 +36,7 @@ Based on the answers, update the following.
 
 Provide guidance on targets for replacing `@unified-live` with the project identifier.
 
-- `package.json` (root + packages/*)
+- `package.json` (root + packages/\*)
 - `pnpm-workspace.yaml`
 
 # Reference Documents

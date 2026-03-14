@@ -32,5 +32,8 @@ dist
 # test coverage
 coverage
 
+# AI agent docs (spec, plan, reference — not shipped)
+/docs
+
 # claude hooks state
 .claude/.post_edit_check_pending

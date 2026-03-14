@@ -4,13 +4,13 @@ A TypeScript SDK providing a unified interface for live streaming platform APIs 
 
 ## Documentation
 
-| Category | Overview |
-| --- | --- |
-| [docs/reference/](docs/reference/) | Glossary, decisions, overview |
+| Category                                                   | Overview                                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [docs/reference/](docs/reference/)                         | Glossary, decisions, overview                                                  |
 | [docs/plan/unified-live-sdk/](docs/plan/unified-live-sdk/) | Feature specifications (types, plugins, client API, infrastructure, packaging) |
-| [docs/backend/](docs/backend/) | SDK architecture reference |
-| [docs/testing/](docs/testing/) | Testing guidelines |
-| [docs/security/](docs/security/) | Security and linting |
+| [docs/backend/](docs/backend/)                             | SDK architecture reference                                                     |
+| [docs/testing/](docs/testing/)                             | Testing guidelines                                                             |
+| [docs/security/](docs/security/)                           | Security and linting                                                           |
 
 ## Skills
 

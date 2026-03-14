@@ -59,10 +59,12 @@ export type YTPlaylistItemResource = {
 /**
  * Convert a YouTube Video resource to a unified Content type.
  *
+ * @param item - YouTube video resource from the API
+ * @returns unified Content (LiveStream if live, Video otherwise)
  * @precondition item has all required fields (snippet, contentDetails, statistics)
  * @postcondition returns LiveStream if currently live, Video otherwise
  */
-export function toContent(item: YTVideoResource): Content {
+export const toContent = (item: YTVideoResource): Content => {
   const thumb =
     item.snippet.thumbnails.high ??
     item.snippet.thumbnails.medium ??
@@ -95,10 +97,7 @@ export function toContent(item: YTVideoResource): Content {
       channel,
       sessionId: item.id,
       type: "live",
-      viewerCount: Number.parseInt(
-        item.liveStreamingDetails.concurrentViewers ?? "0",
-        10,
-      ),
+      viewerCount: Number.parseInt(item.liveStreamingDetails.concurrentViewers ?? "0", 10),
       startedAt: new Date(item.liveStreamingDetails.actualStartTime),
       raw: item,
     } satisfies LiveStream;
@@ -118,16 +117,18 @@ export function toContent(item: YTVideoResource): Content {
     publishedAt: new Date(item.snippet.publishedAt),
     raw: item,
   } satisfies Video;
-}
+};
 
 /**
  * Convert a YouTube Channel resource to a unified Channel type.
  *
+ * @param item - YouTube channel resource from the API
+ * @returns unified Channel
  * @precondition item has at least id and snippet fields
  * @postcondition returns a Channel with thumbnail undefined if none available
  * @idempotency Safe — pure function
  */
-export function toChannel(item: YTChannelResource): Channel {
+export const toChannel = (item: YTChannelResource): Channel => {
   const thumbnail =
     item.snippet.thumbnails.high ??
     item.snippet.thumbnails.medium ??
@@ -142,16 +143,18 @@ export function toChannel(item: YTChannelResource): Channel {
       ? { url: thumbnail.url, width: thumbnail.width, height: thumbnail.height }
       : undefined,
   };
-}
+};
 
 /**
  * Parse an ISO 8601 duration string (e.g., "PT1H2M3S") into seconds.
  *
+ * @param duration - ISO 8601 duration string
+ * @returns total seconds
  * @precondition duration is a valid ISO 8601 duration
  * @postcondition returns total seconds as a number >= 0
  * @idempotency Safe — pure function
  */
-export function parseDuration(duration: string): number {
+export const parseDuration = (duration: string): number => {
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
 
@@ -160,4 +163,4 @@ export function parseDuration(duration: string): number {
   const seconds = Number.parseInt(match[3] ?? "0", 10);
 
   return hours * 3600 + minutes * 60 + seconds;
-}
+};

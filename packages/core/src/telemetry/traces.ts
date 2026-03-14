@@ -8,13 +8,14 @@ const TRACER_NAME = "unified-live";
  * When no OTel SDK is registered, this returns a no-op tracer automatically
  * (built into @opentelemetry/api).
  *
+ * @returns the SDK tracer instance
  * @precondition none
  * @postcondition returns a Tracer instance (possibly no-op)
  * @idempotency Safe — always returns the same tracer
  */
-export function getTracer(): Tracer {
+export const getTracer = (): Tracer => {
   return trace.getTracer(TRACER_NAME);
-}
+};
 
 /** Standard span attribute keys used by the SDK. */
 export const SpanAttributes = {

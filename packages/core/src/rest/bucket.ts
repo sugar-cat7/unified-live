@@ -1,8 +1,4 @@
-import type {
-  RateLimitHandle,
-  RateLimitStatus,
-  RateLimitStrategy,
-} from "./strategy";
+import type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestRequest } from "./types";
 
 export type TokenBucketConfig = {
@@ -13,13 +9,13 @@ export type TokenBucketConfig = {
 /**
  * Creates a header-driven token bucket strategy (used by Twitch, TwitCasting).
  *
+ * @param config - token bucket configuration with limits and header parser
+ * @returns a RateLimitStrategy backed by a token bucket
  * @precondition global.requests > 0 and global.perMs > 0
  * @postcondition acquire() blocks when no tokens are available, resolves on refill
  * @idempotency Not idempotent — each acquire() consumes a token
  */
-export function createTokenBucketStrategy(
-  config: TokenBucketConfig,
-): RateLimitStrategy {
+export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitStrategy => {
   let remaining = config.global.requests;
   const limit = config.global.requests;
   let resetsAt = new Date(Date.now() + config.global.perMs);
@@ -86,4 +82,4 @@ export function createTokenBucketStrategy(
       }
     },
   };
-}
+};

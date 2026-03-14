@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["jsdoc"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
@@ -12,7 +13,14 @@
     "no-else-return": "error",
     "typescript/prefer-as-const": "error",
     "typescript/no-inferrable-types": "error",
-    "typescript/prefer-enum-initializers": "error"
+    "typescript/prefer-enum-initializers": "error",
+    "jsdoc/check-tag-names": "off",
+    "jsdoc/require-param": "warn",
+    "jsdoc/require-param-description": "warn",
+    "jsdoc/require-param-name": "error",
+    "jsdoc/require-returns": "warn",
+    "jsdoc/require-returns-description": "warn",
+    "jsdoc/require-yields": "warn"
   },
   "ignorePatterns": [
     "dist",

@@ -31,13 +31,13 @@ type TCMoviesResponse = {
 };
 
 /**
+ * @param rest - REST manager for API requests
+ * @param id - TwitCasting movie ID
+ * @returns unified Content for the movie
  * @precondition id is a valid TwitCasting movie ID
  * @postcondition returns Content (live or video) for the movie
  */
-export async function twitcastingGetContent(
-  rest: RestManager,
-  id: string,
-): Promise<Content> {
+export const twitcastingGetContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<TCMovieResponse>({
     method: "GET",
     path: `/movies/${id}`,
@@ -45,16 +45,16 @@ export async function twitcastingGetContent(
   });
 
   return movieToContent(res.data.movie, res.data.broadcaster);
-}
+};
 
 /**
+ * @param rest - REST manager for API requests
+ * @param id - TwitCasting user_id or screen_id
+ * @returns unified Channel for the user
  * @precondition id is a valid TwitCasting user_id or screen_id
  * @postcondition returns Channel for the user
  */
-export async function twitcastingGetChannel(
-  rest: RestManager,
-  id: string,
-): Promise<Channel> {
+export const twitcastingGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const res = await rest.request<TCUserResponse>({
     method: "GET",
     path: `/users/${id}`,
@@ -66,16 +66,19 @@ export async function twitcastingGetChannel(
   }
 
   return userToChannel(res.data.user);
-}
+};
 
 /**
+ * @param rest - REST manager for API requests
+ * @param channelId - TwitCasting user_id or screen_id
+ * @returns array of live streams (0 or 1 items)
  * @precondition channelId is a valid TwitCasting user_id or screen_id
  * @postcondition returns live streams (0 or 1 for TwitCasting, since a user can only have one live)
  */
-export async function twitcastingGetLiveStreams(
+export const twitcastingGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> {
+): Promise<LiveStream[]> => {
   const res = await rest.request<TCUserResponse>({
     method: "GET",
     path: `/users/${channelId}`,
@@ -98,17 +101,21 @@ export async function twitcastingGetLiveStreams(
   }
 
   return [movieToLive(movieRes.data.movie, res.data.user)];
-}
+};
 
 /**
+ * @param rest - REST manager for API requests
+ * @param channelId - TwitCasting user_id or screen_id
+ * @param cursor - optional pagination cursor (slice_id)
+ * @returns paginated list of videos
  * @precondition channelId is a valid TwitCasting user_id or screen_id
  * @postcondition returns paginated videos using slice_id for deep pagination
  */
-export async function twitcastingGetVideos(
+export const twitcastingGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
-): Promise<Page<Video>> {
+): Promise<Page<Video>> => {
   const query: Record<string, string> = { limit: "50" };
   if (cursor) {
     query.slice_id = cursor;
@@ -136,21 +143,23 @@ export async function twitcastingGetVideos(
   return {
     items: videos,
     cursor:
-      videos.length > 0 && moviesRes.data.movies.length === 50
-        ? videos.at(-1)!.id
-        : undefined,
+      videos.length > 0 && moviesRes.data.movies.length === 50 ? videos.at(-1)!.id : undefined,
     total: moviesRes.data.total_count,
   };
-}
+};
 
 /**
  * TwitCasting uses the same ID for live and archive.
  * resolveArchive checks if the movie has ended and returns the video.
+ *
+ * @param rest - REST manager for API requests
+ * @param live - live stream to check for archive
+ * @returns archived Video or null if still live
  */
-export async function twitcastingResolveArchive(
+export const twitcastingResolveArchive = async (
   rest: RestManager,
   live: LiveStream,
-): Promise<Video | null> {
+): Promise<Video | null> => {
   const res = await rest.request<TCMovieResponse>({
     method: "GET",
     path: `/movies/${live.id}`,
@@ -162,4 +171,4 @@ export async function twitcastingResolveArchive(
   }
 
   return movieToVideo(res.data.movie, res.data.broadcaster);
-}
+};

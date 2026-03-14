@@ -27,9 +27,7 @@ import { createTwitchPlugin } from "@unified-live/twitch";
 const client = createClient();
 
 // 2. Register platform plugins
-client.register(
-  createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
-);
+client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
 client.register(
   createTwitchPlugin({
     clientId: process.env.TWITCH_CLIENT_ID!,
@@ -40,9 +38,9 @@ client.register(
 // 3. Fetch content by URL — the client auto-detects the platform
 const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
-console.log(content.title);     // Video title
-console.log(content.platform);  // "youtube"
-console.log(content.type);      // "live" or "video"
+console.log(content.title); // Video title
+console.log(content.platform); // "youtube"
+console.log(content.type); // "live" or "video"
 
 // 4. Clean up when done
 client.dispose();

@@ -1,13 +1,6 @@
 import { PlatformNotFoundError, ValidationError } from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import type {
-  Channel,
-  Content,
-  LiveStream,
-  Page,
-  ResolvedUrl,
-  Video,
-} from "./types";
+import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
 
 export type UnifiedClientOptions = {
   plugins?: PlatformPlugin[];
@@ -17,6 +10,7 @@ export type UnifiedClient = {
   /**
    * Register a platform plugin.
    *
+   * @param plugin - the platform plugin to register
    * @precondition plugin.name is unique across registered plugins
    * @postcondition plugin is available for URL matching and API calls
    * @idempotency Re-registering the same name overwrites the previous plugin
@@ -26,6 +20,8 @@ export type UnifiedClient = {
   /**
    * Retrieve content by URL. Automatically routes to the correct plugin.
    *
+   * @param url - content URL to resolve and fetch
+   * @returns the resolved content (LiveStream or Video)
    * @precondition url matches a registered plugin
    * @postcondition returns Content (LiveStream or Video)
    * @throws PlatformNotFoundError if no plugin matches the URL
@@ -35,6 +31,9 @@ export type UnifiedClient = {
   /**
    * Retrieve content by platform name and ID.
    *
+   * @param platform - platform name
+   * @param id - content identifier
+   * @returns the resolved content (LiveStream or Video)
    * @precondition platform is registered
    * @postcondition returns Content (LiveStream or Video)
    * @throws PlatformNotFoundError if platform is not registered
@@ -44,6 +43,9 @@ export type UnifiedClient = {
   /**
    * List currently active live streams for a channel.
    *
+   * @param platform - platform name
+   * @param channelId - channel identifier
+   * @returns active live streams for the channel
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
@@ -52,18 +54,21 @@ export type UnifiedClient = {
   /**
    * List videos for a channel with cursor-based pagination.
    *
+   * @param platform - platform name
+   * @param channelId - channel identifier
+   * @param cursor - pagination cursor
+   * @returns paginated list of videos
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getVideos(
-    platform: string,
-    channelId: string,
-    cursor?: string,
-  ): Promise<Page<Video>>;
+  getVideos(platform: string, channelId: string, cursor?: string): Promise<Page<Video>>;
 
   /**
    * Retrieve channel information.
    *
+   * @param platform - platform name
+   * @param id - channel identifier
+   * @returns channel information
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
@@ -72,6 +77,8 @@ export type UnifiedClient = {
   /**
    * Access a specific platform plugin.
    *
+   * @param name - platform name to look up
+   * @returns the registered platform plugin
    * @throws PlatformNotFoundError if platform is not registered
    */
   platform(name: string): PlatformPlugin;
@@ -80,6 +87,8 @@ export type UnifiedClient = {
    * Parse a URL to determine which platform and resource it refers to.
    * No network calls.
    *
+   * @param url - URL to match against registered plugins
+   * @returns resolved URL info, or null if no plugin matches
    * @postcondition returns ResolvedUrl or null if no plugin matches
    */
   match(url: string): ResolvedUrl | null;
@@ -105,6 +114,8 @@ export const UnifiedClient = {
   /**
    * Creates the main SDK client that manages plugins and routes requests.
    *
+   * @param options - client configuration with optional plugins
+   * @returns a new UnifiedClient instance
    * @precondition none
    * @postcondition returns a fully functional UnifiedClient
    * @idempotency Not idempotent — each call creates a new client
@@ -118,15 +129,15 @@ export const UnifiedClient = {
       }
     }
 
-    function getPlugin(name: string): PlatformPlugin {
+    const getPlugin = (name: string): PlatformPlugin => {
       const plugin = plugins.get(name);
       if (!plugin) {
         throw new PlatformNotFoundError(name);
       }
       return plugin;
-    }
+    };
 
-    function matchUrl(url: string): ResolvedUrl | null {
+    const matchUrl = (url: string): ResolvedUrl | null => {
       for (const plugin of plugins.values()) {
         const resolved = plugin.match(url);
         if (resolved) {
@@ -134,7 +145,7 @@ export const UnifiedClient = {
         }
       }
       return null;
-    }
+    };
 
     const client: UnifiedClient = {
       register(plugin: PlatformPlugin): void {
@@ -143,10 +154,7 @@ export const UnifiedClient = {
 
       async getContent(url: string): Promise<Content> {
         if (!url) {
-          throw new ValidationError(
-            "VALIDATION_INVALID_INPUT",
-            "URL must be a non-empty string",
-          );
+          throw new ValidationError("VALIDATION_INVALID_INPUT", "URL must be a non-empty string");
         }
         const resolved = matchUrl(url);
         if (!resolved) {
@@ -161,19 +169,12 @@ export const UnifiedClient = {
         return plugin.getContent(id);
       },
 
-      async getLiveStreams(
-        platform: string,
-        channelId: string,
-      ): Promise<LiveStream[]> {
+      async getLiveStreams(platform: string, channelId: string): Promise<LiveStream[]> {
         const plugin = getPlugin(platform);
         return plugin.getLiveStreams(channelId);
       },
 
-      async getVideos(
-        platform: string,
-        channelId: string,
-        cursor?: string,
-      ): Promise<Page<Video>> {
+      async getVideos(platform: string, channelId: string, cursor?: string): Promise<Page<Video>> {
         const plugin = getPlugin(platform);
         return plugin.getVideos(channelId, cursor);
       },

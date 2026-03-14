@@ -31,11 +31,13 @@ const parseTwitchRateLimitHeaders = createRateLimitHeaderParser({
 /**
  * Creates a Twitch platform plugin.
  *
+ * @param config - Twitch plugin configuration including client credentials
+ * @returns configured PlatformPlugin for Twitch
  * @precondition config.clientId and config.clientSecret are valid Twitch app credentials
  * @postcondition returns a PlatformPlugin that handles Twitch URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
-export function createTwitchPlugin(config: TwitchPluginConfig): PlatformPlugin {
+export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin => {
   return PlatformPlugin.create(
     {
       name: "twitch",
@@ -62,4 +64,4 @@ export function createTwitchPlugin(config: TwitchPluginConfig): PlatformPlugin {
       resolveArchive: twitchResolveArchive,
     },
   );
-}
+};

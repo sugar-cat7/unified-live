@@ -1,7 +1,13 @@
 {
   "name": "@unified-live/twitch",
   "version": "0.1.0",
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
       "types": {
@@ -12,22 +18,18 @@
       "require": "./dist/index.cjs"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsdown",
     "type-check": "tsc --noEmit",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@unified-live/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

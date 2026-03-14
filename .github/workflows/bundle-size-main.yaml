@@ -1,0 +1,37 @@
+name: Bundle Size (main baseline)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/*/src/**"
+      - "packages/*/package.json"
+      - "packages/*/tsdown.config.ts"
+      - "pnpm-lock.yaml"
+      - "scripts/check-bundle-size.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  bundle-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Check bundle size
+        run: npx tsx scripts/check-bundle-size.ts | tee "$GITHUB_STEP_SUMMARY"

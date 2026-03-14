@@ -50,7 +50,7 @@
     {
       "description": "Monorepo tooling",
       "groupName": "shared-monorepo",
-      "matchPackageNames": ["turbo", "typescript", "tsup", "knip"],
+      "matchPackageNames": ["turbo", "typescript", "tsdown", "knip"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },

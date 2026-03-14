@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createTwitCastingPlugin } from "../plugin.js";
+import { createTwitCastingPlugin } from "../plugin";
 
 function createMockFetch(
   responses: Array<{

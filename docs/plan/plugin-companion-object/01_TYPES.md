@@ -116,12 +116,12 @@ export const PlatformPlugin = {
 
 ```ts
 // Before (packages/core/src/index.ts)
-export type { PlatformPlugin } from "./plugin.js";
+export type { PlatformPlugin } from "./plugin";
 
 // After
-export { PlatformPlugin } from "./plugin.js";
-export type { PlatformPlugin as PlatformPluginType } from "./plugin.js";
-export type { PluginDefinition, PluginMethods } from "./plugin.js";
+export { PlatformPlugin } from "./plugin";
+export type { PlatformPlugin as PlatformPluginType } from "./plugin";
+export type { PluginDefinition, PluginMethods } from "./plugin";
 ```
 
 Consumers can use `PlatformPlugin` as both a type and a value:

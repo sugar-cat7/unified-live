@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { UnifiedClient } from "../client.js";
-import { PlatformNotFoundError, ValidationError } from "../errors.js";
-import type { PlatformPlugin } from "../plugin.js";
-import type { Channel, Content } from "../types.js";
+import { UnifiedClient } from "../client";
+import { PlatformNotFoundError, ValidationError } from "../errors";
+import type { PlatformPlugin } from "../plugin";
+import type { Channel, Content } from "../types";
 
 function createMockPlugin(name: string): PlatformPlugin {
   const mockContent: Content = {

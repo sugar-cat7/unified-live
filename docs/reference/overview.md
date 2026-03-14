@@ -68,6 +68,6 @@
 - API type generation: openapi-typescript (YouTube, Twitch)
 - Observability: `@opentelemetry/api` (peer dependency)
 - Error handling: Thrown exceptions (`UnifiedLiveError` hierarchy)
-- Build: tsup (ESM + CJS dual output)
+- Build: tsdown (ESM + CJS dual output, powered by Rolldown)
 - Package manager: pnpm (workspace monorepo)
 - Architecture: discordeno pattern (factory functions, overridable function objects)

@@ -285,7 +285,7 @@ To add a new platform (e.g., Niconico):
    │   └── index.ts         # Re-exports
    ├── package.json
    ├── tsconfig.json
-   ├── tsup.config.ts
+   ├── tsdown.config.ts
    └── vitest.config.ts
    ```
 

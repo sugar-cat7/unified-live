@@ -1,5 +1,5 @@
-import type { TokenManager } from "../auth/types.js";
-import type { RateLimitStrategy } from "./strategy.js";
+import type { TokenManager } from "../auth/types";
+import type { RateLimitStrategy } from "./strategy";
 
 export type RestRequest = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

@@ -3,15 +3,15 @@ import {
   createTokenBucketStrategy,
   PlatformPlugin,
 } from "@unified-live/core";
-import { createBasicAuthTokenManager } from "./auth.js";
+import { createBasicAuthTokenManager } from "./auth";
 import {
   twitcastingGetChannel,
   twitcastingGetContent,
   twitcastingGetLiveStreams,
   twitcastingGetVideos,
   twitcastingResolveArchive,
-} from "./methods.js";
-import { matchTwitCastingUrl } from "./urls.js";
+} from "./methods";
+import { matchTwitCastingUrl } from "./urls";
 
 const TWITCASTING_BASE_URL = "https://apiv2.twitcasting.tv";
 

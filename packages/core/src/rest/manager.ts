@@ -1,4 +1,4 @@
-import type { TokenManager } from "../auth/types.js";
+import type { TokenManager } from "../auth/types";
 import {
   AuthenticationError,
   classifyNetworkError,
@@ -7,15 +7,15 @@ import {
   ParseError,
   RateLimitError,
   UnifiedLiveError,
-} from "../errors.js";
-import { getTracer, SpanAttributes } from "../telemetry/traces.js";
-import type { RateLimitStrategy } from "./strategy.js";
+} from "../errors";
+import { getTracer, SpanAttributes } from "../telemetry/traces";
+import type { RateLimitStrategy } from "./strategy";
 import type {
   RateLimitInfo,
   RestManagerOptions,
   RestRequest,
   RestResponse,
-} from "./types.js";
+} from "./types";
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_BASE_DELAY = 1000;

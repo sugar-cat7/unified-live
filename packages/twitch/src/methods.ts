@@ -14,7 +14,7 @@ import {
   type TwitchVideo,
   userToChannel,
   videoToVideo,
-} from "./mapper.js";
+} from "./mapper";
 
 type TwitchResponse<T> = {
   data: T[];

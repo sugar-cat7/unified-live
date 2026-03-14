@@ -14,7 +14,7 @@ import {
   type TCMovie,
   type TCUser,
   userToChannel,
-} from "./mapper.js";
+} from "./mapper";
 
 type TCMovieResponse = {
   movie: TCMovie;

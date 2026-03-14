@@ -10,7 +10,7 @@ import {
   RateLimitError,
   UnifiedLiveError,
   ValidationError,
-} from "../errors.js";
+} from "../errors";
 
 describe("UnifiedLiveError hierarchy", () => {
   it.each([

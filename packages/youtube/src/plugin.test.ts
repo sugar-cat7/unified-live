@@ -5,15 +5,15 @@ import {
   QuotaExhaustedError,
 } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createYouTubePlugin } from "../plugin";
+import { createYouTubePlugin } from "./plugin";
 
-function createMockFetch(
+const createMockFetch = (
   responses: Array<{
     body: unknown;
     status?: number;
     headers?: Record<string, string>;
   }>,
-): typeof globalThis.fetch {
+): typeof globalThis.fetch => {
   let callIndex = 0;
   return vi.fn(async () => {
     const r = responses[callIndex];
@@ -27,7 +27,7 @@ function createMockFetch(
       headers: { "Content-Type": "application/json", ...r.headers },
     });
   }) as unknown as typeof globalThis.fetch;
-}
+};
 
 const sampleVideoItem = {
   id: "dQw4w9WgXcQ",

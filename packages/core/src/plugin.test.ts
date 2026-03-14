@@ -3,11 +3,11 @@ import {
   PlatformPlugin,
   type PluginDefinition,
   type PluginMethods,
-} from "../plugin";
-import type { RateLimitHandle, RateLimitStrategy } from "../rest/strategy";
-import type { ResolvedUrl } from "../types";
+} from "./plugin";
+import type { RateLimitHandle, RateLimitStrategy } from "./rest/strategy";
+import type { ResolvedUrl } from "./types";
 
-function createMockStrategy(): RateLimitStrategy {
+const createMockStrategy = (): RateLimitStrategy => {
   return {
     acquire: vi.fn().mockResolvedValue({
       complete: vi.fn(),
@@ -21,15 +21,15 @@ function createMockStrategy(): RateLimitStrategy {
     }),
     dispose: vi.fn(),
   };
-}
+};
 
-function createMockFetch(
+const createMockFetch = (
   responses: Array<{
     status: number;
     body?: unknown;
     headers?: Record<string, string>;
   }>,
-): typeof globalThis.fetch {
+): typeof globalThis.fetch => {
   let callIndex = 0;
   return vi.fn(async () => {
     const r = responses[callIndex];
@@ -40,7 +40,7 @@ function createMockFetch(
       headers: r.headers,
     });
   }) as unknown as typeof globalThis.fetch;
-}
+};
 
 const mockMatchUrl = (url: string): ResolvedUrl | null => {
   if (url.includes("example.com")) {
@@ -49,18 +49,18 @@ const mockMatchUrl = (url: string): ResolvedUrl | null => {
   return null;
 };
 
-function createMockMethods(): PluginMethods {
+const createMockMethods = (): PluginMethods => {
   return {
     getContent: vi.fn().mockResolvedValue({ type: "video", id: "v1" }),
     getChannel: vi.fn().mockResolvedValue({ id: "ch1" }),
     getLiveStreams: vi.fn().mockResolvedValue([]),
     getVideos: vi.fn().mockResolvedValue({ items: [] }),
   };
-}
+};
 
-function createMinimalDefinition(
+const createMinimalDefinition = (
   overrides?: Partial<PluginDefinition>,
-): PluginDefinition {
+): PluginDefinition => {
   return {
     name: "test",
     baseUrl: "https://api.example.com",
@@ -69,7 +69,7 @@ function createMinimalDefinition(
     fetch: createMockFetch([{ status: 200, body: {} }]),
     ...overrides,
   };
-}
+};
 
 describe("PlatformPlugin.create", () => {
   let plugin: PlatformPlugin | undefined;
@@ -106,31 +106,15 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.match("https://other.com")).toBeNull();
   });
 
-  it("delegates getContent to methods with rest injected", async () => {
+  it.each([
+    { name: "getContent", methodName: "getContent" as const, args: ["v1"], expectedPluginArgs: ["v1"] },
+    { name: "getChannel", methodName: "getChannel" as const, args: ["ch1"], expectedPluginArgs: ["ch1"] },
+    { name: "getLiveStreams", methodName: "getLiveStreams" as const, args: ["ch1"], expectedPluginArgs: ["ch1"] },
+  ])("delegates $name to methods with rest injected", async ({ methodName, args, expectedPluginArgs }) => {
     const methods = createMockMethods();
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-
-    await plugin.getContent("v1");
-
-    expect(methods.getContent).toHaveBeenCalledWith(plugin.rest, "v1");
-  });
-
-  it("delegates getChannel to methods with rest injected", async () => {
-    const methods = createMockMethods();
-    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-
-    await plugin.getChannel("ch1");
-
-    expect(methods.getChannel).toHaveBeenCalledWith(plugin.rest, "ch1");
-  });
-
-  it("delegates getLiveStreams to methods with rest injected", async () => {
-    const methods = createMockMethods();
-    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-
-    await plugin.getLiveStreams("ch1");
-
-    expect(methods.getLiveStreams).toHaveBeenCalledWith(plugin.rest, "ch1");
+    await (plugin[methodName] as Function)(...args);
+    expect(methods[methodName]).toHaveBeenCalledWith(plugin.rest, ...expectedPluginArgs);
   });
 
   it("delegates getVideos to methods with rest and cursor injected", async () => {

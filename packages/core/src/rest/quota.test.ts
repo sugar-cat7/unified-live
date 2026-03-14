@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { QuotaExhaustedError } from "../../errors";
-import { createQuotaBudgetStrategy } from "../../rest/quota";
-import type { RestRequest } from "../../rest/types";
+import { QuotaExhaustedError } from "../errors";
+import { createQuotaBudgetStrategy } from "./quota";
+import type { RestRequest } from "./types";
 
 const makeReq = (bucketId?: string): RestRequest => ({
   method: "GET",

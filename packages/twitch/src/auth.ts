@@ -12,17 +12,17 @@ type TwitchTokenResponse = {
  * @precondition clientId and clientSecret are valid Twitch app credentials
  * @postcondition auto-fetches app access token and refreshes before expiry
  */
-export function createClientCredentialsTokenManager(config: {
+export const createClientCredentialsTokenManager = (config: {
   clientId: string;
   clientSecret: string;
   fetch?: typeof globalThis.fetch;
-}): TokenManager {
+}): TokenManager => {
   const fetchFn = config.fetch ?? globalThis.fetch;
   let token: string | null = null;
   let expiresAt: Date | null = null;
   let refreshPromise: Promise<string> | null = null;
 
-  async function fetchAndCacheToken(): Promise<string> {
+  const fetchAndCacheToken = async (): Promise<string> => {
     let res: Response;
     try {
       res = await fetchFn("https://id.twitch.tv/oauth2/token", {
@@ -54,7 +54,7 @@ export function createClientCredentialsTokenManager(config: {
     // Refresh at 90% of expiry
     expiresAt = new Date(Date.now() + data.expires_in * 900);
     return token;
-  }
+  };
 
   return {
     async getAuthHeader(): Promise<string> {
@@ -76,4 +76,4 @@ export function createClientCredentialsTokenManager(config: {
       expiresAt = null;
     },
   };
-}
+};

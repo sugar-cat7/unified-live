@@ -35,7 +35,7 @@ const CHANNEL_PATTERNS = [
  * @postcondition returns ResolvedUrl for YouTube URLs, null otherwise
  * @idempotency Safe — no side effects
  */
-export function matchYouTubeUrl(url: string): ResolvedUrl | null {
+export const matchYouTubeUrl = (url: string): ResolvedUrl | null => {
   for (const pattern of CONTENT_PATTERNS) {
     const match = url.match(pattern);
     if (match?.[1]) {
@@ -51,4 +51,4 @@ export function matchYouTubeUrl(url: string): ResolvedUrl | null {
   }
 
   return null;
-}
+};

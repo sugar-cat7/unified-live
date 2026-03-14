@@ -18,13 +18,13 @@ export const YOUTUBE_COST_MAP: Record<string, number> = {
  * @precondition dailyLimit > 0
  * @postcondition returns a strategy that tracks YouTube quota consumption
  */
-export function createYouTubeQuotaStrategy(
+export const createYouTubeQuotaStrategy = (
   dailyLimit?: number,
-): RateLimitStrategy {
+): RateLimitStrategy => {
   return createQuotaBudgetStrategy({
     dailyLimit: dailyLimit ?? 10_000,
     costMap: YOUTUBE_COST_MAP,
     defaultCost: 1,
     platform: "youtube",
   });
-}
+};

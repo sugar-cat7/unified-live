@@ -20,9 +20,9 @@ export function Ok<V>(val?: V): OkResult<V> {
   return { val } as OkResult<V>;
 }
 
-export function Err<E extends UnifiedLiveError>(err: E): ErrResult<E> {
+export const Err = <E extends UnifiedLiveError>(err: E): ErrResult<E> => {
   return { err };
-}
+};
 
 /**
  * Wrap a promise into a Result, catching thrown errors.
@@ -31,16 +31,16 @@ export function Err<E extends UnifiedLiveError>(err: E): ErrResult<E> {
  * @postcondition returns Ok on success, Err on failure — never throws
  * @idempotency Safe — pure wrapper
  */
-export async function wrap<T, E extends UnifiedLiveError>(
+export const wrap = async <T, E extends UnifiedLiveError>(
   p: Promise<T>,
   errorFactory: (err: Error) => E,
-): Promise<Result<T, E>> {
+): Promise<Result<T, E>> => {
   try {
     return Ok(await p);
   } catch (e) {
     return Err(errorFactory(e as Error));
   }
-}
+};
 
 /**
  * Unwrap a Result — returns the value or throws the error.
@@ -49,9 +49,9 @@ export async function wrap<T, E extends UnifiedLiveError>(
  * @precondition result is a valid Result
  * @postcondition returns val if Ok, throws err if Err
  */
-export function unwrap<V, E extends UnifiedLiveError>(result: Result<V, E>): V {
+export const unwrap = <V, E extends UnifiedLiveError>(result: Result<V, E>): V => {
   if (result.err) {
     throw result.err;
   }
   return result.val as V;
-}
+};

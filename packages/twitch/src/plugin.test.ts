@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { createTwitchPlugin } from "../plugin";
+import { createTwitchPlugin } from "./plugin";
 
-function createMockFetch(
+const createMockFetch = (
   responses: Array<{
     status: number;
     body?: unknown;
     headers?: Record<string, string>;
   }>,
-): typeof globalThis.fetch {
+): typeof globalThis.fetch => {
   let callIndex = 0;
   return vi.fn(async (input: string | URL | Request) => {
     const url = typeof input === "string" ? input : input.toString();
@@ -31,7 +31,7 @@ function createMockFetch(
       headers: r.headers,
     });
   }) as unknown as typeof globalThis.fetch;
-}
+};
 
 describe("createTwitchPlugin", () => {
   it("creates a plugin with correct name", () => {

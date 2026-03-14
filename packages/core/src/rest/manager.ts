@@ -100,7 +100,7 @@ export type RestManager = {
  * @postcondition returns a RestManager with all methods set
  * @idempotency Not idempotent — each call creates a new manager instance
  */
-export function createRestManager(options: RestManagerOptions): RestManager {
+export const createRestManager = (options: RestManagerOptions): RestManager => {
   const maxRetries = options.retry?.maxRetries ?? DEFAULT_MAX_RETRIES;
   const baseDelay = options.retry?.baseDelay ?? DEFAULT_BASE_DELAY;
   const retryableStatuses =
@@ -311,8 +311,8 @@ export function createRestManager(options: RestManagerOptions): RestManager {
   };
 
   return manager;
-}
+};
 
-function sleep(ms: number): Promise<void> {
+const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
+};

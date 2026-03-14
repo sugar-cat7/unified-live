@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { UnifiedClient } from "../client";
-import { PlatformNotFoundError, ValidationError } from "../errors";
-import type { PlatformPlugin } from "../plugin";
-import type { Channel, Content } from "../types";
+import { UnifiedClient } from "./client";
+import { PlatformNotFoundError, ValidationError } from "./errors";
+import type { PlatformPlugin } from "./plugin";
+import type { Channel, Content } from "./types";
 
-function createMockPlugin(name: string): PlatformPlugin {
+const createMockPlugin = (name: string): PlatformPlugin => {
   const mockContent: Content = {
     id: "test-id",
     platform: name,
@@ -34,28 +34,23 @@ function createMockPlugin(name: string): PlatformPlugin {
     url: `https://${name}.com/channel/ch1`,
   };
 
+  const matchUrl = (url: string) =>
+    url.includes(name)
+      ? { platform: name, type: "content" as const, id: "test-id" }
+      : null;
+
   return {
     name,
     rest: {} as PlatformPlugin["rest"],
-    match: vi.fn((url: string) => {
-      if (url.includes(name)) {
-        return { platform: name, type: "content" as const, id: "test-id" };
-      }
-      return null;
-    }),
-    resolveUrl: vi.fn((url: string) => {
-      if (url.includes(name)) {
-        return { platform: name, type: "content" as const, id: "test-id" };
-      }
-      return null;
-    }),
+    match: vi.fn(matchUrl),
+    resolveUrl: vi.fn(matchUrl),
     getContent: vi.fn(async () => mockContent),
     getChannel: vi.fn(async () => mockChannel),
     getLiveStreams: vi.fn(async () => []),
     getVideos: vi.fn(async () => ({ items: [], cursor: undefined })),
     dispose: vi.fn(),
   };
-}
+};
 
 describe("UnifiedClient.create", () => {
   it("registers plugins via options", () => {
@@ -106,6 +101,51 @@ describe("UnifiedClient.create", () => {
     client.dispose();
   });
 
+  it.each([
+    {
+      method: "getContentById" as const,
+      args: ["youtube", "abc123"],
+      pluginMethod: "getContent" as const,
+      pluginArgs: ["abc123"],
+      assertion: (result: Content) => expect(result.platform).toBe("youtube"),
+    },
+    {
+      method: "getLiveStreams" as const,
+      args: ["youtube", "ch1"],
+      pluginMethod: "getLiveStreams" as const,
+      pluginArgs: ["ch1"],
+      assertion: (result: unknown) => expect(result).toEqual([]),
+    },
+    {
+      method: "getVideos" as const,
+      args: ["youtube", "ch1", "cursor1"],
+      pluginMethod: "getVideos" as const,
+      pluginArgs: ["ch1", "cursor1"],
+      assertion: (result: { items: unknown[] }) =>
+        expect(result.items).toEqual([]),
+    },
+    {
+      method: "getChannel" as const,
+      args: ["youtube", "ch1"],
+      pluginMethod: "getChannel" as const,
+      pluginArgs: ["ch1"],
+      assertion: (result: Channel) =>
+        expect(result.name).toBe("Test Channel"),
+    },
+  ])(
+    "$method delegates to plugin.$pluginMethod",
+    async ({ method, args, pluginMethod, pluginArgs, assertion }) => {
+      const plugin = createMockPlugin("youtube");
+      const client = UnifiedClient.create({ plugins: [plugin] });
+
+      const result = await (client[method] as Function)(...args);
+      expect(plugin[pluginMethod]).toHaveBeenCalledWith(...pluginArgs);
+      assertion(result);
+
+      client.dispose();
+    },
+  );
+
   it("getContent routes URL to correct plugin", async () => {
     const plugin = createMockPlugin("youtube");
     const client = UnifiedClient.create({ plugins: [plugin] });
@@ -134,50 +174,6 @@ describe("UnifiedClient.create", () => {
     await expect(
       client.getContent("https://unknown.com/video/123"),
     ).rejects.toThrow(PlatformNotFoundError);
-
-    client.dispose();
-  });
-
-  it("getContentById retrieves by platform + id", async () => {
-    const plugin = createMockPlugin("youtube");
-    const client = UnifiedClient.create({ plugins: [plugin] });
-
-    const content = await client.getContentById("youtube", "abc123");
-    expect(plugin.getContent).toHaveBeenCalledWith("abc123");
-    expect(content.platform).toBe("youtube");
-
-    client.dispose();
-  });
-
-  it("getLiveStreams delegates to plugin", async () => {
-    const plugin = createMockPlugin("youtube");
-    const client = UnifiedClient.create({ plugins: [plugin] });
-
-    const streams = await client.getLiveStreams("youtube", "ch1");
-    expect(plugin.getLiveStreams).toHaveBeenCalledWith("ch1");
-    expect(streams).toEqual([]);
-
-    client.dispose();
-  });
-
-  it("getVideos delegates to plugin", async () => {
-    const plugin = createMockPlugin("youtube");
-    const client = UnifiedClient.create({ plugins: [plugin] });
-
-    const page = await client.getVideos("youtube", "ch1", "cursor1");
-    expect(plugin.getVideos).toHaveBeenCalledWith("ch1", "cursor1");
-    expect(page.items).toEqual([]);
-
-    client.dispose();
-  });
-
-  it("getChannel delegates to plugin", async () => {
-    const plugin = createMockPlugin("youtube");
-    const client = UnifiedClient.create({ plugins: [plugin] });
-
-    const channel = await client.getChannel("youtube", "ch1");
-    expect(plugin.getChannel).toHaveBeenCalledWith("ch1");
-    expect(channel.name).toBe("Test Channel");
 
     client.dispose();
   });

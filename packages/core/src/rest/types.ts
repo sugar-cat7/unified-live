@@ -47,11 +47,11 @@ export type RetryConfig = {
  *
  * @idempotency Safe — returns a pure function
  */
-export function createRateLimitHeaderParser(headerNames: {
+export const createRateLimitHeaderParser = (headerNames: {
   limit: string;
   remaining: string;
   reset: string;
-}): (headers: Headers) => RateLimitInfo | undefined {
+}): ((headers: Headers) => RateLimitInfo | undefined) => {
   return (headers: Headers) => {
     const limit = headers.get(headerNames.limit);
     const remaining = headers.get(headerNames.remaining);
@@ -63,4 +63,4 @@ export function createRateLimitHeaderParser(headerNames: {
       resetsAt: new Date(Number.parseInt(reset, 10) * 1000),
     };
   };
-}
+};

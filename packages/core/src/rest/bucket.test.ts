@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createTokenBucketStrategy } from "../../rest/bucket";
-import type { RateLimitInfo, RestRequest } from "../../rest/types";
+import { createTokenBucketStrategy } from "./bucket";
+import type { RateLimitInfo, RestRequest } from "./types";
 
 const makeReq = (): RestRequest => ({
   method: "GET",

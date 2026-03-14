@@ -17,9 +17,9 @@ export type TokenBucketConfig = {
  * @postcondition acquire() blocks when no tokens are available, resolves on refill
  * @idempotency Not idempotent — each acquire() consumes a token
  */
-export function createTokenBucketStrategy(
+export const createTokenBucketStrategy = (
   config: TokenBucketConfig,
-): RateLimitStrategy {
+): RateLimitStrategy => {
   let remaining = config.global.requests;
   const limit = config.global.requests;
   let resetsAt = new Date(Date.now() + config.global.perMs);
@@ -86,4 +86,4 @@ export function createTokenBucketStrategy(
       }
     },
   };
-}
+};

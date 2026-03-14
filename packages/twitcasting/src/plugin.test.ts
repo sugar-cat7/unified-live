@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { createTwitCastingPlugin } from "../plugin";
+import { createTwitCastingPlugin } from "./plugin";
 
-function createMockFetch(
+const createMockFetch = (
   responses: Array<{
     status: number;
     body?: unknown;
     headers?: Record<string, string>;
   }>,
-): typeof globalThis.fetch {
+): typeof globalThis.fetch => {
   let callIndex = 0;
   return vi.fn(async () => {
     const r = responses[callIndex];
@@ -18,7 +18,7 @@ function createMockFetch(
       headers: r.headers,
     });
   }) as unknown as typeof globalThis.fetch;
-}
+};
 
 const mockUser = {
   id: "u1",

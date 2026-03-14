@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { NotFoundError, UnifiedLiveError } from "../errors";
-import { Err, Ok, unwrap, wrap } from "../result";
+import { NotFoundError, UnifiedLiveError } from "./errors";
+import { Err, Ok, unwrap, wrap } from "./result";
 
 describe("Ok", () => {
   it("creates an OkResult with a value", () => {

@@ -3,15 +3,15 @@ import {
   AuthenticationError,
   NotFoundError,
   UnifiedLiveError,
-} from "../../errors";
-import { createRestManager } from "../../rest/manager";
+} from "../errors";
+import { createRestManager } from "./manager";
 import type {
   RateLimitHandle,
   RateLimitStrategy,
-} from "../../rest/strategy";
-import type { RestRequest } from "../../rest/types";
+} from "./strategy";
+import type { RestRequest } from "./types";
 
-function createMockStrategy(): RateLimitStrategy {
+const createMockStrategy = (): RateLimitStrategy => {
   return {
     acquire: vi.fn().mockResolvedValue({
       complete: vi.fn(),
@@ -25,15 +25,15 @@ function createMockStrategy(): RateLimitStrategy {
     }),
     dispose: vi.fn(),
   };
-}
+};
 
-function createMockFetch(
+const createMockFetch = (
   responses: Array<{
     status: number;
     body?: unknown;
     headers?: Record<string, string>;
   }>,
-): typeof globalThis.fetch {
+): typeof globalThis.fetch => {
   let callIndex = 0;
   return vi.fn(async () => {
     const r = responses[callIndex];
@@ -47,7 +47,7 @@ function createMockFetch(
       headers: r.headers,
     });
   }) as unknown as typeof globalThis.fetch;
-}
+};
 
 describe("createRestManager", () => {
   let strategy: RateLimitStrategy;

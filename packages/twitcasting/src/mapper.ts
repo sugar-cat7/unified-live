@@ -36,7 +36,7 @@ export type TCUser = {
  * @precondition movie.is_live === true
  * @postcondition returns LiveStream with sessionId set to movie.id
  */
-export function movieToLive(movie: TCMovie, user: TCUser): LiveStream {
+export const movieToLive = (movie: TCMovie, user: TCUser): LiveStream => {
   return {
     id: movie.id,
     platform: "twitcasting",
@@ -58,7 +58,7 @@ export function movieToLive(movie: TCMovie, user: TCUser): LiveStream {
     startedAt: new Date(movie.created * 1000),
     raw: movie,
   };
-}
+};
 
 /**
  * Convert a TwitCasting Movie to a unified Video.
@@ -66,7 +66,7 @@ export function movieToLive(movie: TCMovie, user: TCUser): LiveStream {
  * @precondition movie.is_live === false
  * @postcondition returns Video with sessionId set to movie.id
  */
-export function movieToVideo(movie: TCMovie, user: TCUser): Video {
+export const movieToVideo = (movie: TCMovie, user: TCUser): Video => {
   return {
     id: movie.id,
     platform: "twitcasting",
@@ -89,22 +89,22 @@ export function movieToVideo(movie: TCMovie, user: TCUser): Video {
     publishedAt: new Date(movie.created * 1000),
     raw: movie,
   };
-}
+};
 
 /**
  * Convert a TwitCasting Movie to unified Content (live or video).
  */
-export function movieToContent(movie: TCMovie, user: TCUser): Content {
+export const movieToContent = (movie: TCMovie, user: TCUser): Content => {
   if (movie.is_live) {
     return movieToLive(movie, user);
   }
   return movieToVideo(movie, user);
-}
+};
 
 /**
  * Convert a TwitCasting User to a unified Channel.
  */
-export function userToChannel(user: TCUser): Channel {
+export const userToChannel = (user: TCUser): Channel => {
   return {
     id: user.id,
     platform: "twitcasting",
@@ -116,4 +116,4 @@ export function userToChannel(user: TCUser): Channel {
       height: 300,
     },
   };
-}
+};

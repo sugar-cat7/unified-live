@@ -13,7 +13,7 @@ const CHANNEL_PATTERN =
  * @postcondition returns ResolvedUrl for TwitCasting URLs, null otherwise
  * @idempotency Safe — no side effects
  */
-export function matchTwitCastingUrl(url: string): ResolvedUrl | null {
+export const matchTwitCastingUrl = (url: string): ResolvedUrl | null => {
   const contentMatch = url.match(CONTENT_PATTERN);
   if (contentMatch?.[2]) {
     return {
@@ -33,4 +33,4 @@ export function matchTwitCastingUrl(url: string): ResolvedUrl | null {
   }
 
   return null;
-}
+};

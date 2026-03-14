@@ -6,7 +6,9 @@
 - Type definitions: Zod Schema First (`z.infer<typeof schema>`). No explicit interfaces.
 - Simplicity: Remove unnecessary code, only abstract when duplicated 3+ times, no premature optimization.
 - Architecture: discordeno pattern (factory functions, overridable function objects). No class inheritance hierarchies.
+- Function style: All functions use arrow function syntax (`const fn = () => {}`). No `function` declarations (avoid hoisting). Exception: TypeScript overload signatures require `function` (e.g., `Ok` in `result.ts`).
 - Function documentation: Write JSDoc with preconditions, postconditions, and idempotency for public functions.
+- Test files: Colocate with source (`foo.test.ts` next to `foo.ts`). No `__tests__/` folders. Use table-driven tests (`it.each`) as the default pattern.
 - Run `./scripts/post-edit-check.sh` after code changes.
 
 ## References

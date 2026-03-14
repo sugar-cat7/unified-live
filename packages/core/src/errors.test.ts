@@ -10,7 +10,7 @@ import {
   RateLimitError,
   UnifiedLiveError,
   ValidationError,
-} from "../errors";
+} from "./errors";
 
 describe("UnifiedLiveError hierarchy", () => {
   it.each([
@@ -291,38 +291,15 @@ describe("PlatformNotFoundError", () => {
 });
 
 describe("classifyNetworkError", () => {
-  it("classifies AbortError", () => {
-    const error = new DOMException("The operation was aborted", "AbortError");
-    expect(classifyNetworkError(error)).toBe("NETWORK_ABORT");
-  });
-
-  it("classifies abort in message", () => {
-    const error = new Error("Request aborted by user");
-    expect(classifyNetworkError(error)).toBe("NETWORK_ABORT");
-  });
-
-  it("classifies TimeoutError", () => {
-    const error = new DOMException("Signal timed out", "TimeoutError");
-    expect(classifyNetworkError(error)).toBe("NETWORK_TIMEOUT");
-  });
-
-  it("classifies timeout in message", () => {
-    const error = new Error("request timeout");
-    expect(classifyNetworkError(error)).toBe("NETWORK_TIMEOUT");
-  });
-
-  it("classifies DNS errors", () => {
-    const error = new Error("getaddrinfo ENOTFOUND example.com");
-    expect(classifyNetworkError(error)).toBe("NETWORK_DNS");
-  });
-
-  it("classifies dns in message", () => {
-    const error = new Error("DNS lookup failed");
-    expect(classifyNetworkError(error)).toBe("NETWORK_DNS");
-  });
-
-  it("defaults to NETWORK_CONNECTION", () => {
-    const error = new TypeError("fetch failed");
-    expect(classifyNetworkError(error)).toBe("NETWORK_CONNECTION");
+  it.each([
+    { name: "AbortError", error: new DOMException("The operation was aborted", "AbortError"), expected: "NETWORK_ABORT" },
+    { name: "abort in message", error: new Error("Request aborted by user"), expected: "NETWORK_ABORT" },
+    { name: "TimeoutError", error: new DOMException("Signal timed out", "TimeoutError"), expected: "NETWORK_TIMEOUT" },
+    { name: "timeout in message", error: new Error("request timeout"), expected: "NETWORK_TIMEOUT" },
+    { name: "DNS ENOTFOUND", error: new Error("getaddrinfo ENOTFOUND example.com"), expected: "NETWORK_DNS" },
+    { name: "dns in message", error: new Error("DNS lookup failed"), expected: "NETWORK_DNS" },
+    { name: "default connection", error: new TypeError("fetch failed"), expected: "NETWORK_CONNECTION" },
+  ])("classifies $name as $expected", ({ error, expected }) => {
+    expect(classifyNetworkError(error)).toBe(expected);
   });
 });

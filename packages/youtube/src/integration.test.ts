@@ -1,15 +1,15 @@
 import { Content, UnifiedClient } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createYouTubePlugin } from "../plugin";
+import { createYouTubePlugin } from "./plugin";
 
 /**
  * Integration test: Full consumer flow with mock fetch.
  * Tests the complete path: UnifiedClient.create -> createYouTubePlugin -> URL routing -> API call -> response mapping.
  */
 
-function createMockFetch(
+const createMockFetch = (
   handler: (url: string) => { body: unknown; status?: number },
-): typeof globalThis.fetch {
+): typeof globalThis.fetch => {
   return vi.fn(async (input: string | URL | Request) => {
     const url =
       typeof input === "string"
@@ -23,7 +23,7 @@ function createMockFetch(
       headers: { "Content-Type": "application/json" },
     });
   }) as unknown as typeof globalThis.fetch;
-}
+};
 
 const sampleVideoResponse = {
   items: [

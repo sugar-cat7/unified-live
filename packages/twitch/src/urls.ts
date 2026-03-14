@@ -12,7 +12,7 @@ const CHANNEL_PATTERN =
  * @postcondition returns ResolvedUrl for Twitch URLs, null otherwise
  * @idempotency Safe — no side effects
  */
-export function matchTwitchUrl(url: string): ResolvedUrl | null {
+export const matchTwitchUrl = (url: string): ResolvedUrl | null => {
   const contentMatch = url.match(CONTENT_PATTERN);
   if (contentMatch?.[1]) {
     return { platform: "twitch", type: "content", id: contentMatch[1] };
@@ -24,4 +24,4 @@ export function matchTwitchUrl(url: string): ResolvedUrl | null {
   }
 
   return null;
-}
+};

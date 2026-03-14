@@ -21,10 +21,10 @@ type TwitchResponse<T> = {
   pagination?: { cursor?: string };
 };
 
-export async function twitchGetContent(
+export const twitchGetContent = async (
   rest: RestManager,
   id: string,
-): Promise<Content> {
+): Promise<Content> => {
   const res = await rest.request<TwitchResponse<TwitchVideo>>({
     method: "GET",
     path: "/videos",
@@ -38,12 +38,12 @@ export async function twitchGetContent(
   }
 
   return videoToVideo(item);
-}
+};
 
-export async function twitchGetChannel(
+export const twitchGetChannel = async (
   rest: RestManager,
   id: string,
-): Promise<Channel> {
+): Promise<Channel> => {
   const query: Record<string, string> = {};
 
   // Numeric IDs use id param, login names use login param
@@ -66,12 +66,12 @@ export async function twitchGetChannel(
   }
 
   return userToChannel(item);
-}
+};
 
-export async function twitchGetLiveStreams(
+export const twitchGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> {
+): Promise<LiveStream[]> => {
   const res = await rest.request<TwitchResponse<TwitchStream>>({
     method: "GET",
     path: "/streams",
@@ -80,13 +80,13 @@ export async function twitchGetLiveStreams(
   });
 
   return res.data.data.filter((s) => s.type === "live").map(streamToLive);
-}
+};
 
-export async function twitchGetVideos(
+export const twitchGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
-): Promise<Page<Video>> {
+): Promise<Page<Video>> => {
   const query: Record<string, string> = {
     user_id: channelId,
     type: "archive",
@@ -107,12 +107,12 @@ export async function twitchGetVideos(
     items: res.data.data.map(videoToVideo),
     cursor: res.data.pagination?.cursor,
   };
-}
+};
 
-export async function twitchResolveArchive(
+export const twitchResolveArchive = async (
   rest: RestManager,
   live: LiveStream,
-): Promise<Video | null> {
+): Promise<Video | null> => {
   if (!live.sessionId) return null;
 
   const res = await rest.request<TwitchResponse<TwitchVideo>>({
@@ -128,4 +128,4 @@ export async function twitchResolveArchive(
 
   const match = res.data.data.find((v) => v.stream_id === live.sessionId);
   return match ? videoToVideo(match) : null;
-}
+};

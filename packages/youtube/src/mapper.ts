@@ -62,7 +62,7 @@ export type YTPlaylistItemResource = {
  * @precondition item has all required fields (snippet, contentDetails, statistics)
  * @postcondition returns LiveStream if currently live, Video otherwise
  */
-export function toContent(item: YTVideoResource): Content {
+export const toContent = (item: YTVideoResource): Content => {
   const thumb =
     item.snippet.thumbnails.high ??
     item.snippet.thumbnails.medium ??
@@ -118,7 +118,7 @@ export function toContent(item: YTVideoResource): Content {
     publishedAt: new Date(item.snippet.publishedAt),
     raw: item,
   } satisfies Video;
-}
+};
 
 /**
  * Convert a YouTube Channel resource to a unified Channel type.
@@ -127,7 +127,7 @@ export function toContent(item: YTVideoResource): Content {
  * @postcondition returns a Channel with thumbnail undefined if none available
  * @idempotency Safe — pure function
  */
-export function toChannel(item: YTChannelResource): Channel {
+export const toChannel = (item: YTChannelResource): Channel => {
   const thumbnail =
     item.snippet.thumbnails.high ??
     item.snippet.thumbnails.medium ??
@@ -142,7 +142,7 @@ export function toChannel(item: YTChannelResource): Channel {
       ? { url: thumbnail.url, width: thumbnail.width, height: thumbnail.height }
       : undefined,
   };
-}
+};
 
 /**
  * Parse an ISO 8601 duration string (e.g., "PT1H2M3S") into seconds.
@@ -151,7 +151,7 @@ export function toChannel(item: YTChannelResource): Channel {
  * @postcondition returns total seconds as a number >= 0
  * @idempotency Safe — pure function
  */
-export function parseDuration(duration: string): number {
+export const parseDuration = (duration: string): number => {
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
 
@@ -160,4 +160,4 @@ export function parseDuration(duration: string): number {
   const seconds = Number.parseInt(match[3] ?? "0", 10);
 
   return hours * 3600 + minutes * 60 + seconds;
-}
+};

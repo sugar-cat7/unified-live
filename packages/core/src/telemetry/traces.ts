@@ -12,9 +12,9 @@ const TRACER_NAME = "unified-live";
  * @postcondition returns a Tracer instance (possibly no-op)
  * @idempotency Safe — always returns the same tracer
  */
-export function getTracer(): Tracer {
+export const getTracer = (): Tracer => {
   return trace.getTracer(TRACER_NAME);
-}
+};
 
 /** Standard span attribute keys used by the SDK. */
 export const SpanAttributes = {

@@ -12,6 +12,7 @@
     "knip:fix": "knip --fix",
     "test": "turbo test:run",
     "test:run": "turbo test:run",
+    "test:coverage": "turbo test:coverage",
     "security-scan": "./scripts/security-scan.sh"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
     "textlint": "^15.5.2",
     "textlint-rule-preset-ja-technical-writing": "^12.0.2",
     "turbo": "2.6.3",
+    "vitest": "catalog:",
     "typescript": "catalog:"
   },
   "packageManager": "pnpm@10.24.0"

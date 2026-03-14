@@ -3,6 +3,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,8 +15,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.24.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -29,8 +30,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.24.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -49,8 +48,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.24.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -61,13 +58,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.24.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -75,5 +73,42 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Run tests
-        run: pnpm test:run
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+
+      - uses: k1LoW/octocov-action@v1
+
+  bundle-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Report bundle size
+        id: bundle
+        run: |
+          report=$(bash scripts/report-bundle-size.sh)
+          delimiter="BUNDLE_REPORT_$(date +%s)"
+          {
+            echo "report<<${delimiter}"
+            echo "$report"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment bundle size on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: bundle-size
+          message: ${{ steps.bundle.outputs.report }}

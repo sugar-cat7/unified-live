@@ -21,7 +21,8 @@
   "scripts": {
     "build": "tsdown",
     "type-check": "tsc --noEmit",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@unified-live/core": "workspace:*"
@@ -30,6 +31,7 @@
     "@types/node": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "vitest": "catalog:"
   }
 }

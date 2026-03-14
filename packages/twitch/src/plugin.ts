@@ -35,7 +35,7 @@ const parseTwitchRateLimitHeaders = createRateLimitHeaderParser({
  * @postcondition returns a PlatformPlugin that handles Twitch URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
-export function createTwitchPlugin(config: TwitchPluginConfig): PlatformPlugin {
+export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin => {
   return PlatformPlugin.create(
     {
       name: "twitch",
@@ -62,4 +62,4 @@ export function createTwitchPlugin(config: TwitchPluginConfig): PlatformPlugin {
       resolveArchive: twitchResolveArchive,
     },
   );
-}
+};

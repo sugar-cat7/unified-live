@@ -1,0 +1,13 @@
+coverage:
+  paths:
+    - packages/core/coverage/lcov.info
+    - packages/youtube/coverage/lcov.info
+    - packages/twitch/coverage/lcov.info
+    - packages/twitcasting/coverage/lcov.info
+
+comment:
+  enable: true
+  hideFooterLink: false
+
+summary:
+  enable: true

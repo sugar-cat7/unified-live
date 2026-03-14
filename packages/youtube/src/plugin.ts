@@ -27,9 +27,9 @@ export type YouTubePluginConfig = {
  * @postcondition returns a PlatformPlugin that handles YouTube URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
-export function createYouTubePlugin(
+export const createYouTubePlugin = (
   config: YouTubePluginConfig,
-): PlatformPlugin {
+): PlatformPlugin => {
   const quotaStrategy = createYouTubeQuotaStrategy(config.quota?.dailyLimit);
 
   return PlatformPlugin.create(
@@ -93,4 +93,4 @@ export function createYouTubePlugin(
       resolveArchive: youtubeResolveArchive,
     },
   );
-}
+};

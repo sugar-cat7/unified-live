@@ -21,10 +21,10 @@ type YTListResponse<T> = {
   nextPageToken?: string;
 };
 
-export async function youtubeGetContent(
+export const youtubeGetContent = async (
   rest: RestManager,
   id: string,
-): Promise<Content> {
+): Promise<Content> => {
   const res = await rest.request<YTListResponse<YTVideoResource>>({
     method: "GET",
     path: "/videos",
@@ -41,12 +41,12 @@ export async function youtubeGetContent(
   }
 
   return toContent(item);
-}
+};
 
-export async function youtubeGetChannel(
+export const youtubeGetChannel = async (
   rest: RestManager,
   id: string,
-): Promise<Channel> {
+): Promise<Channel> => {
   const query: Record<string, string> = {
     part: "snippet,contentDetails",
   };
@@ -72,12 +72,12 @@ export async function youtubeGetChannel(
   }
 
   return toChannel(item);
-}
+};
 
-export async function youtubeGetLiveStreams(
+export const youtubeGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> {
+): Promise<LiveStream[]> => {
   const res = await rest.request<YTListResponse<{ id: { videoId: string } }>>({
     method: "GET",
     path: "/search",
@@ -109,13 +109,13 @@ export async function youtubeGetLiveStreams(
   return videosRes.data.items
     .map(toContent)
     .filter((c): c is LiveStream => c.type === "live");
-}
+};
 
-export async function youtubeGetVideos(
+export const youtubeGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
-): Promise<Page<Video>> {
+): Promise<Page<Video>> => {
   const channelRes = await rest.request<YTListResponse<YTChannelResource>>({
     method: "GET",
     path: "/channels",
@@ -178,12 +178,12 @@ export async function youtubeGetVideos(
     cursor: playlistRes.data.nextPageToken,
     total: playlistRes.data.pageInfo.totalResults,
   };
-}
+};
 
-export async function youtubeResolveArchive(
+export const youtubeResolveArchive = async (
   rest: RestManager,
   live: LiveStream,
-): Promise<Video | null> {
+): Promise<Video | null> => {
   const content = await youtubeGetContent(rest, live.id);
   return content.type === "video" ? content : null;
-}
+};

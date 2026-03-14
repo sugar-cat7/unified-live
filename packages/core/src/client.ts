@@ -118,15 +118,15 @@ export const UnifiedClient = {
       }
     }
 
-    function getPlugin(name: string): PlatformPlugin {
+    const getPlugin = (name: string): PlatformPlugin => {
       const plugin = plugins.get(name);
       if (!plugin) {
         throw new PlatformNotFoundError(name);
       }
       return plugin;
-    }
+    };
 
-    function matchUrl(url: string): ResolvedUrl | null {
+    const matchUrl = (url: string): ResolvedUrl | null => {
       for (const plugin of plugins.values()) {
         const resolved = plugin.match(url);
         if (resolved) {
@@ -134,7 +134,7 @@ export const UnifiedClient = {
         }
       }
       return null;
-    }
+    };
 
     const client: UnifiedClient = {
       register(plugin: PlatformPlugin): void {

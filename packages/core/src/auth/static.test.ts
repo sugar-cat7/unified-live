@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { TokenManager } from "../../auth/types";
-import { AuthenticationError } from "../../errors";
+import { TokenManager } from "./types";
+import { AuthenticationError } from "../errors";
 
 describe("TokenManager.static", () => {
   it("returns the provided header", async () => {

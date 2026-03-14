@@ -259,7 +259,7 @@ export class PlatformNotFoundError extends UnifiedLiveError {
  * @postcondition returns one of NETWORK_ABORT, NETWORK_TIMEOUT, NETWORK_DNS, NETWORK_CONNECTION
  * @idempotent same error always produces same code
  */
-export function classifyNetworkError(error: Error): NetworkCode {
+export const classifyNetworkError = (error: Error): NetworkCode => {
   const msg = error.message.toLowerCase();
   if (error.name === "AbortError" || msg.includes("abort"))
     return "NETWORK_ABORT";
@@ -267,4 +267,4 @@ export function classifyNetworkError(error: Error): NetworkCode {
     return "NETWORK_TIMEOUT";
   if (msg.includes("dns") || msg.includes("getaddrinfo")) return "NETWORK_DNS";
   return "NETWORK_CONNECTION";
-}
+};

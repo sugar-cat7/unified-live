@@ -45,7 +45,7 @@ export type TwitchUser = {
  * @precondition stream.type === "live"
  * @postcondition returns LiveStream with sessionId set to stream.id
  */
-export function streamToLive(stream: TwitchStream): LiveStream {
+export const streamToLive = (stream: TwitchStream): LiveStream => {
   return {
     id: stream.id,
     platform: "twitch",
@@ -63,7 +63,7 @@ export function streamToLive(stream: TwitchStream): LiveStream {
     startedAt: new Date(stream.started_at),
     raw: stream,
   };
-}
+};
 
 /**
  * Convert a Twitch Video to a unified Video.
@@ -71,7 +71,7 @@ export function streamToLive(stream: TwitchStream): LiveStream {
  * @precondition video has all required fields
  * @postcondition returns Video with sessionId set to stream_id (if available)
  */
-export function videoToVideo(video: TwitchVideo): Video {
+export const videoToVideo = (video: TwitchVideo): Video => {
   return {
     id: video.id,
     platform: "twitch",
@@ -90,12 +90,12 @@ export function videoToVideo(video: TwitchVideo): Video {
     publishedAt: new Date(video.published_at),
     raw: video,
   };
-}
+};
 
 /**
  * Convert a Twitch User to a unified Channel.
  */
-export function userToChannel(user: TwitchUser): Channel {
+export const userToChannel = (user: TwitchUser): Channel => {
   return {
     id: user.id,
     platform: "twitch",
@@ -107,14 +107,14 @@ export function userToChannel(user: TwitchUser): Channel {
       height: 300,
     },
   };
-}
+};
 
 /**
  * Parse Twitch duration format (e.g., "3h2m1s", "45m30s", "30s") into seconds.
  *
  * @idempotency Safe — pure function
  */
-export function parseTwitchDuration(duration: string): number {
+export const parseTwitchDuration = (duration: string): number => {
   const match = duration.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/);
   if (!match) return 0;
 
@@ -123,13 +123,13 @@ export function parseTwitchDuration(duration: string): number {
   const seconds = Number.parseInt(match[3] ?? "0", 10);
 
   return hours * 3600 + minutes * 60 + seconds;
-}
+};
 
-function formatThumbnailUrl(templateUrl: string) {
+const formatThumbnailUrl = (templateUrl: string) => {
   const url = templateUrl
     .replace("%{width}", "640")
     .replace("%{height}", "360")
     .replace("{width}", "640")
     .replace("{height}", "360");
   return { url, width: 640, height: 360 };
-}
+};

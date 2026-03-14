@@ -9,7 +9,7 @@ import {
   resolvedUrlSchema,
   thumbnailSchema,
   videoSchema,
-} from "../types";
+} from "./types";
 
 const validThumbnail = {
   url: "https://example.com/thumb.jpg",

@@ -57,9 +57,7 @@ describe("YouTube Integration", () => {
     const plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContent(
-      "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // codeql[js/incomplete-hostname-regexp] — URL literal, not a regex
-    );
+    const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");

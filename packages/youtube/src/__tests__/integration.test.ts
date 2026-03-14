@@ -1,6 +1,6 @@
 import { Content, UnifiedClient } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createYouTubePlugin } from "../plugin.js";
+import { createYouTubePlugin } from "../plugin";
 
 /**
  * Integration test: Full consumer flow with mock fetch.

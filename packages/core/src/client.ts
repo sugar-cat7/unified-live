@@ -1,5 +1,5 @@
-import { PlatformNotFoundError, ValidationError } from "./errors.js";
-import type { PlatformPlugin } from "./plugin.js";
+import { PlatformNotFoundError, ValidationError } from "./errors";
+import type { PlatformPlugin } from "./plugin";
 import type {
   Channel,
   Content,
@@ -7,7 +7,7 @@ import type {
   Page,
   ResolvedUrl,
   Video,
-} from "./types.js";
+} from "./types";
 
 export type UnifiedClientOptions = {
   plugins?: PlatformPlugin[];

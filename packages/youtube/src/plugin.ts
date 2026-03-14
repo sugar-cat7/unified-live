@@ -5,9 +5,9 @@ import {
   youtubeGetLiveStreams,
   youtubeGetVideos,
   youtubeResolveArchive,
-} from "./methods.js";
-import { createYouTubeQuotaStrategy } from "./quota.js";
-import { matchYouTubeUrl } from "./urls.js";
+} from "./methods";
+import { createYouTubeQuotaStrategy } from "./quota";
+import { matchYouTubeUrl } from "./urls";
 
 const YOUTUBE_BASE_URL = "https://www.googleapis.com/youtube/v3";
 

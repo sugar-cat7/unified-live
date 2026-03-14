@@ -3,15 +3,15 @@ import {
   createTokenBucketStrategy,
   PlatformPlugin,
 } from "@unified-live/core";
-import { createClientCredentialsTokenManager } from "./auth.js";
+import { createClientCredentialsTokenManager } from "./auth";
 import {
   twitchGetChannel,
   twitchGetContent,
   twitchGetLiveStreams,
   twitchGetVideos,
   twitchResolveArchive,
-} from "./methods.js";
-import { matchTwitchUrl } from "./urls.js";
+} from "./methods";
+import { matchTwitchUrl } from "./urls";
 
 const TWITCH_BASE_URL = "https://api.twitch.tv/helix";
 

@@ -1,4 +1,4 @@
-import { AuthenticationError } from "../errors.js";
+import { AuthenticationError } from "../errors";
 
 /**
  * Manages authentication credentials for a platform.

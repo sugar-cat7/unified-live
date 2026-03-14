@@ -6,7 +6,7 @@ From `@unified-live/core`:
 
 ```ts
 // Type
-export type { ErrorCode, ErrorContext } from "./errors.js";
+export type { ErrorCode, ErrorContext } from "./errors";
 
 // Classes
 export {
@@ -19,10 +19,10 @@ export {
   ParseError,          // new
   ValidationError,     // new
   PlatformNotFoundError,
-} from "./errors.js";
+} from "./errors";
 
 // Utility
-export { classifyNetworkError } from "./errors.js";
+export { classifyNetworkError } from "./errors";
 ```
 
 ## Consumer Usage Examples

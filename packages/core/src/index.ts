@@ -1,12 +1,12 @@
-export { TokenManager } from "./auth/types.js";
-export type { UnifiedClientOptions } from "./client.js";
-export { UnifiedClient } from "./client.js";
+export { TokenManager } from "./auth/types";
+export type { UnifiedClientOptions } from "./client";
+export { UnifiedClient } from "./client";
 export type {
   ErrorCode,
   ErrorContext,
   NetworkCode,
   QuotaDetails,
-} from "./errors.js";
+} from "./errors";
 export {
   AuthenticationError,
   classifyNetworkError,
@@ -18,31 +18,31 @@ export {
   RateLimitError,
   UnifiedLiveError,
   ValidationError,
-} from "./errors.js";
-export type { PluginDefinition, PluginMethods } from "./plugin.js";
-export { PlatformPlugin } from "./plugin.js";
-export type { TokenBucketConfig } from "./rest/bucket.js";
-export { createTokenBucketStrategy } from "./rest/bucket.js";
-export type { RestManager } from "./rest/manager.js";
-export { createRestManager } from "./rest/manager.js";
-export type { QuotaBudgetConfig } from "./rest/quota.js";
-export { createQuotaBudgetStrategy } from "./rest/quota.js";
+} from "./errors";
+export type { PluginDefinition, PluginMethods } from "./plugin";
+export { PlatformPlugin } from "./plugin";
+export type { TokenBucketConfig } from "./rest/bucket";
+export { createTokenBucketStrategy } from "./rest/bucket";
+export type { RestManager } from "./rest/manager";
+export { createRestManager } from "./rest/manager";
+export type { QuotaBudgetConfig } from "./rest/quota";
+export { createQuotaBudgetStrategy } from "./rest/quota";
 export type {
   RateLimitHandle,
   RateLimitStatus,
   RateLimitStrategy,
-} from "./rest/strategy.js";
+} from "./rest/strategy";
 export type {
   RateLimitInfo,
   RestManagerOptions,
   RestRequest,
   RestResponse,
   RetryConfig,
-} from "./rest/types.js";
-export { createRateLimitHeaderParser } from "./rest/types.js";
-export type { ErrResult, OkResult, Result } from "./result.js";
-export { Err, Ok, unwrap, wrap } from "./result.js";
-export { getTracer, SpanAttributes } from "./telemetry/traces.js";
+} from "./rest/types";
+export { createRateLimitHeaderParser } from "./rest/types";
+export type { ErrResult, OkResult, Result } from "./result";
+export { Err, Ok, unwrap, wrap } from "./result";
+export { getTracer, SpanAttributes } from "./telemetry/traces";
 export type {
   BroadcastSession,
   Channel,
@@ -50,7 +50,7 @@ export type {
   Page,
   ResolvedUrl,
   Video,
-} from "./types.js";
+} from "./types";
 export {
   broadcastSessionSchema,
   Content,
@@ -61,4 +61,4 @@ export {
   resolvedUrlSchema,
   thumbnailSchema,
   videoSchema,
-} from "./types.js";
+} from "./types";

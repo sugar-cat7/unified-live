@@ -1,11 +1,11 @@
-export { createBasicAuthTokenManager } from "./auth.js";
-export type { TCMovie, TCUser } from "./mapper.js";
+export { createBasicAuthTokenManager } from "./auth";
+export type { TCMovie, TCUser } from "./mapper";
 export {
   movieToContent,
   movieToLive,
   movieToVideo,
   userToChannel,
-} from "./mapper.js";
-export type { TwitCastingPluginConfig } from "./plugin.js";
-export { createTwitCastingPlugin } from "./plugin.js";
-export { matchTwitCastingUrl } from "./urls.js";
+} from "./mapper";
+export type { TwitCastingPluginConfig } from "./plugin";
+export { createTwitCastingPlugin } from "./plugin";
+export { matchTwitCastingUrl } from "./urls";

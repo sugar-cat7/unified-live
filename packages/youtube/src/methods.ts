@@ -13,7 +13,7 @@ import {
   type YTChannelResource,
   type YTPlaylistItemResource,
   type YTVideoResource,
-} from "./mapper.js";
+} from "./mapper";
 
 type YTListResponse<T> = {
   items: T[];

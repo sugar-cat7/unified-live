@@ -1,10 +1,10 @@
-export { createClientCredentialsTokenManager } from "./auth.js";
+export { createClientCredentialsTokenManager } from "./auth";
 export type {
   TwitchStream,
   TwitchUser,
   TwitchVideo,
-} from "./mapper.js";
-export { parseTwitchDuration, userToChannel, videoToVideo } from "./mapper.js";
-export type { TwitchPluginConfig } from "./plugin.js";
-export { createTwitchPlugin } from "./plugin.js";
-export { matchTwitchUrl } from "./urls.js";
+} from "./mapper";
+export { parseTwitchDuration, userToChannel, videoToVideo } from "./mapper";
+export type { TwitchPluginConfig } from "./plugin";
+export { createTwitchPlugin } from "./plugin";
+export { matchTwitchUrl } from "./urls";

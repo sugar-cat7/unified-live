@@ -5,7 +5,7 @@ import {
   QuotaExhaustedError,
 } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createYouTubePlugin } from "../plugin.js";
+import { createYouTubePlugin } from "../plugin";
 
 function createMockFetch(
   responses: Array<{

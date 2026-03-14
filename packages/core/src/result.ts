@@ -1,4 +1,4 @@
-import type { UnifiedLiveError } from "./errors.js";
+import type { UnifiedLiveError } from "./errors";
 
 export type OkResult<V> = {
   val: V;

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { TwitchStream, TwitchUser, TwitchVideo } from "../mapper.js";
+import type { TwitchStream, TwitchUser, TwitchVideo } from "../mapper";
 import {
   parseTwitchDuration,
   streamToLive,
   userToChannel,
   videoToVideo,
-} from "../mapper.js";
+} from "../mapper";
 
 const mockStream: TwitchStream = {
   id: "stream123",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { YTChannelResource, YTVideoResource } from "../mapper.js";
-import { parseDuration, toChannel, toContent } from "../mapper.js";
+import type { YTChannelResource, YTVideoResource } from "../mapper";
+import { parseDuration, toChannel, toContent } from "../mapper";
 
 const baseVideoResource: YTVideoResource = {
   id: "dQw4w9WgXcQ",

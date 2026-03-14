@@ -3,9 +3,9 @@ import {
   PlatformPlugin,
   type PluginDefinition,
   type PluginMethods,
-} from "../plugin.js";
-import type { RateLimitHandle, RateLimitStrategy } from "../rest/strategy.js";
-import type { ResolvedUrl } from "../types.js";
+} from "../plugin";
+import type { RateLimitHandle, RateLimitStrategy } from "../rest/strategy";
+import type { ResolvedUrl } from "../types";
 
 function createMockStrategy(): RateLimitStrategy {
   return {

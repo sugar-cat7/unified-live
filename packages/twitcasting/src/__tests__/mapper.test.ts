@@ -6,7 +6,7 @@ import {
   type TCMovie,
   type TCUser,
   userToChannel,
-} from "../mapper.js";
+} from "../mapper";
 
 const mockUser: TCUser = {
   id: "user456",

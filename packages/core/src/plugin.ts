@@ -1,7 +1,7 @@
-import type { TokenManager } from "./auth/types.js";
-import { createRestManager, type RestManager } from "./rest/manager.js";
-import type { RateLimitStrategy } from "./rest/strategy.js";
-import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types.js";
+import type { TokenManager } from "./auth/types";
+import { createRestManager, type RestManager } from "./rest/manager";
+import type { RateLimitStrategy } from "./rest/strategy";
+import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
 import type {
   Channel,
   Content,
@@ -9,7 +9,7 @@ import type {
   Page,
   ResolvedUrl,
   Video,
-} from "./types.js";
+} from "./types";
 
 /**
  * Declarative configuration for creating a PlatformPlugin via `PlatformPlugin.create()`.

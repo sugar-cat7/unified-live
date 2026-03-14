@@ -3,13 +3,13 @@ import {
   AuthenticationError,
   NotFoundError,
   UnifiedLiveError,
-} from "../../errors.js";
-import { createRestManager } from "../../rest/manager.js";
+} from "../../errors";
+import { createRestManager } from "../../rest/manager";
 import type {
   RateLimitHandle,
   RateLimitStrategy,
-} from "../../rest/strategy.js";
-import type { RestRequest } from "../../rest/types.js";
+} from "../../rest/strategy";
+import type { RestRequest } from "../../rest/types";
 
 function createMockStrategy(): RateLimitStrategy {
   return {

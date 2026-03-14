@@ -1,10 +1,10 @@
-import { QuotaExhaustedError } from "../errors.js";
+import { QuotaExhaustedError } from "../errors";
 import type {
   RateLimitHandle,
   RateLimitStatus,
   RateLimitStrategy,
-} from "./strategy.js";
-import type { RestRequest } from "./types.js";
+} from "./strategy";
+import type { RestRequest } from "./types";
 
 export type QuotaBudgetConfig = {
   dailyLimit?: number;

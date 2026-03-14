@@ -1,4 +1,4 @@
-import type { RestRequest } from "./types.js";
+import type { RestRequest } from "./types";
 
 export type RateLimitHandle = {
   /** Called after successful response — updates state from response headers. */

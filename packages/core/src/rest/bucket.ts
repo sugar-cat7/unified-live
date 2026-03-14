@@ -2,8 +2,8 @@ import type {
   RateLimitHandle,
   RateLimitStatus,
   RateLimitStrategy,
-} from "./strategy.js";
-import type { RateLimitInfo, RestRequest } from "./types.js";
+} from "./strategy";
+import type { RateLimitInfo, RestRequest } from "./types";
 
 export type TokenBucketConfig = {
   global: { requests: number; perMs: number };

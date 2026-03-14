@@ -95,14 +95,17 @@ unified-live/
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "types": {
+        "import": "./dist/index.d.mts",
+        "require": "./dist/index.d.cts"
+      },
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     }
   },
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "files": ["dist"],
   "peerDependencies": {
     "@opentelemetry/api": "^1.0.0"
@@ -113,7 +116,7 @@ unified-live/
     }
   },
   "devDependencies": {
-    "tsup": "catalog:",
+    "tsdown": "catalog:",
     "typescript": "catalog:",
     "zod": "catalog:",
     "vitest": "catalog:"
@@ -130,20 +133,23 @@ unified-live/
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "types": {
+        "import": "./dist/index.d.mts",
+        "require": "./dist/index.d.cts"
+      },
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     }
   },
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "files": ["dist"],
   "dependencies": {
     "@unified-live/core": "workspace:*"
   },
   "devDependencies": {
-    "tsup": "catalog:",
+    "tsdown": "catalog:",
     "typescript": "catalog:",
     "zod": "catalog:",
     "vitest": "catalog:"
@@ -159,19 +165,19 @@ packages:
 catalog:
   '@opentelemetry/api': ^1.9.0
   '@types/node': 20.19.25
-  tsup: 8.5.1
+  tsdown: 0.21.2
   typescript: 5.9.3
-  vitest: ^3.0.0
+  vitest: 3.2.3
   zod: 4.2.1
 ```
 
 ## Build Configuration
 
-### tsup (per package)
+### tsdown (per package)
 
 ```ts
-// packages/core/tsup.config.ts
-import { defineConfig } from "tsup";
+// packages/core/tsdown.config.ts
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -179,7 +185,9 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: ["@opentelemetry/api"],
+  deps: {
+    neverBundle: ["@opentelemetry/api"],
+  },
 });
 ```
 

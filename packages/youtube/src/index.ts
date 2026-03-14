@@ -2,9 +2,9 @@ export type {
   YTChannelResource,
   YTPlaylistItemResource,
   YTVideoResource,
-} from "./mapper.js";
-export { parseDuration, toChannel, toContent } from "./mapper.js";
-export type { YouTubePluginConfig } from "./plugin.js";
-export { createYouTubePlugin } from "./plugin.js";
-export { createYouTubeQuotaStrategy, YOUTUBE_COST_MAP } from "./quota.js";
-export { matchYouTubeUrl } from "./urls.js";
+} from "./mapper";
+export { parseDuration, toChannel, toContent } from "./mapper";
+export type { YouTubePluginConfig } from "./plugin";
+export { createYouTubePlugin } from "./plugin";
+export { createYouTubeQuotaStrategy, YOUTUBE_COST_MAP } from "./quota";
+export { matchYouTubeUrl } from "./urls";

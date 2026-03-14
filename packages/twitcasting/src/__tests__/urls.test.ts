@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchTwitCastingUrl } from "../urls.js";
+import { matchTwitCastingUrl } from "../urls";
 
 describe("matchTwitCastingUrl", () => {
   it.each([

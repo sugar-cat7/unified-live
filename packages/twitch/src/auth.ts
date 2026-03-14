@@ -35,17 +35,18 @@ export function createClientCredentialsTokenManager(config: {
         }),
       });
     } catch (e) {
-      throw new AuthenticationError(
-        "twitch",
-        `Token fetch failed: ${(e as Error).message}`,
-      );
+      throw new AuthenticationError("twitch", {
+        code: "AUTHENTICATION_INVALID",
+        message: `Token fetch failed: ${(e as Error).message}`,
+        cause: e as Error,
+      });
     }
 
     if (!res.ok) {
-      throw new AuthenticationError(
-        "twitch",
-        `Token fetch failed: ${res.status}`,
-      );
+      throw new AuthenticationError("twitch", {
+        code: "AUTHENTICATION_INVALID",
+        message: `Token fetch failed: ${res.status}`,
+      });
     }
 
     const data = (await res.json()) as TwitchTokenResponse;

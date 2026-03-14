@@ -244,35 +244,24 @@ createTwitCastingPlugin({
 
 ## Error Types
 
+See `docs/plan/error-hierarchy/01_TYPES.md` for the full specification.
+
 ```ts
 class UnifiedLiveError extends Error {
-  platform: string;
-  code: string;
+  readonly code: ErrorCode;      // Typed string literal union (15 codes)
+  readonly context: ErrorContext; // { platform, method?, path?, status?, resourceId? }
+  readonly cause?: Error;        // ES2022 Error.cause chain
+  get platform(): string;        // Backward-compat getter → context.platform
 }
 
-/** YouTube daily quota exhausted */
-class QuotaExhaustedError extends UnifiedLiveError {
-  details: {
-    consumed: number;
-    limit: number;
-    resetsAt: Date;
-    requestedCost: number;
-  };
-}
-
-/** Credentials invalid or expired */
-class AuthenticationError extends UnifiedLiveError {}
-
-/** Rate limit exceeded after max retries */
-class RateLimitError extends UnifiedLiveError {
-  retryAfter?: number;
-}
-
-/** Platform not registered */
-class PlatformNotFoundError extends UnifiedLiveError {}
-
-/** Resource not found on platform */
-class NotFoundError extends UnifiedLiveError {}
+class NotFoundError extends UnifiedLiveError {}           // code: "NOT_FOUND"
+class AuthenticationError extends UnifiedLiveError {}     // code: "AUTHENTICATION_INVALID" | "AUTHENTICATION_EXPIRED"
+class RateLimitError extends UnifiedLiveError {}          // code: "RATE_LIMIT_EXCEEDED"
+class QuotaExhaustedError extends UnifiedLiveError {}     // code: "QUOTA_EXHAUSTED", details: QuotaDetails
+class NetworkError extends UnifiedLiveError {}            // code: "NETWORK_TIMEOUT" | "NETWORK_CONNECTION" | "NETWORK_DNS" | "NETWORK_ABORT"
+class ParseError extends UnifiedLiveError {}              // code: "PARSE_JSON" | "PARSE_RESPONSE"
+class ValidationError extends UnifiedLiveError {}         // code: "VALIDATION_INVALID_URL" | "VALIDATION_INVALID_INPUT"
+class PlatformNotFoundError extends UnifiedLiveError {}   // code: "PLATFORM_NOT_FOUND"
 ```
 
 ### Error Handling

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createClient } from "../client.js";
-import { PlatformNotFoundError } from "../errors.js";
+import { PlatformNotFoundError, ValidationError } from "../errors.js";
 import type { PlatformPlugin } from "../plugin.js";
 import type { Channel, Content } from "../types.js";
 
@@ -113,6 +113,17 @@ describe("createClient", () => {
     const content = await client.getContent("https://youtube.com/watch?v=abc");
     expect(content.platform).toBe("youtube");
     expect(plugin.getContent).toHaveBeenCalledWith("test-id");
+
+    client.dispose();
+  });
+
+  it("getContent throws ValidationError on empty URL", async () => {
+    const client = createClient();
+
+    await expect(client.getContent("")).rejects.toThrow(ValidationError);
+    await expect(client.getContent("")).rejects.toThrow(
+      "URL must be a non-empty string",
+    );
 
     client.dispose();
   });

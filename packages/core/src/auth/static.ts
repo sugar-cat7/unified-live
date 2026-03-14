@@ -13,10 +13,10 @@ export function createStaticTokenManager(header: string): TokenManager {
   return {
     getAuthHeader: () => Promise.resolve(header),
     invalidate() {
-      throw new AuthenticationError(
-        "unknown",
-        "Static token invalidated. Check credentials.",
-      );
+      throw new AuthenticationError("unknown", {
+        code: "AUTHENTICATION_EXPIRED",
+        message: "Static token invalidated. Check credentials.",
+      });
     },
   };
 }

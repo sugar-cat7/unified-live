@@ -29,7 +29,7 @@ describe("wrap", () => {
   it("returns Ok for a resolved promise", async () => {
     const result = await wrap(
       Promise.resolve("hello"),
-      (e) => new UnifiedLiveError(e.message, "test", "UNKNOWN"),
+      (e) => new UnifiedLiveError(e.message, "INTERNAL", { platform: "test" }),
     );
     expect(result.val).toBe("hello");
     expect(result.err).toBeUndefined();
@@ -38,7 +38,7 @@ describe("wrap", () => {
   it("returns Err for a rejected promise", async () => {
     const result = await wrap(
       Promise.reject(new Error("boom")),
-      (e) => new UnifiedLiveError(e.message, "test", "UNKNOWN"),
+      (e) => new UnifiedLiveError(e.message, "INTERNAL", { platform: "test" }),
     );
     expect(result.err).toBeInstanceOf(UnifiedLiveError);
     expect(result.err?.message).toBe("boom");

@@ -135,8 +135,10 @@ export const toChannel = (item: YTChannelResource): Channel => {
  * @postcondition returns total seconds as a number >= 0
  * @idempotency Safe — pure function
  */
+const ISO_8601_DURATION = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+
 export const parseDuration = (duration: string): number => {
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  const match = duration.match(ISO_8601_DURATION);
   if (!match) return 0;
 
   const hours = Number.parseInt(match[1] ?? "0", 10);

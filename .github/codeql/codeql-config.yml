@@ -2,3 +2,4 @@ paths-ignore:
   - "**/*.test.ts"
   - "**/*.spec.ts"
   - scripts
+  - examples

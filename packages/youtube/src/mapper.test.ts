@@ -84,26 +84,15 @@ describe("toContent", () => {
     });
   });
 
-  it("throws when video has no channelId", () => {
-    const noChannelId: YTVideoResource = {
+  it.each([
+    { field: "channelId", override: { channelId: undefined }, error: "missing channelId" },
+    { field: "publishedAt", override: { publishedAt: undefined }, error: "missing publishedAt" },
+  ])("throws when video has no $field", ({ override, error }) => {
+    const resource: YTVideoResource = {
       ...baseVideoResource,
-      snippet: {
-        ...baseVideoResource.snippet,
-        channelId: undefined,
-      },
+      snippet: { ...baseVideoResource.snippet, ...override },
     };
-    expect(() => toContent(noChannelId)).toThrow("missing channelId");
-  });
-
-  it("throws when video has no publishedAt", () => {
-    const noPublishedAt: YTVideoResource = {
-      ...baseVideoResource,
-      snippet: {
-        ...baseVideoResource.snippet,
-        publishedAt: undefined,
-      },
-    };
-    expect(() => toContent(noPublishedAt)).toThrow("missing publishedAt");
+    expect(() => toContent(resource)).toThrow(error);
   });
 
   it("throws when video has no thumbnail at all", () => {

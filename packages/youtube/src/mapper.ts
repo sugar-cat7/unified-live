@@ -1,59 +1,24 @@
 import type { Channel, Content, LiveStream, Video } from "@unified-live/core";
 import { ParseError } from "@unified-live/core";
+import type { components } from "./generated/youtube-api";
 
-/** Subset of YouTube Data API v3 Video resource fields actually used. */
-export type YTVideoResource = {
-  id: string;
-  snippet: {
-    title: string;
-    channelId: string;
-    channelTitle: string;
-    thumbnails: {
-      high?: { url: string; width: number; height: number };
-      medium?: { url: string; width: number; height: number };
-      default?: { url: string; width: number; height: number };
-    };
-    liveBroadcastContent: "live" | "upcoming" | "none";
-    publishedAt: string;
-  };
-  contentDetails: {
-    duration: string; // ISO 8601 (e.g., "PT1H2M3S")
-  };
-  statistics: {
-    viewCount: string;
-  };
-  liveStreamingDetails?: {
-    actualStartTime?: string;
-    concurrentViewers?: string;
-  };
-};
+export type Schemas = components["schemas"];
 
-/** Subset of YouTube Data API v3 Channel resource fields actually used. */
-export type YTChannelResource = {
-  id: string;
-  snippet: {
-    title: string;
-    thumbnails: {
-      high?: { url: string; width: number; height: number };
-      medium?: { url: string; width: number; height: number };
-      default?: { url: string; width: number; height: number };
-    };
-    customUrl?: string;
-  };
-  contentDetails: {
-    relatedPlaylists: {
-      uploads: string;
-    };
-  };
-};
+/** YouTube Data API v3 Video resource (generated from Discovery Document). */
+export type YTVideoResource = Schemas["Video"];
 
-/** Subset of YouTube Data API v3 PlaylistItem resource fields. */
-export type YTPlaylistItemResource = {
-  snippet: {
-    resourceId: {
-      videoId: string;
-    };
-  };
+/** YouTube Data API v3 Channel resource (generated from Discovery Document). */
+export type YTChannelResource = Schemas["Channel"];
+
+/** YouTube Data API v3 PlaylistItem resource (generated from Discovery Document). */
+export type YTPlaylistItemResource = Schemas["PlaylistItem"];
+
+const pickThumbnail = (
+  thumbnails: Schemas["ThumbnailDetails"] | undefined,
+): { url: string; width: number; height: number } | undefined => {
+  const thumb = thumbnails?.high ?? thumbnails?.medium ?? thumbnails?.default;
+  if (!thumb?.url || thumb.width == null || thumb.height == null) return undefined;
+  return { url: thumb.url, width: thumb.width, height: thumb.height };
 };
 
 /**
@@ -61,60 +26,68 @@ export type YTPlaylistItemResource = {
  *
  * @param item - YouTube video resource from the API
  * @returns unified Content (LiveStream if live, Video otherwise)
- * @precondition item has all required fields (snippet, contentDetails, statistics)
+ * @throws ParseError if required fields (id, snippet, contentDetails, statistics) are missing
+ * @precondition item was fetched with part=snippet,contentDetails,statistics,liveStreamingDetails
  * @postcondition returns LiveStream if currently live, Video otherwise
  */
 export const toContent = (item: YTVideoResource): Content => {
-  const thumb =
-    item.snippet.thumbnails.high ??
-    item.snippet.thumbnails.medium ??
-    item.snippet.thumbnails.default;
-  if (!thumb) {
+  const { id, snippet, contentDetails, statistics, liveStreamingDetails } = item;
+  if (!id || !snippet || !contentDetails || !statistics) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message: "YouTube resource has no thumbnail",
+      message: "YouTube video resource missing required parts (id, snippet, contentDetails, statistics)",
     });
   }
-  const thumbnail = {
-    url: thumb.url,
-    width: thumb.width,
-    height: thumb.height,
-  };
+
+  const channelId = snippet.channelId;
+  const publishedAt = snippet.publishedAt;
+  if (!channelId) {
+    throw new ParseError("youtube", "PARSE_RESPONSE", { message: "YouTube video resource missing channelId" });
+  }
+  if (!publishedAt) {
+    throw new ParseError("youtube", "PARSE_RESPONSE", { message: "YouTube video resource missing publishedAt" });
+  }
+
+  const thumbnail = pickThumbnail(snippet.thumbnails);
+  if (!thumbnail) {
+    throw new ParseError("youtube", "PARSE_RESPONSE", { message: "YouTube resource has no thumbnail" });
+  }
+
   const channel = {
-    id: item.snippet.channelId,
-    name: item.snippet.channelTitle,
-    url: `https://www.youtube.com/channel/${item.snippet.channelId}`,
+    id: channelId,
+    name: snippet.channelTitle ?? "",
+    url: `https://www.youtube.com/channel/${channelId}`,
   };
 
-  const isLive = item.snippet.liveBroadcastContent === "live";
+  const isLive = snippet.liveBroadcastContent === "live";
 
-  if (isLive && item.liveStreamingDetails?.actualStartTime) {
+  if (isLive && liveStreamingDetails?.actualStartTime) {
     return {
-      id: item.id,
+      id,
       platform: "youtube",
-      title: item.snippet.title,
-      url: `https://www.youtube.com/watch?v=${item.id}`,
+      title: snippet.title ?? "",
+      url: `https://www.youtube.com/watch?v=${id}`,
       thumbnail,
       channel,
-      sessionId: item.id,
+      sessionId: id,
       type: "live",
-      viewerCount: Number.parseInt(item.liveStreamingDetails.concurrentViewers ?? "0", 10),
-      startedAt: new Date(item.liveStreamingDetails.actualStartTime),
+      viewerCount: Number.parseInt(liveStreamingDetails.concurrentViewers ?? "0", 10),
+      startedAt: new Date(liveStreamingDetails.actualStartTime),
       raw: item,
     } satisfies LiveStream;
   }
 
   return {
-    id: item.id,
+    id,
     platform: "youtube",
-    title: item.snippet.title,
-    url: `https://www.youtube.com/watch?v=${item.id}`,
+    title: snippet.title ?? "",
+    url: `https://www.youtube.com/watch?v=${id}`,
     thumbnail,
     channel,
-    sessionId: item.id,
+    sessionId: id,
     type: "video",
-    duration: parseDuration(item.contentDetails.duration),
-    viewCount: Number.parseInt(item.statistics.viewCount, 10),
-    publishedAt: new Date(item.snippet.publishedAt),
+    duration: parseDuration(contentDetails.duration ?? ""),
+    viewCount: Number.parseInt(statistics.viewCount ?? "0", 10),
+    publishedAt: new Date(publishedAt),
     raw: item,
   } satisfies Video;
 };
@@ -124,24 +97,25 @@ export const toContent = (item: YTVideoResource): Content => {
  *
  * @param item - YouTube channel resource from the API
  * @returns unified Channel
- * @precondition item has at least id and snippet fields
+ * @throws ParseError if required fields (id, snippet) are missing
+ * @precondition item was fetched with part=snippet,contentDetails
  * @postcondition returns a Channel with thumbnail undefined if none available
  * @idempotency Safe — pure function
  */
 export const toChannel = (item: YTChannelResource): Channel => {
-  const thumbnail =
-    item.snippet.thumbnails.high ??
-    item.snippet.thumbnails.medium ??
-    item.snippet.thumbnails.default;
+  const { id, snippet } = item;
+  if (!id || !snippet) {
+    throw new ParseError("youtube", "PARSE_RESPONSE", {
+      message: "YouTube channel resource missing required parts (id, snippet)",
+    });
+  }
 
   return {
-    id: item.id,
+    id,
     platform: "youtube",
-    name: item.snippet.title,
-    url: `https://www.youtube.com/channel/${item.id}`,
-    thumbnail: thumbnail
-      ? { url: thumbnail.url, width: thumbnail.width, height: thumbnail.height }
-      : undefined,
+    name: snippet.title ?? "",
+    url: `https://www.youtube.com/channel/${id}`,
+    thumbnail: pickThumbnail(snippet.thumbnails),
   };
 };
 

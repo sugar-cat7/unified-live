@@ -10,14 +10,15 @@ import {
 import {
   toChannel,
   toContent,
+  type Schemas,
   type YTChannelResource,
-  type YTPlaylistItemResource,
   type YTVideoResource,
 } from "./mapper";
 
+/** List response shape shared by all YouTube Data API list endpoints. */
 type YTListResponse<T> = {
   items: T[];
-  pageInfo: { totalResults: number; resultsPerPage: number };
+  pageInfo: Schemas["PageInfo"];
   nextPageToken?: string;
 };
 
@@ -72,7 +73,7 @@ export const youtubeGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
 ): Promise<LiveStream[]> => {
-  const res = await rest.request<YTListResponse<{ id: { videoId: string } }>>({
+  const res = await rest.request<YTListResponse<Schemas["SearchResult"]>>({
     method: "GET",
     path: "/search",
     query: {
@@ -88,7 +89,10 @@ export const youtubeGetLiveStreams = async (
     return [];
   }
 
-  const videoIds = res.data.items.map((item) => item.id.videoId).join(",");
+  const videoIds = res.data.items
+    .map((item) => item.id?.videoId)
+    .filter(Boolean)
+    .join(",");
 
   const videosRes = await rest.request<YTListResponse<YTVideoResource>>({
     method: "GET",
@@ -123,7 +127,10 @@ export const youtubeGetVideos = async (
     throw new NotFoundError("youtube", channelId);
   }
 
-  const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
+  const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads;
+  if (!uploadsPlaylistId) {
+    throw new NotFoundError("youtube", channelId);
+  }
 
   const query: Record<string, string> = {
     part: "snippet",
@@ -134,7 +141,7 @@ export const youtubeGetVideos = async (
     query.pageToken = cursor;
   }
 
-  const playlistRes = await rest.request<YTListResponse<YTPlaylistItemResource>>({
+  const playlistRes = await rest.request<YTListResponse<Schemas["PlaylistItem"]>>({
     method: "GET",
     path: "/playlistItems",
     query,
@@ -145,7 +152,10 @@ export const youtubeGetVideos = async (
     return { items: [] };
   }
 
-  const videoIds = playlistRes.data.items.map((item) => item.snippet.resourceId.videoId).join(",");
+  const videoIds = playlistRes.data.items
+    .map((item) => item.snippet?.resourceId?.videoId)
+    .filter(Boolean)
+    .join(",");
 
   const videosRes = await rest.request<YTListResponse<YTVideoResource>>({
     method: "GET",
@@ -162,7 +172,7 @@ export const youtubeGetVideos = async (
   return {
     items: videos,
     cursor: playlistRes.data.nextPageToken,
-    total: playlistRes.data.pageInfo.totalResults,
+    total: playlistRes.data.pageInfo.totalResults ?? 0,
   };
 };
 

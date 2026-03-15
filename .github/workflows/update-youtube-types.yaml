@@ -1,0 +1,51 @@
+name: Update YouTube API Types
+on:
+  schedule:
+    # Every Monday at 09:00 UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate YouTube API types
+        run: pnpm --filter @unified-live/youtube generate:types
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --exit-code -- packages/youtube/src/generated/ || echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create Pull Request
+        if: steps.diff.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: update YouTube API types from Discovery Document"
+          title: "chore: update YouTube API types from Discovery Document"
+          body: |
+            Automated update of YouTube Data API v3 types from Google Discovery Document.
+
+            This PR was created by the scheduled `update-youtube-types` workflow.
+            Please review the generated type changes and ensure mapper/methods still compile.
+          branch: chore/update-youtube-types
+          delete-branch: true
+          labels: dependencies

@@ -22,6 +22,7 @@
     "@textlint/textlint-plugin-markdown": "^15.5.2",
     "@types/node": "catalog:",
     "knip": "^5.82.1",
+    "openapi-typescript": "^7.13.0",
     "oxfmt": "^0.40.0",
     "oxlint": "^1.51.0",
     "textlint": "^15.5.2",

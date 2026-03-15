@@ -184,11 +184,14 @@ describe("UnifiedClient.create", () => {
     client[Symbol.dispose]();
   });
 
-  it("getContent throws PlatformNotFoundError for unknown URL", async () => {
+  it("getContent throws ValidationError for unmatched URL", async () => {
     const client = UnifiedClient.create();
 
     await expect(client.getContent("https://unknown.com/video/123")).rejects.toThrow(
-      PlatformNotFoundError,
+      ValidationError,
+    );
+    await expect(client.getContent("https://unknown.com/video/123")).rejects.toThrow(
+      "No registered plugin matches URL",
     );
 
     client[Symbol.dispose]();

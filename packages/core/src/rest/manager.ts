@@ -8,7 +8,6 @@ import {
   RateLimitError,
   UnifiedLiveError,
 } from "../errors";
-import { SpanStatusCode } from "@opentelemetry/api";
 import { getTracer, SpanAttributes } from "../telemetry/traces";
 import type { RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } from "./types";
@@ -128,7 +127,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
         );
       }
       return tracer.startActiveSpan(
-        `unified-live.rest ${manager.platform} ${req.method} ${req.path}`,
+        `unified-live.rest ${req.method}`,
         async (span) => {
           span.setAttribute(SpanAttributes.PLATFORM, manager.platform);
           span.setAttribute(SpanAttributes.HTTP_METHOD, req.method);
@@ -290,7 +289,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
               span.setAttribute(SpanAttributes.ERROR_HAS_CAUSE, !!error.cause);
             }
             span.setStatus({
-              code: SpanStatusCode.ERROR,
+              code: 2, // SpanStatusCode.ERROR
               message: error instanceof Error ? error.message : String(error),
             });
             span.recordException(error instanceof Error ? error : new Error(String(error)));
@@ -360,6 +359,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     },
 
     [Symbol.dispose]: (): void => {
+      if (disposed) return;
       disposed = true;
       manager.rateLimitStrategy[Symbol.dispose]();
       manager.tokenManager?.[Symbol.dispose]?.();

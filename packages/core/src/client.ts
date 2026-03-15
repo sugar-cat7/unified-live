@@ -176,7 +176,10 @@ export const UnifiedClient = {
         }
         const resolved = matchUrl(url);
         if (!resolved) {
-          throw new PlatformNotFoundError(url);
+          throw new ValidationError(
+            "VALIDATION_INVALID_URL",
+            `No registered plugin matches URL: "${url}"`,
+          );
         }
         const plugin = getPlugin(resolved.platform);
         return plugin.getContent(resolved.id);

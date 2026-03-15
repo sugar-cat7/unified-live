@@ -113,20 +113,6 @@ export const Page = {
     hasMore: false,
   }),
 
-  /**
-   * Create an iterable wrapper for a Page, enabling for...of loops.
-   *
-   * @param page - the page to iterate
-   * @returns an iterable that yields page items
-   * @idempotency Safe — pure function
-   * @example
-   * ```ts
-   * for (const video of Page.iter(page)) { ... }
-   * ```
-   */
-  iter: <T>(page: Page<T>): Iterable<T> => ({
-    [Symbol.iterator]: () => page.items[Symbol.iterator](),
-  }),
 } as const;
 
 export const resolvedUrlSchema = z.object({

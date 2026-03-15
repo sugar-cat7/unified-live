@@ -46,9 +46,9 @@ describe("SpanAttributes", () => {
     ["QUOTA_DAILY_REMAINING", "unified_live.quota.daily_remaining"],
     ["SERVER_ADDRESS", "server.address"],
     ["SERVER_PORT", "server.port"],
-    ["ERROR_CODE", "error.code"],
+    ["ERROR_CODE", "unified_live.error.code"],
     ["ERROR_TYPE", "error.type"],
-    ["ERROR_HAS_CAUSE", "error.has_cause"],
+    ["ERROR_HAS_CAUSE", "unified_live.error.has_cause"],
     ["RETRY_COUNT", "unified_live.retry.count"],
   ] as const)("has %s = %s", (key, expected) => {
     expect(SpanAttributes[key]).toBe(expected);

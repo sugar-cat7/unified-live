@@ -38,10 +38,10 @@ export const SpanAttributes = {
   QUOTA_CONSUMED: "unified_live.quota.consumed",
   QUOTA_DAILY_REMAINING: "unified_live.quota.daily_remaining",
 
-  // Error attributes
-  ERROR_CODE: "error.code",
+  // Error attributes (namespaced to avoid OTel convention collision)
+  ERROR_CODE: "unified_live.error.code",
   ERROR_TYPE: "error.type",
-  ERROR_HAS_CAUSE: "error.has_cause",
+  ERROR_HAS_CAUSE: "unified_live.error.has_cause",
 
   // Retry attributes
   RETRY_COUNT: "unified_live.retry.count",

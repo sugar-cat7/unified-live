@@ -375,22 +375,3 @@ describe("Page.empty", () => {
   });
 });
 
-describe("Page.iter", () => {
-  it("allows for...of iteration over page items", () => {
-    const page: Page<string> = { items: ["a", "b", "c"], hasMore: false };
-    const collected: string[] = [];
-    for (const item of Page.iter(page)) {
-      collected.push(item);
-    }
-    expect(collected).toEqual(["a", "b", "c"]);
-  });
-
-  it("handles empty page", () => {
-    const page = Page.empty<string>();
-    const collected: string[] = [];
-    for (const item of Page.iter(page)) {
-      collected.push(item);
-    }
-    expect(collected).toEqual([]);
-  });
-});

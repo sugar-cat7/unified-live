@@ -10,7 +10,7 @@
  * - TwitCasting application credentials (client ID + secret)
  */
 
-import { Content, ErrorCode, Page, UnifiedClient, UnifiedLiveError } from "@unified-live/core";
+import { Content, ErrorCode, UnifiedClient, UnifiedLiveError } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 import { createTwitCastingPlugin } from "@unified-live/twitcasting";
@@ -52,19 +52,14 @@ if (Content.isLive(content)) {
 const channel = await client.getChannel("twitch", "shroud");
 console.log(`Channel: ${channel.name} (${channel.platform})`);
 
-// 6. Paginate through videos with Page.iter for ergonomic for...of loops
+// 6. Paginate through videos
 let cursor: string | undefined;
 do {
   const page = await client.getVideos("youtube", "UCuAXFkgsw1L7xaCfnd5JJOw", cursor);
 
-  // Page.iter() enables direct for...of iteration
-  for (const video of Page.iter(page)) {
+  for (const video of page.items) {
     console.log(`  ${video.title} (${video.duration}s)`);
   }
-
-  // Page.map() transforms items while preserving pagination metadata
-  const titles = Page.map(page, (video) => video.title);
-  console.log(`Page titles: ${titles.items.join(", ")}`);
 
   cursor = page.cursor;
 } while (cursor);

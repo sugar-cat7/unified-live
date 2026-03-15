@@ -7,14 +7,7 @@ import {
   type RestManager,
   type Video,
 } from "@unified-live/core";
-import {
-  movieToContent,
-  movieToLive,
-  movieToVideo,
-  type TCMovie,
-  type TCUser,
-  userToChannel,
-} from "./mapper";
+import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
 
 type TCMovieResponse = {
   movie: TCMovie;
@@ -31,9 +24,11 @@ type TCMoviesResponse = {
 };
 
 /**
+ * Fetch a TwitCasting movie by ID and map to unified Content.
+ *
  * @param rest - REST manager for API requests
  * @param id - TwitCasting movie ID
- * @returns unified Content for the movie
+ * @returns unified Content (live or video) for the movie
  * @precondition id is a valid TwitCasting movie ID
  * @postcondition returns Content (live or video) for the movie
  */
@@ -44,13 +39,16 @@ export const twitcastingGetContent = async (rest: RestManager, id: string): Prom
     bucketId: "movies",
   });
 
-  return movieToContent(res.data.movie, res.data.broadcaster);
+  return toContent(res.data.movie, res.data.broadcaster);
 };
 
 /**
+ * Fetch a TwitCasting channel by user_id or screen_id and map to unified Channel.
+ *
  * @param rest - REST manager for API requests
  * @param id - TwitCasting user_id or screen_id
  * @returns unified Channel for the user
+ * @throws NotFoundError if user does not exist
  * @precondition id is a valid TwitCasting user_id or screen_id
  * @postcondition returns Channel for the user
  */
@@ -65,10 +63,12 @@ export const twitcastingGetChannel = async (rest: RestManager, id: string): Prom
     throw new NotFoundError("twitcasting", id);
   }
 
-  return userToChannel(res.data.user);
+  return toChannel(res.data.user);
 };
 
 /**
+ * Fetch active live streams for a TwitCasting channel.
+ *
  * @param rest - REST manager for API requests
  * @param channelId - TwitCasting user_id or screen_id
  * @returns array of live streams (0 or 1 items)
@@ -100,13 +100,16 @@ export const twitcastingGetLiveStreams = async (
     return [];
   }
 
-  return [movieToLive(movieRes.data.movie, res.data.user)];
+  return [toLive(movieRes.data.movie, res.data.user)];
 };
 
 /**
+ * Fetch paginated videos for a TwitCasting channel.
+ *
  * @param rest - REST manager for API requests
  * @param channelId - TwitCasting user_id or screen_id
  * @param cursor - optional pagination cursor (slice_id)
+ * @param pageSize - number of items per page (default 50)
  * @returns paginated list of videos
  * @precondition channelId is a valid TwitCasting user_id or screen_id
  * @postcondition returns paginated videos using slice_id for deep pagination
@@ -115,8 +118,9 @@ export const twitcastingGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
+  pageSize = 50,
 ): Promise<Page<Video>> => {
-  const query: Record<string, string> = { limit: "50" };
+  const query: Record<string, string> = { limit: String(pageSize) };
   if (cursor) {
     query.slice_id = cursor;
   }
@@ -136,15 +140,16 @@ export const twitcastingGetVideos = async (
     }),
   ]);
 
-  const videos = moviesRes.data.movies
-    .filter((m) => !m.is_live)
-    .map((m) => movieToVideo(m, userRes.data.user));
+  const movies = moviesRes.data.movies;
+  const videos = movies.filter((m) => !m.is_live).map((m) => toVideo(m, userRes.data.user));
 
+  // Use last movie ID (not last video) as cursor to avoid stopping when a page has only live movies
+  const nextCursor = movies.length === pageSize ? movies.at(-1)!.id : undefined;
   return {
     items: videos,
-    cursor:
-      videos.length > 0 && moviesRes.data.movies.length === 50 ? videos.at(-1)!.id : undefined,
+    cursor: nextCursor,
     total: moviesRes.data.total_count,
+    hasMore: nextCursor !== undefined,
   };
 };
 
@@ -170,5 +175,5 @@ export const twitcastingResolveArchive = async (
     return null;
   }
 
-  return movieToVideo(res.data.movie, res.data.broadcaster);
+  return toVideo(res.data.movie, res.data.broadcaster);
 };

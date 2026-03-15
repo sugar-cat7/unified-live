@@ -31,6 +31,30 @@ const mockUser = {
 };
 
 describe("createTwitCastingPlugin", () => {
+  it("reports correct capabilities", () => {
+    const plugin = createTwitCastingPlugin({
+      clientId: "id",
+      clientSecret: "secret",
+      fetch: createMockFetch([]),
+    });
+    expect(plugin.capabilities).toEqual({
+      supportsLiveStreams: true,
+      supportsArchiveResolution: true,
+      authModel: "basic",
+      rateLimitModel: "tokenBucket",
+    });
+    plugin.dispose();
+  });
+
+  it("throws on missing credentials", () => {
+    expect(() =>
+      createTwitCastingPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) }),
+    ).toThrow("clientId and clientSecret are required");
+    expect(() =>
+      createTwitCastingPlugin({ clientId: "id", clientSecret: "", fetch: createMockFetch([]) }),
+    ).toThrow("clientId and clientSecret are required");
+  });
+
   it("creates a plugin with correct name", () => {
     const plugin = createTwitCastingPlugin({
       clientId: "test-id",
@@ -187,6 +211,100 @@ describe("createTwitCastingPlugin", () => {
     const calls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls;
     const headers = (calls[0]?.[1] as RequestInit)?.headers as Record<string, string>;
     expect(headers["X-Api-Version"]).toBe("2.0");
+
+    plugin.dispose();
+  });
+
+  it("resolveArchive returns video when movie is no longer live", async () => {
+    const archivedMovie = {
+      id: "m123",
+      user_id: "u1",
+      title: "Past Stream",
+      subtitle: null,
+      last_owner_comment: null,
+      category: null,
+      link: "https://twitcasting.tv/testuser/movie/m123",
+      is_live: false,
+      is_recorded: true,
+      current_view_count: 0,
+      total_view_count: 500,
+      duration: 3600,
+      created: 1741420800,
+      large_thumbnail: "https://img.tv/thumb.jpg",
+      small_thumbnail: "https://img.tv/thumb_s.jpg",
+    };
+
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([
+        { status: 200, body: { movie: archivedMovie, broadcaster: mockUser } },
+      ]),
+    });
+
+    const live = {
+      id: "m123",
+      platform: "twitcasting",
+      title: "Live",
+      url: "https://twitcasting.tv/testuser/movie/m123",
+      thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
+      channel: { id: "u1", name: "TestUser", url: "https://twitcasting.tv/testuser" },
+      sessionId: "m123",
+      type: "live" as const,
+      viewerCount: 100,
+      startedAt: new Date(1741420800 * 1000),
+      raw: {},
+    };
+
+    const archive = await plugin.resolveArchive!(live);
+    expect(archive).not.toBeNull();
+    expect(archive!.type).toBe("video");
+    expect(archive!.id).toBe("m123");
+
+    plugin.dispose();
+  });
+
+  it("resolveArchive returns null when still live", async () => {
+    const liveMovie = {
+      id: "m456",
+      user_id: "u1",
+      title: "Still Live",
+      subtitle: null,
+      last_owner_comment: null,
+      category: null,
+      link: "https://twitcasting.tv/testuser/movie/m456",
+      is_live: true,
+      is_recorded: false,
+      current_view_count: 300,
+      total_view_count: 300,
+      duration: 0,
+      created: 1741420800,
+      large_thumbnail: "https://img.tv/live.jpg",
+      small_thumbnail: "https://img.tv/live_s.jpg",
+    };
+
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([{ status: 200, body: { movie: liveMovie, broadcaster: mockUser } }]),
+    });
+
+    const live = {
+      id: "m456",
+      platform: "twitcasting",
+      title: "Live",
+      url: "https://twitcasting.tv/testuser/movie/m456",
+      thumbnail: { url: "https://img.tv/live.jpg", width: 640, height: 360 },
+      channel: { id: "u1", name: "TestUser", url: "https://twitcasting.tv/testuser" },
+      sessionId: "m456",
+      type: "live" as const,
+      viewerCount: 300,
+      startedAt: new Date(1741420800 * 1000),
+      raw: {},
+    };
+
+    const archive = await plugin.resolveArchive!(live);
+    expect(archive).toBeNull();
 
     plugin.dispose();
   });

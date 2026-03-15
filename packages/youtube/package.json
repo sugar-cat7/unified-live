@@ -19,6 +19,7 @@
     }
   },
   "scripts": {
+    "generate:types": "tsx ../../scripts/generate-youtube-types.ts",
     "build": "tsdown",
     "type-check": "tsc --noEmit",
     "test:run": "vitest run",

@@ -3,12 +3,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"],
-      "cache": false
+      "inputs": ["src/**/*.ts", "tsconfig.json", "tsdown.config.ts", "package.json"],
+      "outputs": ["dist/**"]
     },
     "type-check": {
       "dependsOn": ["^build"],
-      "cache": false
+      "inputs": ["src/**/*.ts", "tsconfig.json", "package.json"]
     },
     "test:run": {
       "dependsOn": ["^build"],

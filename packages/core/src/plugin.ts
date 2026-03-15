@@ -4,6 +4,17 @@ import type { RateLimitStrategy } from "./rest/strategy";
 import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
 import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
 
+export type PluginCapabilities = {
+  /** Whether the plugin supports live stream detection */
+  supportsLiveStreams: boolean;
+  /** Whether the plugin supports archive resolution (live -> video) */
+  supportsArchiveResolution: boolean;
+  /** Authentication model used by this plugin */
+  authModel: "apiKey" | "oauth2" | "basic";
+  /** Rate limiting model */
+  rateLimitModel: "quota" | "tokenBucket";
+};
+
 /**
  * Declarative configuration for creating a PlatformPlugin via `PlatformPlugin.create()`.
  * Plugin authors provide this instead of manually wiring RestManager overrides.
@@ -41,6 +52,9 @@ export type PluginDefinition = {
 
   /** Retry configuration. */
   retry?: RetryConfig;
+
+  /** Plugin capability metadata. */
+  capabilities?: PluginCapabilities;
 };
 
 /**
@@ -59,7 +73,12 @@ export type PluginMethods = {
   getLiveStreams: (rest: RestManager, channelId: string) => Promise<LiveStream[]>;
 
   /** List videos for a channel with pagination. */
-  getVideos: (rest: RestManager, channelId: string, cursor?: string) => Promise<Page<Video>>;
+  getVideos: (
+    rest: RestManager,
+    channelId: string,
+    cursor?: string,
+    pageSize?: number,
+  ) => Promise<Page<Video>>;
 
   /** Resolve archive for a live stream (optional). */
   resolveArchive?: (rest: RestManager, live: LiveStream) => Promise<Video | null>;
@@ -77,6 +96,9 @@ export type PlatformPlugin = {
 
   /** The underlying RestManager for this plugin. */
   readonly rest: RestManager;
+
+  /** Plugin capability metadata. */
+  readonly capabilities: PluginCapabilities;
 
   /**
    * Test whether a URL belongs to this platform.
@@ -101,7 +123,7 @@ export type PlatformPlugin = {
   getLiveStreams(channelId: string): Promise<LiveStream[]>;
 
   /** List videos (archives) for a channel with cursor-based pagination. */
-  getVideos(channelId: string, cursor?: string): Promise<Page<Video>>;
+  getVideos(channelId: string, cursor?: string, pageSize?: number): Promise<Page<Video>>;
 
   /** Resolve the archive video for a live stream (platform-specific). */
   resolveArchive?(live: LiveStream): Promise<Video | null>;
@@ -160,12 +182,19 @@ export const PlatformPlugin = {
     const plugin: PlatformPlugin = {
       name: definition.name,
       rest,
+      capabilities: definition.capabilities ?? {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: !!methods.resolveArchive,
+        authModel: "apiKey",
+        rateLimitModel: "tokenBucket",
+      },
       match: definition.matchUrl,
       resolveUrl: definition.matchUrl,
       getContent: (id) => methods.getContent(rest, id),
       getChannel: (id) => methods.getChannel(rest, id),
       getLiveStreams: (channelId) => methods.getLiveStreams(rest, channelId),
-      getVideos: (channelId, cursor) => methods.getVideos(rest, channelId, cursor),
+      getVideos: (channelId, cursor, pageSize) =>
+        methods.getVideos(rest, channelId, cursor, pageSize),
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
@@ -194,7 +223,9 @@ export const PlatformPlugin = {
       typeof obj.getLiveStreams === "function" &&
       typeof obj.getVideos === "function" &&
       typeof obj.dispose === "function" &&
-      obj.rest !== undefined
+      obj.rest !== undefined &&
+      typeof obj.capabilities === "object" &&
+      obj.capabilities !== null
     );
   },
 } as const;

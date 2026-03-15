@@ -4,6 +4,13 @@ import { PlatformNotFoundError, ValidationError } from "./errors";
 import type { PlatformPlugin } from "./plugin";
 import type { Channel, Content } from "./types";
 
+const mockCapabilities = {
+  supportsLiveStreams: true,
+  supportsArchiveResolution: false,
+  authModel: "apiKey" as const,
+  rateLimitModel: "tokenBucket" as const,
+};
+
 const createMockPlugin = (name: string): PlatformPlugin => {
   const mockContent: Content = {
     id: "test-id",
@@ -40,17 +47,26 @@ const createMockPlugin = (name: string): PlatformPlugin => {
   return {
     name,
     rest: {} as PlatformPlugin["rest"],
+    capabilities: mockCapabilities,
     match: vi.fn(matchUrl),
     resolveUrl: vi.fn(matchUrl),
     getContent: vi.fn(async () => mockContent),
     getChannel: vi.fn(async () => mockChannel),
     getLiveStreams: vi.fn(async () => []),
-    getVideos: vi.fn(async () => ({ items: [], cursor: undefined })),
+    getVideos: vi.fn(async () => ({ items: [], cursor: undefined, hasMore: false })),
     dispose: vi.fn(),
   };
 };
 
 describe("UnifiedClient.create", () => {
+  it("lists registered platforms", () => {
+    const plugin = createMockPlugin("test-platform");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    expect(client.platforms()).toEqual(["test-platform"]);
+    client.dispose();
+  });
+
   it("registers plugins via options", () => {
     const plugin = createMockPlugin("youtube");
     const client = UnifiedClient.create({ plugins: [plugin] });
@@ -118,7 +134,7 @@ describe("UnifiedClient.create", () => {
       method: "getVideos" as const,
       args: ["youtube", "ch1", "cursor1"],
       pluginMethod: "getVideos" as const,
-      pluginArgs: ["ch1", "cursor1"],
+      pluginArgs: ["ch1", "cursor1", undefined],
       assertion: (result: { items: unknown[] }) => expect(result.items).toEqual([]),
     },
     {

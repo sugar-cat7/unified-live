@@ -2,6 +2,7 @@ import {
   createRateLimitHeaderParser,
   createTokenBucketStrategy,
   PlatformPlugin,
+  ValidationError,
 } from "@unified-live/core";
 import { createClientCredentialsTokenManager } from "./auth";
 import {
@@ -38,6 +39,14 @@ const parseTwitchRateLimitHeaders = createRateLimitHeaderParser({
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
 export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin => {
+  if (!config.clientId || !config.clientSecret) {
+    throw new ValidationError(
+      "VALIDATION_INVALID_INPUT",
+      "Twitch clientId and clientSecret are required",
+      { platform: "twitch" },
+    );
+  }
+
   return PlatformPlugin.create(
     {
       name: "twitch",
@@ -52,6 +61,12 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
         fetch: config.fetch,
       }),
       matchUrl: matchTwitchUrl,
+      capabilities: {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: true,
+        authModel: "oauth2",
+        rateLimitModel: "tokenBucket",
+      },
       headers: { "Client-Id": config.clientId },
       parseRateLimitHeaders: parseTwitchRateLimitHeaders,
       fetch: config.fetch,

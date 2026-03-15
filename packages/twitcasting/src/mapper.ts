@@ -39,7 +39,7 @@ export type TCUser = {
  * @precondition movie.is_live === true
  * @postcondition returns LiveStream with sessionId set to movie.id
  */
-export const movieToLive = (movie: TCMovie, user: TCUser): LiveStream => {
+export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
   return {
     id: movie.id,
     platform: "twitcasting",
@@ -72,7 +72,7 @@ export const movieToLive = (movie: TCMovie, user: TCUser): LiveStream => {
  * @precondition movie.is_live === false
  * @postcondition returns Video with sessionId set to movie.id
  */
-export const movieToVideo = (movie: TCMovie, user: TCUser): Video => {
+export const toVideo = (movie: TCMovie, user: TCUser): Video => {
   return {
     id: movie.id,
     platform: "twitcasting",
@@ -104,11 +104,11 @@ export const movieToVideo = (movie: TCMovie, user: TCUser): Video => {
  * @param user - TwitCasting user who owns the movie
  * @returns unified Content (LiveStream if live, Video otherwise)
  */
-export const movieToContent = (movie: TCMovie, user: TCUser): Content => {
+export const toContent = (movie: TCMovie, user: TCUser): Content => {
   if (movie.is_live) {
-    return movieToLive(movie, user);
+    return toLive(movie, user);
   }
-  return movieToVideo(movie, user);
+  return toVideo(movie, user);
 };
 
 /**
@@ -117,7 +117,7 @@ export const movieToContent = (movie: TCMovie, user: TCUser): Content => {
  * @param user - TwitCasting user resource
  * @returns unified Channel
  */
-export const userToChannel = (user: TCUser): Channel => {
+export const toChannel = (user: TCUser): Channel => {
   return {
     id: user.id,
     platform: "twitcasting",

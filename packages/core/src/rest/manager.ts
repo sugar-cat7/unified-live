@@ -96,6 +96,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
   const retryableStatuses = options.retry?.retryableStatuses ?? DEFAULT_RETRYABLE_STATUSES;
   const fetchFn = options.fetch ?? globalThis.fetch;
   const tracer = getTracer();
+  let disposed = false;
 
   const manager: RestManager = {
     platform: options.platform,
@@ -104,6 +105,13 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     tokenManager: options.tokenManager,
 
     request: async <T>(req: RestRequest): Promise<RestResponse<T>> => {
+      if (disposed) {
+        throw new UnifiedLiveError(
+          `RestManager for "${options.platform}" has been disposed`,
+          "INTERNAL",
+          { platform: options.platform },
+        );
+      }
       return tracer.startActiveSpan(
         `unified-live.rest ${manager.platform} ${req.method} ${req.path}`,
         async (span) => {
@@ -176,7 +184,8 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
               // Retryable server errors (5xx)
               if (retryableStatuses.includes(response.status)) {
                 if (attempt < maxRetries) {
-                  await sleep(baseDelay * 2 ** attempt);
+                  const jitter = 0.5 + Math.random();
+                  await sleep(baseDelay * 2 ** attempt * jitter);
                   continue;
                 }
                 throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
@@ -262,8 +271,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
       attempt: number,
     ): Promise<boolean> => {
       if (response.status === 429) {
-        const retryAfterHeader = response.headers.get("Retry-After");
-        const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : 1;
+        const retryAfter = parseRetryAfter(response.headers.get("Retry-After"), 1);
         await sleep(retryAfter * 1000);
         return attempt < maxRetries;
       }
@@ -276,6 +284,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     },
 
     dispose: (): void => {
+      disposed = true;
       manager.rateLimitStrategy.dispose();
       manager.tokenManager?.dispose?.();
     },
@@ -286,4 +295,19 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+/**
+ * Parse a Retry-After header value into a bounded number of seconds.
+ * Returns fallback if the header is missing, NaN, or out of bounds.
+ *
+ * @param header - raw Retry-After header value (may be null)
+ * @param fallback - default seconds if header is missing or invalid
+ * @returns seconds in range [0, 120], or fallback if header is missing/invalid
+ */
+export const parseRetryAfter = (header: string | null, fallback = 1): number => {
+  if (!header) return Math.min(Math.max(fallback, 0), 120);
+  const parsed = Number.parseInt(header, 10);
+  if (Number.isNaN(parsed) || parsed < 0) return Math.min(Math.max(fallback, 0), 120);
+  return Math.min(parsed, 120);
 };

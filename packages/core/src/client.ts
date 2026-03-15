@@ -61,7 +61,12 @@ export type UnifiedClient = {
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getVideos(platform: string, channelId: string, cursor?: string): Promise<Page<Video>>;
+  getVideos(
+    platform: string,
+    channelId: string,
+    cursor?: string,
+    pageSize?: number,
+  ): Promise<Page<Video>>;
 
   /**
    * Retrieve channel information.
@@ -92,6 +97,14 @@ export type UnifiedClient = {
    * @postcondition returns ResolvedUrl or null if no plugin matches
    */
   match(url: string): ResolvedUrl | null;
+
+  /**
+   * Returns the names of all registered platforms.
+   *
+   * @returns array of platform name strings
+   * @postcondition returns a snapshot of currently registered platform names
+   */
+  platforms(): string[];
 
   /**
    * Release all resources (rate limit timers, token refresh schedulers).
@@ -174,9 +187,14 @@ export const UnifiedClient = {
         return plugin.getLiveStreams(channelId);
       },
 
-      async getVideos(platform: string, channelId: string, cursor?: string): Promise<Page<Video>> {
+      async getVideos(
+        platform: string,
+        channelId: string,
+        cursor?: string,
+        pageSize?: number,
+      ): Promise<Page<Video>> {
         const plugin = getPlugin(platform);
-        return plugin.getVideos(channelId, cursor);
+        return plugin.getVideos(channelId, cursor, pageSize);
       },
 
       async getChannel(platform: string, id: string): Promise<Channel> {
@@ -190,6 +208,15 @@ export const UnifiedClient = {
 
       match(url: string): ResolvedUrl | null {
         return matchUrl(url);
+      },
+
+      /**
+       * Returns the names of all registered platforms.
+       *
+       * @returns array of platform name strings
+       */
+      platforms(): string[] {
+        return [...plugins.keys()];
       },
 
       dispose(): void {

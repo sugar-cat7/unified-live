@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthenticationError, NotFoundError, UnifiedLiveError } from "../errors";
-import { createRestManager } from "./manager";
+import { createRestManager, parseRetryAfter } from "./manager";
 import type { RateLimitHandle, RateLimitStrategy } from "./strategy";
 import type { RestRequest } from "./types";
 
@@ -314,6 +314,22 @@ describe("createRestManager", () => {
     );
   });
 
+  it("throws after dispose is called", async () => {
+    strategy = createMockStrategy();
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: createMockFetch([]),
+    });
+
+    manager.dispose();
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
+      "has been disposed",
+    );
+  });
+
   it("dispose cleans up strategy and tokenManager", () => {
     const tokenDispose = vi.fn();
     strategy = createMockStrategy();
@@ -333,5 +349,21 @@ describe("createRestManager", () => {
     manager.dispose();
     expect(strategy.dispose).toHaveBeenCalledTimes(1);
     expect(tokenDispose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("parseRetryAfter", () => {
+  it.each([
+    { header: "5", fallback: 1, expected: 5 },
+    { header: "0", fallback: 1, expected: 0 },
+    { header: "200", fallback: 1, expected: 120 },
+    { header: null, fallback: 1, expected: 1 },
+    { header: null, fallback: 5, expected: 5 },
+    { header: "invalid", fallback: 3, expected: 3 },
+    { header: "NaN", fallback: 1, expected: 1 },
+    { header: "-5", fallback: 1, expected: 1 },
+    { header: "60", fallback: 1, expected: 60 },
+  ])('parseRetryAfter("$header", $fallback) = $expected', ({ header, fallback, expected }) => {
+    expect(parseRetryAfter(header, fallback)).toBe(expected);
   });
 });

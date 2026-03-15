@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
-import { parseTwitchDuration, streamToLive, userToChannel, videoToVideo } from "./mapper";
+import { parseDuration, toLive, toChannel, toVideo } from "./mapper";
 
 const mockStream: TwitchStream = {
   id: "stream123",
@@ -39,9 +39,9 @@ const mockUser: TwitchUser = {
   profile_image_url: "https://static-cdn.jtvnw.net/user-default.png",
 };
 
-describe("streamToLive", () => {
+describe("toLive", () => {
   it("converts a Twitch stream to LiveStream", () => {
-    const result = streamToLive(mockStream);
+    const result = toLive(mockStream);
 
     expect(result.type).toBe("live");
     expect(result.id).toBe("stream123");
@@ -52,11 +52,16 @@ describe("streamToLive", () => {
     expect(result.channel.id).toBe("user456");
     expect(result.url).toBe("https://www.twitch.tv/testuser");
   });
+
+  it("preserves raw data", () => {
+    const result = toLive(mockStream);
+    expect(result.raw).toBe(mockStream);
+  });
 });
 
-describe("videoToVideo", () => {
+describe("toVideo", () => {
   it("converts a Twitch video to Video", () => {
-    const result = videoToVideo(mockVideo);
+    const result = toVideo(mockVideo);
 
     expect(result.type).toBe("video");
     expect(result.id).toBe("v789");
@@ -69,14 +74,27 @@ describe("videoToVideo", () => {
 
   it("uses video id as sessionId when stream_id is null", () => {
     const video = { ...mockVideo, stream_id: null };
-    const result = videoToVideo(video);
+    const result = toVideo(video);
     expect(result.sessionId).toBe("v789");
+  });
+
+  it("preserves raw data", () => {
+    const result = toVideo(mockVideo);
+    expect(result.raw).toBe(mockVideo);
+  });
+
+  it("formats thumbnail URL replacing placeholders", () => {
+    const result = toVideo(mockVideo);
+    expect(result.thumbnail.url).not.toContain("{width}");
+    expect(result.thumbnail.url).not.toContain("{height}");
+    expect(result.thumbnail.width).toBe(640);
+    expect(result.thumbnail.height).toBe(360);
   });
 });
 
-describe("userToChannel", () => {
+describe("toChannel", () => {
   it("converts a Twitch user to Channel", () => {
-    const result = userToChannel(mockUser);
+    const result = toChannel(mockUser);
 
     expect(result.id).toBe("user456");
     expect(result.platform).toBe("twitch");
@@ -86,7 +104,7 @@ describe("userToChannel", () => {
   });
 });
 
-describe("parseTwitchDuration", () => {
+describe("parseDuration", () => {
   it.each([
     ["3h2m1s", 10921],
     ["1h0m0s", 3600],
@@ -94,7 +112,10 @@ describe("parseTwitchDuration", () => {
     ["30s", 30],
     ["1h", 3600],
     ["", 0],
+    ["0h0m0s", 0],
+    ["10h", 36000],
+    ["invalid", 0],
   ])("parses %s to %d seconds", (input, expected) => {
-    expect(parseTwitchDuration(input)).toBe(expected);
+    expect(parseDuration(input)).toBe(expected);
   });
 });

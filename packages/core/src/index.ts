@@ -14,12 +14,12 @@ export {
   UnifiedLiveError,
   ValidationError,
 } from "./errors";
-export type { PluginDefinition, PluginMethods } from "./plugin";
+export type { PluginCapabilities, PluginDefinition, PluginMethods } from "./plugin";
 export { PlatformPlugin } from "./plugin";
 export type { TokenBucketConfig } from "./rest/bucket";
 export { createTokenBucketStrategy } from "./rest/bucket";
 export type { RestManager } from "./rest/manager";
-export { createRestManager } from "./rest/manager";
+export { createRestManager, parseRetryAfter } from "./rest/manager";
 export type { QuotaBudgetConfig } from "./rest/quota";
 export { createQuotaBudgetStrategy } from "./rest/quota";
 export type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./rest/strategy";

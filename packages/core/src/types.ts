@@ -72,6 +72,7 @@ export type Page<T> = {
   items: T[];
   cursor?: string;
   total?: number;
+  hasMore: boolean;
 };
 
 export const resolvedUrlSchema = z.object({

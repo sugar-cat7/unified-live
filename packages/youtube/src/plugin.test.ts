@@ -81,6 +81,22 @@ describe("createYouTubePlugin", () => {
     plugin?.dispose();
   });
 
+  it("reports correct capabilities", () => {
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: createMockFetch([]) });
+    expect(plugin.capabilities).toEqual({
+      supportsLiveStreams: true,
+      supportsArchiveResolution: true,
+      authModel: "apiKey",
+      rateLimitModel: "quota",
+    });
+  });
+
+  it("throws on empty API key", () => {
+    expect(() => createYouTubePlugin({ apiKey: "", fetch: createMockFetch([]) })).toThrow(
+      "API key is required",
+    );
+  });
+
   it("getContent returns a Video for a regular video", async () => {
     const fetchFn = createMockFetch([
       {
@@ -287,6 +303,7 @@ describe("createYouTubePlugin", () => {
     expect(page.items[0]?.type).toBe("video");
     expect(page.cursor).toBe("CDIQAA");
     expect(page.total).toBe(100);
+    expect(page.hasMore).toBe(true);
   });
 
   it("getVideos throws NotFoundError when channel not found", async () => {
@@ -414,6 +431,7 @@ describe("createYouTubePlugin", () => {
 
     expect(page.items).toEqual([]);
     expect(page.cursor).toBeUndefined();
+    expect(page.hasMore).toBe(false);
   });
 
   it("handles 403 rateLimitExceeded by retrying", async () => {

@@ -50,7 +50,7 @@ const createMockMethods = (): PluginMethods => {
     getContent: vi.fn().mockResolvedValue({ type: "video", id: "v1" }),
     getChannel: vi.fn().mockResolvedValue({ id: "ch1" }),
     getLiveStreams: vi.fn().mockResolvedValue([]),
-    getVideos: vi.fn().mockResolvedValue({ items: [] }),
+    getVideos: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
   };
 };
 
@@ -80,6 +80,13 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.rest).toBeDefined();
     expect(plugin.rest.platform).toBe("test");
     expect(plugin.rest.baseUrl).toBe("https://api.example.com");
+  });
+
+  it("exposes plugin capabilities", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+
+    expect(plugin.capabilities).toBeDefined();
+    expect(plugin.capabilities.supportsLiveStreams).toBe(true);
   });
 
   it("wires match and resolveUrl to definition.matchUrl", () => {
@@ -129,7 +136,7 @@ describe("PlatformPlugin.create", () => {
 
     await plugin.getVideos("ch1", "cursor123");
 
-    expect(methods.getVideos).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123");
+    expect(methods.getVideos).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123", undefined);
   });
 
   it("wires resolveArchive when provided", async () => {
@@ -315,6 +322,12 @@ describe("PlatformPlugin.is", () => {
     const obj = {
       name: "manual",
       rest: {},
+      capabilities: {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: false,
+        authModel: "apiKey",
+        rateLimitModel: "tokenBucket",
+      },
       match: () => null,
       resolveUrl: () => null,
       getContent: async () => ({}),

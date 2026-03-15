@@ -1,4 +1,4 @@
-import { PlatformPlugin, QuotaExhaustedError } from "@unified-live/core";
+import { parseRetryAfter, PlatformPlugin, QuotaExhaustedError } from "@unified-live/core";
 import {
   youtubeGetChannel,
   youtubeGetContent,
@@ -64,14 +64,14 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
           }
 
           if (reason === "rateLimitExceeded") {
-            const retryAfter = Number.parseInt(response.headers.get("Retry-After") ?? "5", 10);
+            const retryAfter = parseRetryAfter(response.headers.get("Retry-After"), 5);
             await new Promise((r) => setTimeout(r, retryAfter * 1000));
             return true;
           }
         }
 
         if (response.status === 429) {
-          const retryAfter = Number.parseInt(response.headers.get("Retry-After") ?? "1", 10);
+          const retryAfter = parseRetryAfter(response.headers.get("Retry-After"), 1);
           await new Promise((r) => setTimeout(r, retryAfter * 1000));
           return true;
         }

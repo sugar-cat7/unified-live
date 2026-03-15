@@ -262,8 +262,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
       attempt: number,
     ): Promise<boolean> => {
       if (response.status === 429) {
-        const retryAfterHeader = response.headers.get("Retry-After");
-        const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : 1;
+        const retryAfter = parseRetryAfter(response.headers.get("Retry-After"), 1);
         await sleep(retryAfter * 1000);
         return attempt < maxRetries;
       }
@@ -286,4 +285,19 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+/**
+ * Parse a Retry-After header value into a bounded number of seconds.
+ * Returns fallback if the header is missing, NaN, or out of bounds.
+ *
+ * @param header - raw Retry-After header value (may be null)
+ * @param fallback - default seconds if header is missing or invalid
+ * @returns seconds clamped to [1, 120]
+ */
+export const parseRetryAfter = (header: string | null, fallback = 1): number => {
+  if (!header) return fallback;
+  const parsed = Number.parseInt(header, 10);
+  if (Number.isNaN(parsed) || parsed < 0) return fallback;
+  return Math.min(parsed, 120);
 };

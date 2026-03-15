@@ -1,4 +1,4 @@
-export type { YTChannelResource, YTPlaylistItemResource, YTVideoResource } from "./mapper";
+export type { Schemas, YTChannelResource, YTPlaylistItemResource, YTVideoResource } from "./mapper";
 export { parseDuration, toChannel, toContent } from "./mapper";
 export type { YouTubePluginConfig } from "./plugin";
 export { createYouTubePlugin } from "./plugin";

@@ -30,6 +30,15 @@ jobs:
       - name: Generate YouTube API types
         run: pnpm --filter @unified-live/youtube generate:types
 
+      - name: Build packages
+        run: pnpm build
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Run tests
+        run: pnpm --filter @unified-live/youtube test:run
+
       - name: Check for changes
         id: diff
         run: |

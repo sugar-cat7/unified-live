@@ -84,6 +84,28 @@ describe("toContent", () => {
     });
   });
 
+  it("throws when video has no channelId", () => {
+    const noChannelId: YTVideoResource = {
+      ...baseVideoResource,
+      snippet: {
+        ...baseVideoResource.snippet,
+        channelId: undefined,
+      },
+    };
+    expect(() => toContent(noChannelId)).toThrow("missing channelId");
+  });
+
+  it("throws when video has no publishedAt", () => {
+    const noPublishedAt: YTVideoResource = {
+      ...baseVideoResource,
+      snippet: {
+        ...baseVideoResource.snippet,
+        publishedAt: undefined,
+      },
+    };
+    expect(() => toContent(noPublishedAt)).toThrow("missing publishedAt");
+  });
+
   it("throws when video has no thumbnail at all", () => {
     const noThumb: YTVideoResource = {
       ...baseVideoResource,
@@ -146,6 +168,13 @@ describe("toChannel", () => {
       width: 800,
       height: 800,
     });
+  });
+
+  it.each([
+    { desc: "missing id", resource: { snippet: { title: "X" } } },
+    { desc: "missing snippet", resource: { id: "UC123" } },
+  ])("throws when channel has $desc", ({ resource }) => {
+    expect(() => toChannel(resource as YTChannelResource)).toThrow("missing required parts");
   });
 
   it("handles missing thumbnail", () => {

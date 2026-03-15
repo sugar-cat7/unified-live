@@ -177,9 +177,13 @@ const resolveRefs = (
 
 const main = async () => {
   console.log("Fetching YouTube Data API v3 Discovery Document...");
-  const res = await fetch(DISCOVERY_URL);
+  const res = await fetch(DISCOVERY_URL, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
   const discovery: DiscoveryDoc = await res.json();
+
+  if (!discovery.schemas || typeof discovery.schemas !== "object") {
+    throw new Error("Invalid Discovery Document: missing schemas object");
+  }
 
   // Resolve all required schemas including transitive dependencies
   const allRequired = resolveRefs(discovery.schemas, REQUIRED_SCHEMAS);

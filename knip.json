@@ -19,7 +19,7 @@
     },
     "packages/youtube": {
       "project": ["src/**/*.ts"],
-      "ignore": ["dist/**", "node_modules/**"]
+      "ignore": ["dist/**", "node_modules/**", "src/generated/**"]
     },
     "packages/twitch": {
       "project": ["src/**/*.ts"],

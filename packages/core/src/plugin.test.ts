@@ -83,6 +83,15 @@ describe("PlatformPlugin.create", () => {
     ).toThrow(ValidationError);
   });
 
+  it("throws ValidationError for invalid baseUrl", () => {
+    expect(() =>
+      PlatformPlugin.create(
+        { ...createMinimalDefinition(), baseUrl: "not-a-url" },
+        createMockMethods(),
+      ),
+    ).toThrow(ValidationError);
+  });
+
   it("creates a plugin with required fields only", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 

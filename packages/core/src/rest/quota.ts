@@ -89,7 +89,7 @@ export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitS
       resetsAt = nextResetTime();
       scheduleReset();
     }, ms);
-    if (resetTimer && "unref" in resetTimer) {
+    if (typeof resetTimer === "object" && typeof resetTimer.unref === "function") {
       resetTimer.unref();
     }
   };

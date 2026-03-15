@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { trace } from "@opentelemetry/api";
+import { describe, expect, it, vi } from "vitest";
 import { getTracer, SpanAttributes } from "./traces.js";
 
 describe("getTracer", () => {
@@ -9,9 +10,11 @@ describe("getTracer", () => {
     expect(typeof tracer.startSpan).toBe("function");
   });
 
-  it("includes version when creating tracer", () => {
-    const tracer = getTracer();
-    expect(tracer).toBeDefined();
+  it("passes tracer name and version to trace.getTracer", () => {
+    const spy = vi.spyOn(trace, "getTracer");
+    getTracer();
+    expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));
+    spy.mockRestore();
   });
 
   it("returns a tracer on repeated calls", () => {

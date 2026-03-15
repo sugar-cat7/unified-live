@@ -35,7 +35,7 @@ export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitS
       }
     }, config.global.perMs);
 
-    if ("unref" in refillTimer) {
+    if (typeof refillTimer === "object" && typeof refillTimer.unref === "function") {
       refillTimer.unref();
     }
   };

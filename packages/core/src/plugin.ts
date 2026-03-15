@@ -154,7 +154,17 @@ export const PlatformPlugin = {
    * @postcondition returns a fully functional PlatformPlugin with wired RestManager
    */
   create(definition: PluginDefinition, methods: PluginMethods): PlatformPlugin {
-    if (!definition.baseUrl.startsWith("https://")) {
+    let parsedBaseUrl: URL;
+    try {
+      parsedBaseUrl = new URL(definition.baseUrl);
+    } catch {
+      throw new ValidationError(
+        "VALIDATION_INVALID_URL",
+        `Plugin "${definition.name}" baseUrl is not a valid URL (got "${definition.baseUrl}")`,
+        { platform: definition.name },
+      );
+    }
+    if (parsedBaseUrl.protocol !== "https:") {
       throw new ValidationError(
         "VALIDATION_INVALID_URL",
         `Plugin "${definition.name}" baseUrl must use HTTPS (got "${definition.baseUrl}")`,

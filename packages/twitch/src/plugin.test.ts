@@ -191,6 +191,7 @@ describe("createTwitchPlugin", () => {
     expect(page.items).toHaveLength(1);
     expect(page.items[0]!.type).toBe("video");
     expect(page.cursor).toBe("next-page");
+    expect(page.hasMore).toBe(true);
 
     plugin.dispose();
   });

@@ -142,6 +142,7 @@ export const youtubeGetLiveStreams = async (
  * @param rest - REST manager for API requests
  * @param channelId - YouTube channel ID
  * @param cursor - optional page token for pagination
+ * @param pageSize - number of items per page (default 50)
  * @returns paginated list of Video objects
  * @throws NotFoundError if channel does not exist or has no uploads playlist
  * @precondition channelId is a valid YouTube channel ID
@@ -151,6 +152,7 @@ export const youtubeGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
+  pageSize = 50,
 ): Promise<Page<Video>> => {
   const channelRes = await rest.request<YTListResponse<YTChannelResource>>({
     method: "GET",
@@ -175,7 +177,7 @@ export const youtubeGetVideos = async (
   const query: Record<string, string> = {
     part: "snippet",
     playlistId: uploadsPlaylistId,
-    maxResults: "50",
+    maxResults: String(pageSize),
   };
   if (cursor) {
     query.pageToken = cursor;
@@ -189,7 +191,7 @@ export const youtubeGetVideos = async (
   });
 
   if (playlistRes.data.items.length === 0) {
-    return { items: [] };
+    return { items: [], hasMore: false };
   }
 
   const videoIds = playlistRes.data.items
@@ -213,6 +215,7 @@ export const youtubeGetVideos = async (
     items: videos,
     cursor: playlistRes.data.nextPageToken,
     total: playlistRes.data.pageInfo.totalResults ?? 0,
+    hasMore: playlistRes.data.nextPageToken !== undefined,
   };
 };
 

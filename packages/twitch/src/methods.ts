@@ -8,12 +8,12 @@ import {
   type Video,
 } from "@unified-live/core";
 import {
-  streamToLive,
+  toLive,
   type TwitchStream,
   type TwitchUser,
   type TwitchVideo,
-  userToChannel,
-  videoToVideo,
+  toChannel,
+  toVideo,
 } from "./mapper";
 
 type TwitchResponse<T> = {
@@ -44,7 +44,7 @@ export const twitchGetContent = async (rest: RestManager, id: string): Promise<C
     throw new NotFoundError("twitch", id);
   }
 
-  return videoToVideo(item);
+  return toVideo(item);
 };
 
 /**
@@ -79,7 +79,7 @@ export const twitchGetChannel = async (rest: RestManager, id: string): Promise<C
     throw new NotFoundError("twitch", id);
   }
 
-  return userToChannel(item);
+  return toChannel(item);
 };
 
 /**
@@ -102,7 +102,7 @@ export const twitchGetLiveStreams = async (
     bucketId: "streams",
   });
 
-  return res.data.data.filter((s) => s.type === "live").map(streamToLive);
+  return res.data.data.filter((s) => s.type === "live").map(toLive);
 };
 
 /**
@@ -111,6 +111,7 @@ export const twitchGetLiveStreams = async (
  * @param rest - REST manager for API requests
  * @param channelId - Twitch user ID
  * @param cursor - optional pagination cursor
+ * @param pageSize - number of items per page (default 20)
  * @returns paginated list of Video objects
  * @precondition channelId is a valid Twitch user ID
  * @postcondition returns archive-type videos with cursor for next page
@@ -119,11 +120,12 @@ export const twitchGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
+  pageSize = 20,
 ): Promise<Page<Video>> => {
   const query: Record<string, string> = {
     user_id: channelId,
     type: "archive",
-    first: "20",
+    first: String(pageSize),
   };
   if (cursor) {
     query.after = cursor;
@@ -137,8 +139,9 @@ export const twitchGetVideos = async (
   });
 
   return {
-    items: res.data.data.map(videoToVideo),
+    items: res.data.data.map(toVideo),
     cursor: res.data.pagination?.cursor,
+    hasMore: res.data.pagination?.cursor !== undefined,
   };
 };
 
@@ -168,5 +171,5 @@ export const twitchResolveArchive = async (
   });
 
   const match = res.data.data.find((v) => v.stream_id === live.sessionId);
-  return match ? videoToVideo(match) : null;
+  return match ? toVideo(match) : null;
 };

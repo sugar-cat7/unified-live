@@ -8,12 +8,12 @@ import {
   type Video,
 } from "@unified-live/core";
 import {
-  movieToContent,
-  movieToLive,
-  movieToVideo,
+  toContent,
+  toLive,
+  toVideo,
   type TCMovie,
   type TCUser,
-  userToChannel,
+  toChannel,
 } from "./mapper";
 
 type TCMovieResponse = {
@@ -46,7 +46,7 @@ export const twitcastingGetContent = async (rest: RestManager, id: string): Prom
     bucketId: "movies",
   });
 
-  return movieToContent(res.data.movie, res.data.broadcaster);
+  return toContent(res.data.movie, res.data.broadcaster);
 };
 
 /**
@@ -70,7 +70,7 @@ export const twitcastingGetChannel = async (rest: RestManager, id: string): Prom
     throw new NotFoundError("twitcasting", id);
   }
 
-  return userToChannel(res.data.user);
+  return toChannel(res.data.user);
 };
 
 /**
@@ -107,7 +107,7 @@ export const twitcastingGetLiveStreams = async (
     return [];
   }
 
-  return [movieToLive(movieRes.data.movie, res.data.user)];
+  return [toLive(movieRes.data.movie, res.data.user)];
 };
 
 /**
@@ -116,6 +116,7 @@ export const twitcastingGetLiveStreams = async (
  * @param rest - REST manager for API requests
  * @param channelId - TwitCasting user_id or screen_id
  * @param cursor - optional pagination cursor (slice_id)
+ * @param pageSize - number of items per page (default 50)
  * @returns paginated list of videos
  * @precondition channelId is a valid TwitCasting user_id or screen_id
  * @postcondition returns paginated videos using slice_id for deep pagination
@@ -124,8 +125,9 @@ export const twitcastingGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
+  pageSize = 50,
 ): Promise<Page<Video>> => {
-  const query: Record<string, string> = { limit: "50" };
+  const query: Record<string, string> = { limit: String(pageSize) };
   if (cursor) {
     query.slice_id = cursor;
   }
@@ -147,13 +149,14 @@ export const twitcastingGetVideos = async (
 
   const videos = moviesRes.data.movies
     .filter((m) => !m.is_live)
-    .map((m) => movieToVideo(m, userRes.data.user));
+    .map((m) => toVideo(m, userRes.data.user));
 
+  const nextCursor = videos.length > 0 && moviesRes.data.movies.length === pageSize ? videos.at(-1)!.id : undefined;
   return {
     items: videos,
-    cursor:
-      videos.length > 0 && moviesRes.data.movies.length === 50 ? videos.at(-1)!.id : undefined,
+    cursor: nextCursor,
     total: moviesRes.data.total_count,
+    hasMore: nextCursor !== undefined,
   };
 };
 
@@ -179,5 +182,5 @@ export const twitcastingResolveArchive = async (
     return null;
   }
 
-  return movieToVideo(res.data.movie, res.data.broadcaster);
+  return toVideo(res.data.movie, res.data.broadcaster);
 };

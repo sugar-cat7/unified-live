@@ -50,7 +50,7 @@ const createMockMethods = (): PluginMethods => {
     getContent: vi.fn().mockResolvedValue({ type: "video", id: "v1" }),
     getChannel: vi.fn().mockResolvedValue({ id: "ch1" }),
     getLiveStreams: vi.fn().mockResolvedValue([]),
-    getVideos: vi.fn().mockResolvedValue({ items: [] }),
+    getVideos: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
   };
 };
 
@@ -129,7 +129,7 @@ describe("PlatformPlugin.create", () => {
 
     await plugin.getVideos("ch1", "cursor123");
 
-    expect(methods.getVideos).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123");
+    expect(methods.getVideos).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123", undefined);
   });
 
   it("wires resolveArchive when provided", async () => {

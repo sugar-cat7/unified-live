@@ -47,7 +47,7 @@ export type TwitchUser = {
  * @precondition stream.type === "live"
  * @postcondition returns LiveStream with sessionId set to stream.id
  */
-export const streamToLive = (stream: TwitchStream): LiveStream => {
+export const toLive = (stream: TwitchStream): LiveStream => {
   return {
     id: stream.id,
     platform: "twitch",
@@ -75,7 +75,7 @@ export const streamToLive = (stream: TwitchStream): LiveStream => {
  * @precondition video has all required fields
  * @postcondition returns Video with sessionId set to stream_id (if available)
  */
-export const videoToVideo = (video: TwitchVideo): Video => {
+export const toVideo = (video: TwitchVideo): Video => {
   return {
     id: video.id,
     platform: "twitch",
@@ -89,7 +89,7 @@ export const videoToVideo = (video: TwitchVideo): Video => {
     },
     sessionId: video.stream_id ?? video.id,
     type: "video",
-    duration: parseTwitchDuration(video.duration),
+    duration: parseDuration(video.duration),
     viewCount: video.view_count,
     publishedAt: new Date(video.published_at),
     raw: video,
@@ -102,7 +102,7 @@ export const videoToVideo = (video: TwitchVideo): Video => {
  * @param user - Twitch user resource from Helix API
  * @returns unified Channel
  */
-export const userToChannel = (user: TwitchUser): Channel => {
+export const toChannel = (user: TwitchUser): Channel => {
   return {
     id: user.id,
     platform: "twitch",
@@ -123,7 +123,7 @@ export const userToChannel = (user: TwitchUser): Channel => {
  * @returns total seconds
  * @idempotency Safe — pure function
  */
-export const parseTwitchDuration = (duration: string): number => {
+export const parseDuration = (duration: string): number => {
   const match = duration.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
   if (!match) return 0;
 

@@ -59,7 +59,7 @@ export type PluginMethods = {
   getLiveStreams: (rest: RestManager, channelId: string) => Promise<LiveStream[]>;
 
   /** List videos for a channel with pagination. */
-  getVideos: (rest: RestManager, channelId: string, cursor?: string) => Promise<Page<Video>>;
+  getVideos: (rest: RestManager, channelId: string, cursor?: string, pageSize?: number) => Promise<Page<Video>>;
 
   /** Resolve archive for a live stream (optional). */
   resolveArchive?: (rest: RestManager, live: LiveStream) => Promise<Video | null>;
@@ -101,7 +101,7 @@ export type PlatformPlugin = {
   getLiveStreams(channelId: string): Promise<LiveStream[]>;
 
   /** List videos (archives) for a channel with cursor-based pagination. */
-  getVideos(channelId: string, cursor?: string): Promise<Page<Video>>;
+  getVideos(channelId: string, cursor?: string, pageSize?: number): Promise<Page<Video>>;
 
   /** Resolve the archive video for a live stream (platform-specific). */
   resolveArchive?(live: LiveStream): Promise<Video | null>;
@@ -165,7 +165,7 @@ export const PlatformPlugin = {
       getContent: (id) => methods.getContent(rest, id),
       getChannel: (id) => methods.getChannel(rest, id),
       getLiveStreams: (channelId) => methods.getLiveStreams(rest, channelId),
-      getVideos: (channelId, cursor) => methods.getVideos(rest, channelId, cursor),
+      getVideos: (channelId, cursor, pageSize) => methods.getVideos(rest, channelId, cursor, pageSize),
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,

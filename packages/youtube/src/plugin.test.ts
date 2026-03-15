@@ -293,6 +293,7 @@ describe("createYouTubePlugin", () => {
     expect(page.items[0]?.type).toBe("video");
     expect(page.cursor).toBe("CDIQAA");
     expect(page.total).toBe(100);
+    expect(page.hasMore).toBe(true);
   });
 
   it("getVideos throws NotFoundError when channel not found", async () => {
@@ -420,6 +421,7 @@ describe("createYouTubePlugin", () => {
 
     expect(page.items).toEqual([]);
     expect(page.cursor).toBeUndefined();
+    expect(page.hasMore).toBe(false);
   });
 
   it("handles 403 rateLimitExceeded by retrying", async () => {

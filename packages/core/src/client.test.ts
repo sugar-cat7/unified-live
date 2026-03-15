@@ -45,7 +45,7 @@ const createMockPlugin = (name: string): PlatformPlugin => {
     getContent: vi.fn(async () => mockContent),
     getChannel: vi.fn(async () => mockChannel),
     getLiveStreams: vi.fn(async () => []),
-    getVideos: vi.fn(async () => ({ items: [], cursor: undefined })),
+    getVideos: vi.fn(async () => ({ items: [], cursor: undefined, hasMore: false })),
     dispose: vi.fn(),
   };
 };
@@ -118,7 +118,7 @@ describe("UnifiedClient.create", () => {
       method: "getVideos" as const,
       args: ["youtube", "ch1", "cursor1"],
       pluginMethod: "getVideos" as const,
-      pluginArgs: ["ch1", "cursor1"],
+      pluginArgs: ["ch1", "cursor1", undefined],
       assertion: (result: { items: unknown[] }) => expect(result.items).toEqual([]),
     },
     {

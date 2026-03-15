@@ -7,6 +7,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import openapiTS, { astToString } from "openapi-typescript";
 
 const DISCOVERY_URL = "https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest";
@@ -220,8 +221,8 @@ const main = async () => {
   };
 
   const outDir = path.resolve(
-    new URL("..", import.meta.url).pathname,
-    "packages/youtube/src/generated",
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../packages/youtube/src/generated",
   );
   fs.mkdirSync(outDir, { recursive: true });
 

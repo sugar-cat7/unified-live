@@ -17,8 +17,8 @@ import {
 
 /** List response shape shared by all YouTube Data API list endpoints. */
 type YTListResponse<T> = {
-  items: T[];
-  pageInfo: Schemas["PageInfo"];
+  items?: T[];
+  pageInfo?: Schemas["PageInfo"];
   nextPageToken?: string;
 };
 
@@ -43,7 +43,7 @@ export const youtubeGetContent = async (rest: RestManager, id: string): Promise<
     bucketId: "videos:list",
   });
 
-  const item = res.data.items[0];
+  const item = res.data.items?.[0];
   if (!item) {
     throw new NotFoundError("youtube", id);
   }
@@ -81,7 +81,7 @@ export const youtubeGetChannel = async (rest: RestManager, id: string): Promise<
     bucketId: "channels:list",
   });
 
-  const item = res.data.items[0];
+  const item = res.data.items?.[0];
   if (!item) {
     throw new NotFoundError("youtube", id);
   }
@@ -114,7 +114,7 @@ export const youtubeGetLiveStreams = async (
     bucketId: "search:list",
   });
 
-  if (res.data.items.length === 0) {
+  if (!res.data.items || res.data.items.length === 0) {
     return [];
   }
 
@@ -133,7 +133,7 @@ export const youtubeGetLiveStreams = async (
     bucketId: "videos:list",
   });
 
-  return videosRes.data.items.map(toContent).filter((c): c is LiveStream => c.type === "live");
+  return (videosRes.data.items ?? []).map(toContent).filter((c): c is LiveStream => c.type === "live");
 };
 
 /**
@@ -190,7 +190,7 @@ export const youtubeGetVideos = async (
     bucketId: "playlistItems:list",
   });
 
-  if (playlistRes.data.items.length === 0) {
+  if (!playlistRes.data.items || playlistRes.data.items.length === 0) {
     return { items: [], hasMore: false };
   }
 
@@ -209,12 +209,12 @@ export const youtubeGetVideos = async (
     bucketId: "videos:list",
   });
 
-  const videos = videosRes.data.items.map(toContent).filter((c): c is Video => c.type === "video");
+  const videos = (videosRes.data.items ?? []).map(toContent).filter((c): c is Video => c.type === "video");
 
   return {
     items: videos,
     cursor: playlistRes.data.nextPageToken,
-    total: playlistRes.data.pageInfo.totalResults ?? 0,
+    total: playlistRes.data.pageInfo?.totalResults ?? 0,
     hasMore: playlistRes.data.nextPageToken !== undefined,
   };
 };

@@ -140,12 +140,12 @@ export const twitcastingGetVideos = async (
     }),
   ]);
 
-  const videos = moviesRes.data.movies
-    .filter((m) => !m.is_live)
-    .map((m) => toVideo(m, userRes.data.user));
+  const movies = moviesRes.data.movies;
+  const videos = movies.filter((m) => !m.is_live).map((m) => toVideo(m, userRes.data.user));
 
+  // Use last movie ID (not last video) as cursor to avoid stopping when a page has only live movies
   const nextCursor =
-    videos.length > 0 && moviesRes.data.movies.length === pageSize ? videos.at(-1)!.id : undefined;
+    movies.length === pageSize ? movies.at(-1)!.id : undefined;
   return {
     items: videos,
     cursor: nextCursor,

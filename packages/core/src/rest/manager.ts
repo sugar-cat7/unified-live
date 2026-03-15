@@ -106,7 +106,11 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
 
     request: async <T>(req: RestRequest): Promise<RestResponse<T>> => {
       if (disposed) {
-        throw new Error(`RestManager for "${options.platform}" has been disposed`);
+        throw new UnifiedLiveError(
+          `RestManager for "${options.platform}" has been disposed`,
+          "INTERNAL",
+          { platform: options.platform },
+        );
       }
       return tracer.startActiveSpan(
         `unified-live.rest ${manager.platform} ${req.method} ${req.path}`,
@@ -299,11 +303,11 @@ const sleep = (ms: number): Promise<void> => {
  *
  * @param header - raw Retry-After header value (may be null)
  * @param fallback - default seconds if header is missing or invalid
- * @returns seconds clamped to [1, 120]
+ * @returns seconds in range [0, 120], or fallback if header is missing/invalid
  */
 export const parseRetryAfter = (header: string | null, fallback = 1): number => {
-  if (!header) return fallback;
+  if (!header) return Math.min(Math.max(fallback, 0), 120);
   const parsed = Number.parseInt(header, 10);
-  if (Number.isNaN(parsed) || parsed < 0) return fallback;
+  if (Number.isNaN(parsed) || parsed < 0) return Math.min(Math.max(fallback, 0), 120);
   return Math.min(parsed, 120);
 };

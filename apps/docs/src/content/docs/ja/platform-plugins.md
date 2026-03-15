@@ -139,7 +139,7 @@ const client = UnifiedClient.create({
 `using` を使うとスコープを抜けた時点で自動的に内部タイマーが解放されます:
 
 ```ts
-using client = UnifiedClient.create({ plugins: [youtube({ apiKey: "..." })] });
+using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: "..." })] });
 // スコープ終了時に client[Symbol.dispose]() が自動的に呼ばれます
 ```
 

@@ -6,11 +6,11 @@ Each platform has its own package with a factory function. You only install the 
 
 ## Platform Status
 
-| Platform    | Status | Auth                     | Rate Limiting          | Archive Resolution |
-| :---------- | :----- | :----------------------- | :--------------------- | :----------------- |
-| YouTube     | ✅ Stable | API Key (query param) | Quota Budget (10k/day) | ✅ Supported       |
+| Platform    | Status    | Auth                      | Rate Limiting          | Archive Resolution |
+| :---------- | :-------- | :------------------------ | :--------------------- | :----------------- |
+| YouTube     | ✅ Stable | API Key (query param)     | Quota Budget (10k/day) | ✅ Supported       |
 | Twitch      | ✅ Stable | OAuth2 Client Credentials | Token Bucket (800/min) | ✅ Supported       |
-| TwitCasting | ✅ Stable | Basic Auth (base64)    | Token Bucket (60/min)  | ❌ Not supported   |
+| TwitCasting | ✅ Stable | Basic Auth (base64)       | Token Bucket (60/min)  | ❌ Not supported   |
 
 ---
 

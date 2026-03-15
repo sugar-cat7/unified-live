@@ -64,10 +64,7 @@ export default defineConfig({
         {
           label: "Cookbook",
           translations: { ja: "クックブック" },
-          items: [
-            { slug: "examples" },
-            { slug: "creating-a-plugin" },
-          ],
+          items: [{ slug: "examples" }, { slug: "creating-a-plugin" }],
         },
         typeDocSidebarGroup,
       ],

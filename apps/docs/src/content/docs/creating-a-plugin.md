@@ -187,11 +187,11 @@ export const createExamplePlugin = (config: { apiKey: string }): PlatformPlugin 
 
 The SDK supports three auth patterns via `TokenManager`:
 
-| Pattern | Use Case | Example |
-|---------|----------|---------|
-| **Static** | API key / Basic auth | `TokenManager.static("Bearer key123")` |
-| **OAuth2** | Token refresh needed | Custom `TokenManager` with refresh logic |
-| **Query param** | API key in URL | Use `transformRequest` instead of `tokenManager` |
+| Pattern         | Use Case             | Example                                          |
+| --------------- | -------------------- | ------------------------------------------------ |
+| **Static**      | API key / Basic auth | `TokenManager.static("Bearer key123")`           |
+| **OAuth2**      | Token refresh needed | Custom `TokenManager` with refresh logic         |
+| **Query param** | API key in URL       | Use `transformRequest` instead of `tokenManager` |
 
 For **query parameter auth** (like YouTube), use `transformRequest`:
 
@@ -241,10 +241,10 @@ const createOAuth2TokenManager = (config: {
 
 Choose a strategy based on the platform's model:
 
-| Strategy | When to Use | Example Platform |
-|----------|-------------|-----------------|
+| Strategy         | When to Use                    | Example Platform                               |
+| ---------------- | ------------------------------ | ---------------------------------------------- |
 | **Token Bucket** | Fixed requests per time window | Twitch (800 req/min), TwitCasting (60 req/min) |
-| **Quota Budget** | Cost-based daily limit | YouTube (10,000 units/day) |
+| **Quota Budget** | Cost-based daily limit         | YouTube (10,000 units/day)                     |
 
 **Token Bucket** — for platforms with request-per-second limits:
 
@@ -357,12 +357,16 @@ const matchUrl = (url: string): ResolvedUrl | null => {
 // Data methods
 const getContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<any>({ method: "GET", path: `/videos/${id}` });
-  return { /* map res.data to Content */ } as Content;
+  return {
+    /* map res.data to Content */
+  } as Content;
 };
 
 const getChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${id}` });
-  return { /* map res.data to Channel */ } as Channel;
+  return {
+    /* map res.data to Channel */
+  } as Channel;
 };
 
 const getLiveStreams = async (rest: RestManager, channelId: string): Promise<LiveStream[]> => {
@@ -371,7 +375,10 @@ const getLiveStreams = async (rest: RestManager, channelId: string): Promise<Liv
 };
 
 const getVideos = async (
-  rest: RestManager, channelId: string, cursor?: string, pageSize?: number,
+  rest: RestManager,
+  channelId: string,
+  cursor?: string,
+  pageSize?: number,
 ): Promise<Page<Video>> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/videos` });
   return { items: [], hasMore: false }; // map res.data

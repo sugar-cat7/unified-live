@@ -187,11 +187,11 @@ export const createExamplePlugin = (config: { apiKey: string }): PlatformPlugin 
 
 SDK は `TokenManager` を通じて3つの認証パターンをサポート:
 
-| パターン | ユースケース | 例 |
-|---------|------------|---|
-| **静的** | API キー / Basic auth | `TokenManager.static("Bearer key123")` |
-| **OAuth2** | トークンのリフレッシュが必要 | カスタム `TokenManager` にリフレッシュロジック |
-| **クエリパラメータ** | URL 中の API キー | `tokenManager` の代わりに `transformRequest` を使用 |
+| パターン             | ユースケース                 | 例                                                  |
+| -------------------- | ---------------------------- | --------------------------------------------------- |
+| **静的**             | API キー / Basic auth        | `TokenManager.static("Bearer key123")`              |
+| **OAuth2**           | トークンのリフレッシュが必要 | カスタム `TokenManager` にリフレッシュロジック      |
+| **クエリパラメータ** | URL 中の API キー            | `tokenManager` の代わりに `transformRequest` を使用 |
 
 **クエリパラメータ認証**（YouTube のような場合）は `transformRequest` を使用:
 
@@ -241,10 +241,10 @@ const createOAuth2TokenManager = (config: {
 
 プラットフォームのモデルに応じて戦略を選択:
 
-| 戦略 | 使用タイミング | プラットフォーム例 |
-|------|-------------|-----------------|
+| 戦略             | 使用タイミング                 | プラットフォーム例                             |
+| ---------------- | ------------------------------ | ---------------------------------------------- |
 | **Token Bucket** | 時間窓あたりの固定リクエスト数 | Twitch (800 req/min)、TwitCasting (60 req/min) |
-| **Quota Budget** | コストベースの日次制限 | YouTube (10,000 units/day) |
+| **Quota Budget** | コストベースの日次制限         | YouTube (10,000 units/day)                     |
 
 **Token Bucket** — リクエスト/秒制限のプラットフォーム向け:
 
@@ -357,12 +357,16 @@ const matchUrl = (url: string): ResolvedUrl | null => {
 // データメソッド
 const getContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<any>({ method: "GET", path: `/videos/${id}` });
-  return { /* res.data を Content にマッピング */ } as Content;
+  return {
+    /* res.data を Content にマッピング */
+  } as Content;
 };
 
 const getChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${id}` });
-  return { /* res.data を Channel にマッピング */ } as Channel;
+  return {
+    /* res.data を Channel にマッピング */
+  } as Channel;
 };
 
 const getLiveStreams = async (rest: RestManager, channelId: string): Promise<LiveStream[]> => {
@@ -371,7 +375,10 @@ const getLiveStreams = async (rest: RestManager, channelId: string): Promise<Liv
 };
 
 const getVideos = async (
-  rest: RestManager, channelId: string, cursor?: string, pageSize?: number,
+  rest: RestManager,
+  channelId: string,
+  cursor?: string,
+  pageSize?: number,
 ): Promise<Page<Video>> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/videos` });
   return { items: [], hasMore: false }; // res.data をマッピング

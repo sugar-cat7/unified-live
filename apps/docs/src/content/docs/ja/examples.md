@@ -72,8 +72,7 @@ const [ytStreams, twitchStreams] = await Promise.all([
   client.getLiveStreams("twitch", "twitchdev"),
 ]);
 
-const allStreams = [...ytStreams, ...twitchStreams]
-  .sort((a, b) => b.viewerCount - a.viewerCount);
+const allStreams = [...ytStreams, ...twitchStreams].sort((a, b) => b.viewerCount - a.viewerCount);
 
 console.log(`プラットフォーム全体で ${allStreams.length} 配信`);
 
@@ -165,7 +164,14 @@ await sdk.shutdown();
 実際の API にアクセスせずにユニットテスト用の軽量プラグインを作成:
 
 ```ts
-import { PlatformPlugin, type Content, type Channel, type Page, type Video, type LiveStream } from "@unified-live/core";
+import {
+  PlatformPlugin,
+  type Content,
+  type Channel,
+  type Page,
+  type Video,
+  type LiveStream,
+} from "@unified-live/core";
 
 const mockContent: Content = {
   id: "test-1",
@@ -195,7 +201,12 @@ const mockPlugin: PlatformPlugin = {
   resolveUrl: (url) =>
     url.includes("example.com") ? { platform: "mock", type: "content", id: "test-1" } : null,
   getContent: async () => mockContent,
-  getChannel: async () => ({ id: "ch-1", platform: "mock", name: "テストチャンネル", url: "https://example.com/channel/ch-1" }),
+  getChannel: async () => ({
+    id: "ch-1",
+    platform: "mock",
+    name: "テストチャンネル",
+    url: "https://example.com/channel/ch-1",
+  }),
   getLiveStreams: async () => [],
   getVideos: async () => ({ items: [mockContent as Video], hasMore: false }),
   dispose: () => {},

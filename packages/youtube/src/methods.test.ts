@@ -343,7 +343,11 @@ describe("youtubeGetVideos", () => {
         };
       }
       // Return one regular video and one live — only video should pass the filter
-      return { status: 200, headers: new Headers(), data: { items: [sampleVideoItem, sampleLiveItem] } };
+      return {
+        status: 200,
+        headers: new Headers(),
+        data: { items: [sampleVideoItem, sampleLiveItem] },
+      };
     });
 
     const result = await youtubeGetVideos(rest, "UCtest");

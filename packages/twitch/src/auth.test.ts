@@ -163,10 +163,7 @@ describe("createClientCredentialsTokenManager", () => {
 
     // Invalidate and immediately fire concurrent calls
     manager.invalidate();
-    const results = await Promise.all([
-      manager.getAuthHeader(),
-      manager.getAuthHeader(),
-    ]);
+    const results = await Promise.all([manager.getAuthHeader(), manager.getAuthHeader()]);
 
     // Both should get the same token from the shared refresh
     expect(results[0]).toBe(results[1]);

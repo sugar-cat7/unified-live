@@ -33,7 +33,13 @@ export type { QuotaBudgetConfig } from "./rest/quota";
 export { createQuotaBudgetStrategy } from "./rest/quota";
 export type { RateLimitHandle, RateLimitStatus } from "./rest/strategy";
 export { RateLimitStrategy } from "./rest/strategy";
-export type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse, RetryConfig } from "./rest/types";
+export type {
+  RateLimitInfo,
+  RestManagerOptions,
+  RestRequest,
+  RestResponse,
+  RetryConfig,
+} from "./rest/types";
 export { createRateLimitHeaderParser } from "./rest/types";
 
 // --- Result (internal) ---

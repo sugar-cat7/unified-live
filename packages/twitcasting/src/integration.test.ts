@@ -122,8 +122,6 @@ describe("TwitCasting Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.getChannel("twitcasting", "nonexistent")).rejects.toThrow(
-      NotFoundError,
-    );
+    await expect(client.getChannel("twitcasting", "nonexistent")).rejects.toThrow(NotFoundError);
   });
 });

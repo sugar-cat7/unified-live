@@ -1,4 +1,10 @@
-import { Content, type LiveStream, NotFoundError, QuotaExhaustedError, ValidationError } from "@unified-live/core";
+import {
+  Content,
+  type LiveStream,
+  NotFoundError,
+  QuotaExhaustedError,
+  ValidationError,
+} from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
 

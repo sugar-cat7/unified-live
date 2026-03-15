@@ -389,7 +389,9 @@ describe("createRestManager", () => {
       fetch: fetchFn,
     });
 
-    const err = await manager.request({ method: "GET", path: "/test", signal: controller.signal }).catch(e => e);
+    const err = await manager
+      .request({ method: "GET", path: "/test", signal: controller.signal })
+      .catch((e) => e);
     expect(err).toBeInstanceOf(NetworkError);
     expect(err.code).toBe("NETWORK_ABORT");
   });
@@ -412,25 +414,22 @@ describe("createRestManager", () => {
     expect(calledInit.signal).toBeDefined();
   });
 
-  it.each([400, 408, 413, 415, 422])(
-    "throws immediately without retry on %d",
-    async (status) => {
-      strategy = createMockStrategy();
-      const fetchFn = createMockFetch([{ status }]);
+  it.each([400, 408, 413, 415, 422])("throws immediately without retry on %d", async (status) => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status }]);
 
-      const manager = createRestManager({
-        platform: "test",
-        baseUrl: "https://api.example.com",
-        rateLimitStrategy: strategy,
-        fetch: fetchFn,
-      });
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
 
-      await expect(
-        manager.request({ method: "GET", path: "/test" }),
-      ).rejects.toThrow(UnifiedLiveError);
-      expect(fetchFn).toHaveBeenCalledTimes(1); // No retries
-    },
-  );
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
+      UnifiedLiveError,
+    );
+    expect(fetchFn).toHaveBeenCalledTimes(1); // No retries
+  });
 
   it("sends raw body when bodyType is 'raw'", async () => {
     strategy = createMockStrategy();

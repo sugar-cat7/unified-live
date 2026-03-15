@@ -1,7 +1,13 @@
 import { NotFoundError } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
 import type { RestManager } from "@unified-live/core";
-import { twitchGetContent, twitchGetChannel, twitchGetLiveStreams, twitchGetVideos, twitchResolveArchive } from "./methods";
+import {
+  twitchGetContent,
+  twitchGetChannel,
+  twitchGetLiveStreams,
+  twitchGetVideos,
+  twitchResolveArchive,
+} from "./methods";
 
 const createMockRest = (response: unknown): RestManager => ({
   platform: "twitch",
@@ -74,9 +80,7 @@ describe("twitchGetChannel", () => {
   it("uses id param for numeric IDs", async () => {
     const rest = createMockRest({ data: [sampleUser] });
     await twitchGetChannel(rest, "12345");
-    expect(rest.request).toHaveBeenCalledWith(
-      expect.objectContaining({ query: { id: "12345" } }),
-    );
+    expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ query: { id: "12345" } }));
   });
 
   it("uses login param for non-numeric IDs", async () => {
@@ -155,9 +159,16 @@ describe("twitchResolveArchive", () => {
   it("returns null when live has no sessionId", async () => {
     const rest = createMockRest({});
     const result = await twitchResolveArchive(rest, {
-      id: "s1", platform: "twitch", title: "", url: "https://twitch.tv/test",
-      thumbnail: { url: "", width: 1, height: 1 }, channel: { id: "u1", name: "", url: "" },
-      type: "live", viewerCount: 0, startedAt: new Date(), raw: {},
+      id: "s1",
+      platform: "twitch",
+      title: "",
+      url: "https://twitch.tv/test",
+      thumbnail: { url: "", width: 1, height: 1 },
+      channel: { id: "u1", name: "", url: "" },
+      type: "live",
+      viewerCount: 0,
+      startedAt: new Date(),
+      raw: {},
     });
     expect(result).toBeNull();
     expect(rest.request).not.toHaveBeenCalled();
@@ -166,9 +177,17 @@ describe("twitchResolveArchive", () => {
   it("returns Video when matching archive found", async () => {
     const rest = createMockRest({ data: [sampleVideo] });
     const result = await twitchResolveArchive(rest, {
-      id: "s1", platform: "twitch", title: "", url: "https://twitch.tv/test",
-      thumbnail: { url: "", width: 1, height: 1 }, channel: { id: "u1", name: "", url: "" },
-      sessionId: "s1", type: "live", viewerCount: 0, startedAt: new Date(), raw: {},
+      id: "s1",
+      platform: "twitch",
+      title: "",
+      url: "https://twitch.tv/test",
+      thumbnail: { url: "", width: 1, height: 1 },
+      channel: { id: "u1", name: "", url: "" },
+      sessionId: "s1",
+      type: "live",
+      viewerCount: 0,
+      startedAt: new Date(),
+      raw: {},
     });
     expect(result).not.toBeNull();
     expect(result!.type).toBe("video");
@@ -177,9 +196,17 @@ describe("twitchResolveArchive", () => {
   it("returns null when no matching archive", async () => {
     const rest = createMockRest({ data: [{ ...sampleVideo, stream_id: "other" }] });
     const result = await twitchResolveArchive(rest, {
-      id: "s1", platform: "twitch", title: "", url: "https://twitch.tv/test",
-      thumbnail: { url: "", width: 1, height: 1 }, channel: { id: "u1", name: "", url: "" },
-      sessionId: "s1", type: "live", viewerCount: 0, startedAt: new Date(), raw: {},
+      id: "s1",
+      platform: "twitch",
+      title: "",
+      url: "https://twitch.tv/test",
+      thumbnail: { url: "", width: 1, height: 1 },
+      channel: { id: "u1", name: "", url: "" },
+      sessionId: "s1",
+      type: "live",
+      viewerCount: 0,
+      startedAt: new Date(),
+      raw: {},
     });
     expect(result).toBeNull();
   });

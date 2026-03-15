@@ -58,7 +58,11 @@ describe("createTwitCastingPlugin", () => {
 
   it("throws ValidationError for whitespace-only credentials", () => {
     expect(() =>
-      createTwitCastingPlugin({ clientId: "  ", clientSecret: "secret", fetch: createMockFetch([]) }),
+      createTwitCastingPlugin({
+        clientId: "  ",
+        clientSecret: "secret",
+        fetch: createMockFetch([]),
+      }),
     ).toThrow(ValidationError);
   });
 

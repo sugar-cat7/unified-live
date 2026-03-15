@@ -10,13 +10,7 @@
  * - TwitCasting application credentials (client ID + secret)
  */
 
-import {
-  Content,
-  ErrorCode,
-  Page,
-  UnifiedClient,
-  UnifiedLiveError,
-} from "@unified-live/core";
+import { Content, ErrorCode, Page, UnifiedClient, UnifiedLiveError } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 import { createTwitCastingPlugin } from "@unified-live/twitcasting";

@@ -172,10 +172,7 @@ export const UnifiedClient = {
         try {
           void new URL(url);
         } catch {
-          throw new ValidationError(
-            "VALIDATION_INVALID_URL",
-            `Invalid URL: "${url}"`,
-          );
+          throw new ValidationError("VALIDATION_INVALID_URL", `Invalid URL: "${url}"`);
         }
         const resolved = matchUrl(url);
         if (!resolved) {

@@ -202,7 +202,9 @@ export const Channel = {
   is: (value: unknown): value is Channel => {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string, unknown>;
-    return typeof obj.id === "string" && typeof obj.platform === "string" && typeof obj.name === "string";
+    return (
+      typeof obj.id === "string" && typeof obj.platform === "string" && typeof obj.name === "string"
+    );
   },
 } as const;
 

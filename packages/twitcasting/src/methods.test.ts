@@ -68,9 +68,7 @@ describe("twitcastingGetContent", () => {
     const result = await twitcastingGetContent(rest, "m2");
     expect(result.type).toBe("video");
     expect(result.id).toBe("m2");
-    expect(rest.request).toHaveBeenCalledWith(
-      expect.objectContaining({ path: "/movies/m2" }),
-    );
+    expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ path: "/movies/m2" }));
   });
 
   it("returns live content for a live movie", async () => {
@@ -86,9 +84,7 @@ describe("twitcastingGetChannel", () => {
     const result = await twitcastingGetChannel(rest, "testuser");
     expect(result.id).toBe("u1");
     expect(result.platform).toBe("twitcasting");
-    expect(rest.request).toHaveBeenCalledWith(
-      expect.objectContaining({ path: "/users/testuser" }),
-    );
+    expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ path: "/users/testuser" }));
   });
 
   it("throws NotFoundError when user is null", async () => {
@@ -162,7 +158,11 @@ describe("twitcastingGetVideos", () => {
       callCount++;
       if (callCount === 1) {
         // Fewer movies than default pageSize (50)
-        return { status: 200, headers: new Headers(), data: { total_count: 2, movies: [mockArchiveMovie] } };
+        return {
+          status: 200,
+          headers: new Headers(),
+          data: { total_count: 2, movies: [mockArchiveMovie] },
+        };
       }
       return { status: 200, headers: new Headers(), data: { user: mockUser } };
     });
@@ -175,14 +175,16 @@ describe("twitcastingGetVideos", () => {
   it("passes cursor as slice_id", async () => {
     let callCount = 0;
     const rest = createMockRest({});
-    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async (req: { query?: Record<string, string> }) => {
-      callCount++;
-      if (callCount === 1) {
-        expect(req.query?.slice_id).toBe("cursor123");
-        return { status: 200, headers: new Headers(), data: { total_count: 0, movies: [] } };
-      }
-      return { status: 200, headers: new Headers(), data: { user: mockUser } };
-    });
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(
+      async (req: { query?: Record<string, string> }) => {
+        callCount++;
+        if (callCount === 1) {
+          expect(req.query?.slice_id).toBe("cursor123");
+          return { status: 200, headers: new Headers(), data: { total_count: 0, movies: [] } };
+        }
+        return { status: 200, headers: new Headers(), data: { user: mockUser } };
+      },
+    );
 
     await twitcastingGetVideos(rest, "u1", "cursor123");
   });
@@ -192,9 +194,17 @@ describe("twitcastingResolveArchive", () => {
   it("returns null when movie is still live", async () => {
     const rest = createMockRest({ movie: mockLiveMovie, broadcaster: mockUser });
     const live = {
-      id: "m1", platform: "twitcasting", title: "", url: "https://twitcasting.tv/test",
-      thumbnail: { url: "", width: 1, height: 1 }, channel: { id: "u1", name: "", url: "" },
-      sessionId: "m1", type: "live" as const, viewerCount: 0, startedAt: new Date(), raw: {},
+      id: "m1",
+      platform: "twitcasting",
+      title: "",
+      url: "https://twitcasting.tv/test",
+      thumbnail: { url: "", width: 1, height: 1 },
+      channel: { id: "u1", name: "", url: "" },
+      sessionId: "m1",
+      type: "live" as const,
+      viewerCount: 0,
+      startedAt: new Date(),
+      raw: {},
     };
     const result = await twitcastingResolveArchive(rest, live);
     expect(result).toBeNull();
@@ -203,9 +213,17 @@ describe("twitcastingResolveArchive", () => {
   it("returns Video when movie has ended", async () => {
     const rest = createMockRest({ movie: mockArchiveMovie, broadcaster: mockUser });
     const live = {
-      id: "m2", platform: "twitcasting", title: "", url: "https://twitcasting.tv/test",
-      thumbnail: { url: "", width: 1, height: 1 }, channel: { id: "u1", name: "", url: "" },
-      sessionId: "m2", type: "live" as const, viewerCount: 0, startedAt: new Date(), raw: {},
+      id: "m2",
+      platform: "twitcasting",
+      title: "",
+      url: "https://twitcasting.tv/test",
+      thumbnail: { url: "", width: 1, height: 1 },
+      channel: { id: "u1", name: "", url: "" },
+      sessionId: "m2",
+      type: "live" as const,
+      viewerCount: 0,
+      startedAt: new Date(),
+      raw: {},
     };
     const result = await twitcastingResolveArchive(rest, live);
     expect(result).not.toBeNull();

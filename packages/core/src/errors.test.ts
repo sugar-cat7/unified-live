@@ -122,12 +122,17 @@ describe("UnifiedLiveError base", () => {
 
   it("toJSON returns structured representation", () => {
     const cause = new Error("upstream failure");
-    const error = new UnifiedLiveError("test error", "INTERNAL", {
-      platform: "youtube",
-      method: "GET",
-      path: "/videos",
-      status: 500,
-    }, { cause });
+    const error = new UnifiedLiveError(
+      "test error",
+      "INTERNAL",
+      {
+        platform: "youtube",
+        method: "GET",
+        path: "/videos",
+        status: 500,
+      },
+      { cause },
+    );
 
     const json = error.toJSON();
     expect(json).toEqual({

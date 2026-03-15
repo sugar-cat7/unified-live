@@ -289,7 +289,10 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
               span.setAttribute(SpanAttributes.ERROR_TYPE, error.name);
               span.setAttribute(SpanAttributes.ERROR_HAS_CAUSE, !!error.cause);
             }
-            span.setStatus({ code: SpanStatusCode.ERROR, message: error instanceof Error ? error.message : String(error) });
+            span.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: error instanceof Error ? error.message : String(error),
+            });
             span.recordException(error instanceof Error ? error : new Error(String(error)));
             handle.release();
             span.end();
@@ -364,7 +367,14 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
   };
 
   // Prevent accidental deletion of function properties
-  for (const prop of ["request", "createHeaders", "runRequest", "handleResponse", "handleRateLimit", "parseRateLimitHeaders"] as const) {
+  for (const prop of [
+    "request",
+    "createHeaders",
+    "runRequest",
+    "handleResponse",
+    "handleRateLimit",
+    "parseRateLimitHeaders",
+  ] as const) {
     Object.defineProperty(manager, prop, {
       value: manager[prop],
       writable: true,

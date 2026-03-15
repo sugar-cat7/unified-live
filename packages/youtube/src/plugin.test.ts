@@ -81,6 +81,16 @@ describe("createYouTubePlugin", () => {
     plugin?.dispose();
   });
 
+  it("reports correct capabilities", () => {
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: createMockFetch([]) });
+    expect(plugin.capabilities).toEqual({
+      supportsLiveStreams: true,
+      supportsArchiveResolution: true,
+      authModel: "apiKey",
+      rateLimitModel: "quota",
+    });
+  });
+
   it("throws on empty API key", () => {
     expect(() => createYouTubePlugin({ apiKey: "", fetch: createMockFetch([]) })).toThrow(
       "API key is required",

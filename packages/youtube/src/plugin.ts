@@ -50,6 +50,12 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
       rateLimitStrategy: quotaStrategy,
       matchUrl: matchYouTubeUrl,
       fetch: config.fetch,
+      capabilities: {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: true,
+        authModel: "apiKey",
+        rateLimitModel: "quota",
+      },
       transformRequest: (req) => ({
         ...req,
         query: { ...req.query, key: config.apiKey },

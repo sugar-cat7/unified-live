@@ -82,6 +82,13 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.rest.baseUrl).toBe("https://api.example.com");
   });
 
+  it("exposes plugin capabilities", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+
+    expect(plugin.capabilities).toBeDefined();
+    expect(plugin.capabilities.supportsLiveStreams).toBe(true);
+  });
+
   it("wires match and resolveUrl to definition.matchUrl", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 
@@ -315,6 +322,12 @@ describe("PlatformPlugin.is", () => {
     const obj = {
       name: "manual",
       rest: {},
+      capabilities: {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: false,
+        authModel: "apiKey",
+        rateLimitModel: "tokenBucket",
+      },
       match: () => null,
       resolveUrl: () => null,
       getContent: async () => ({}),

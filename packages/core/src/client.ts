@@ -94,6 +94,14 @@ export type UnifiedClient = {
   match(url: string): ResolvedUrl | null;
 
   /**
+   * Returns the names of all registered platforms.
+   *
+   * @returns array of platform name strings
+   * @postcondition returns a snapshot of currently registered platform names
+   */
+  platforms(): string[];
+
+  /**
    * Release all resources (rate limit timers, token refresh schedulers).
    *
    * @idempotency Safe to call multiple times
@@ -190,6 +198,15 @@ export const UnifiedClient = {
 
       match(url: string): ResolvedUrl | null {
         return matchUrl(url);
+      },
+
+      /**
+       * Returns the names of all registered platforms.
+       *
+       * @returns array of platform name strings
+       */
+      platforms(): string[] {
+        return [...plugins.keys()];
       },
 
       dispose(): void {

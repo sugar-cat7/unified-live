@@ -34,6 +34,17 @@ const createMockFetch = (
 };
 
 describe("createTwitchPlugin", () => {
+  it("reports correct capabilities", () => {
+    const plugin = createTwitchPlugin({ clientId: "id", clientSecret: "secret", fetch: createMockFetch([]) });
+    expect(plugin.capabilities).toEqual({
+      supportsLiveStreams: true,
+      supportsArchiveResolution: true,
+      authModel: "oauth2",
+      rateLimitModel: "tokenBucket",
+    });
+    plugin.dispose();
+  });
+
   it("throws on missing credentials", () => {
     expect(() =>
       createTwitchPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) }),

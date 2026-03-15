@@ -60,6 +60,12 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
         clientSecret: config.clientSecret,
       }),
       matchUrl: matchTwitCastingUrl,
+      capabilities: {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: true,
+        authModel: "basic",
+        rateLimitModel: "tokenBucket",
+      },
       headers: { "X-Api-Version": "2.0" },
       parseRateLimitHeaders: parseTwitCastingRateLimitHeaders,
       fetch: config.fetch,

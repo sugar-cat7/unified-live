@@ -14,7 +14,7 @@ export {
   UnifiedLiveError,
   ValidationError,
 } from "./errors";
-export type { PluginDefinition, PluginMethods } from "./plugin";
+export type { PluginCapabilities, PluginDefinition, PluginMethods } from "./plugin";
 export { PlatformPlugin } from "./plugin";
 export type { TokenBucketConfig } from "./rest/bucket";
 export { createTokenBucketStrategy } from "./rest/bucket";

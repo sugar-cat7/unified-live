@@ -61,6 +61,12 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
         fetch: config.fetch,
       }),
       matchUrl: matchTwitchUrl,
+      capabilities: {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: true,
+        authModel: "oauth2",
+        rateLimitModel: "tokenBucket",
+      },
       headers: { "Client-Id": config.clientId },
       parseRateLimitHeaders: parseTwitchRateLimitHeaders,
       fetch: config.fetch,

@@ -31,6 +31,17 @@ const mockUser = {
 };
 
 describe("createTwitCastingPlugin", () => {
+  it("reports correct capabilities", () => {
+    const plugin = createTwitCastingPlugin({ clientId: "id", clientSecret: "secret", fetch: createMockFetch([]) });
+    expect(plugin.capabilities).toEqual({
+      supportsLiveStreams: true,
+      supportsArchiveResolution: true,
+      authModel: "basic",
+      rateLimitModel: "tokenBucket",
+    });
+    plugin.dispose();
+  });
+
   it("throws on missing credentials", () => {
     expect(() =>
       createTwitCastingPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) }),

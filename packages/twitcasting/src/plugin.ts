@@ -2,6 +2,7 @@ import {
   createRateLimitHeaderParser,
   createTokenBucketStrategy,
   PlatformPlugin,
+  ValidationError,
 } from "@unified-live/core";
 import { createBasicAuthTokenManager } from "./auth";
 import {
@@ -38,6 +39,10 @@ const parseTwitCastingRateLimitHeaders = createRateLimitHeaderParser({
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
 export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): PlatformPlugin => {
+  if (!config.clientId || !config.clientSecret) {
+    throw new ValidationError("VALIDATION_INVALID_INPUT", "TwitCasting clientId and clientSecret are required", { platform: "twitcasting" });
+  }
+
   return PlatformPlugin.create(
     {
       name: "twitcasting",

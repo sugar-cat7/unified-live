@@ -22,6 +22,16 @@ type YTListResponse<T> = {
   nextPageToken?: string;
 };
 
+/**
+ * Fetch a YouTube video by ID and map to unified Content.
+ *
+ * @param rest - REST manager for API requests
+ * @param id - YouTube video ID
+ * @returns unified Content (live or video)
+ * @throws NotFoundError if video does not exist
+ * @precondition id is a valid YouTube video ID
+ * @postcondition returns Content mapped from the YouTube video resource
+ */
 export const youtubeGetContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<YTListResponse<YTVideoResource>>({
     method: "GET",
@@ -41,6 +51,16 @@ export const youtubeGetContent = async (rest: RestManager, id: string): Promise<
   return toContent(item);
 };
 
+/**
+ * Fetch a YouTube channel by ID, handle, or username and map to unified Channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param id - YouTube channel ID (UC...), handle (@...), or legacy username
+ * @returns unified Channel
+ * @throws NotFoundError if channel does not exist
+ * @precondition id is a valid YouTube channel ID, handle, or username
+ * @postcondition returns Channel mapped from the YouTube channel resource
+ */
 export const youtubeGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const query: Record<string, string> = {
     part: "snippet,contentDetails",
@@ -69,6 +89,15 @@ export const youtubeGetChannel = async (rest: RestManager, id: string): Promise<
   return toChannel(item);
 };
 
+/**
+ * Fetch active live streams for a YouTube channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param channelId - YouTube channel ID
+ * @returns array of active LiveStream objects (empty if none are live)
+ * @precondition channelId is a valid YouTube channel ID
+ * @postcondition returns only streams with type "live"
+ */
 export const youtubeGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
@@ -107,6 +136,17 @@ export const youtubeGetLiveStreams = async (
   return videosRes.data.items.map(toContent).filter((c): c is LiveStream => c.type === "live");
 };
 
+/**
+ * Fetch paginated uploaded videos for a YouTube channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param channelId - YouTube channel ID
+ * @param cursor - optional page token for pagination
+ * @returns paginated list of Video objects
+ * @throws NotFoundError if channel does not exist or has no uploads playlist
+ * @precondition channelId is a valid YouTube channel ID
+ * @postcondition returns videos from the channel's uploads playlist
+ */
 export const youtubeGetVideos = async (
   rest: RestManager,
   channelId: string,
@@ -176,6 +216,17 @@ export const youtubeGetVideos = async (
   };
 };
 
+/**
+ * Resolve a live stream to its archived video.
+ *
+ * YouTube uses the same video ID for live and archive, so this re-fetches
+ * the content and returns it only if it has transitioned to a video.
+ *
+ * @param rest - REST manager for API requests
+ * @param live - live stream to check for archive
+ * @returns archived Video, or null if still live
+ * @postcondition returns Video if the stream ended, null otherwise
+ */
 export const youtubeResolveArchive = async (
   rest: RestManager,
   live: LiveStream,

@@ -34,6 +34,11 @@ const createMockFetch = (
 };
 
 describe("createTwitchPlugin", () => {
+  it("throws on missing credentials", () => {
+    expect(() => createTwitchPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) })).toThrow("clientId and clientSecret are required");
+    expect(() => createTwitchPlugin({ clientId: "id", clientSecret: "", fetch: createMockFetch([]) })).toThrow("clientId and clientSecret are required");
+  });
+
   it("creates a plugin with correct name", () => {
     const plugin = createTwitchPlugin({
       clientId: "test-id",
@@ -202,6 +207,81 @@ describe("createTwitchPlugin", () => {
     const apiCall = calls.find((c) => !(c[0] as string).includes("oauth2/token"));
     const headers = (apiCall?.[1] as RequestInit)?.headers as Record<string, string>;
     expect(headers["Client-Id"]).toBe("my-client-id");
+
+    plugin.dispose();
+  });
+
+  it("resolveArchive finds matching archive video", async () => {
+    const mockVideo = {
+      id: "v1",
+      stream_id: "s1",
+      user_id: "u1",
+      user_login: "user",
+      user_name: "User",
+      title: "Past Stream",
+      duration: "1h0m0s",
+      view_count: 100,
+      created_at: "2026-01-01T00:00:00Z",
+      published_at: "2026-01-01T00:00:00Z",
+      thumbnail_url: "https://img.tv/vid-{width}x{height}.jpg",
+      type: "archive",
+      url: "https://www.twitch.tv/videos/v1",
+    };
+
+    const plugin = createTwitchPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([
+        { status: 200, body: { data: [mockVideo] } },
+      ]),
+    });
+
+    const live = {
+      id: "s1",
+      platform: "twitch",
+      title: "Live",
+      url: "https://www.twitch.tv/user",
+      thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
+      channel: { id: "u1", name: "User", url: "https://www.twitch.tv/user" },
+      sessionId: "s1",
+      type: "live" as const,
+      viewerCount: 100,
+      startedAt: new Date("2026-01-01T00:00:00Z"),
+      raw: {},
+    };
+
+    const archive = await plugin.resolveArchive!(live);
+    expect(archive).not.toBeNull();
+    expect(archive!.type).toBe("video");
+
+    plugin.dispose();
+  });
+
+  it("resolveArchive returns null when no match", async () => {
+    const plugin = createTwitchPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: createMockFetch([
+        { status: 200, body: { data: [] } },
+      ]),
+    });
+
+    const live = {
+      id: "s1",
+      platform: "twitch",
+      title: "Live",
+      url: "https://www.twitch.tv/user",
+      thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
+      channel: { id: "u1", name: "User", url: "https://www.twitch.tv/user" },
+      sessionId: "s1",
+      type: "live" as const,
+      viewerCount: 100,
+      startedAt: new Date("2026-01-01T00:00:00Z"),
+      raw: {},
+    };
+
+    const archive = await plugin.resolveArchive!(live);
+    expect(archive).toBeNull();
 
     plugin.dispose();
   });

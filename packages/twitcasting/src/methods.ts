@@ -31,9 +31,11 @@ type TCMoviesResponse = {
 };
 
 /**
+ * Fetch a TwitCasting movie by ID and map to unified Content.
+ *
  * @param rest - REST manager for API requests
  * @param id - TwitCasting movie ID
- * @returns unified Content for the movie
+ * @returns unified Content (live or video) for the movie
  * @precondition id is a valid TwitCasting movie ID
  * @postcondition returns Content (live or video) for the movie
  */
@@ -48,9 +50,12 @@ export const twitcastingGetContent = async (rest: RestManager, id: string): Prom
 };
 
 /**
+ * Fetch a TwitCasting channel by user_id or screen_id and map to unified Channel.
+ *
  * @param rest - REST manager for API requests
  * @param id - TwitCasting user_id or screen_id
  * @returns unified Channel for the user
+ * @throws NotFoundError if user does not exist
  * @precondition id is a valid TwitCasting user_id or screen_id
  * @postcondition returns Channel for the user
  */
@@ -69,6 +74,8 @@ export const twitcastingGetChannel = async (rest: RestManager, id: string): Prom
 };
 
 /**
+ * Fetch active live streams for a TwitCasting channel.
+ *
  * @param rest - REST manager for API requests
  * @param channelId - TwitCasting user_id or screen_id
  * @returns array of live streams (0 or 1 items)
@@ -104,6 +111,8 @@ export const twitcastingGetLiveStreams = async (
 };
 
 /**
+ * Fetch paginated videos for a TwitCasting channel.
+ *
  * @param rest - REST manager for API requests
  * @param channelId - TwitCasting user_id or screen_id
  * @param cursor - optional pagination cursor (slice_id)

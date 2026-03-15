@@ -1,4 +1,4 @@
-import { parseRetryAfter, PlatformPlugin, QuotaExhaustedError } from "@unified-live/core";
+import { parseRetryAfter, PlatformPlugin, QuotaExhaustedError, ValidationError } from "@unified-live/core";
 import {
   youtubeGetChannel,
   youtubeGetContent,
@@ -30,6 +30,10 @@ export type YouTubePluginConfig = {
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
 export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin => {
+  if (!config.apiKey) {
+    throw new ValidationError("VALIDATION_INVALID_INPUT", "YouTube API key is required", { platform: "youtube" });
+  }
+
   const quotaStrategy = createYouTubeQuotaStrategy(config.quota?.dailyLimit);
 
   return PlatformPlugin.create(

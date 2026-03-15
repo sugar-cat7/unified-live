@@ -21,6 +21,16 @@ type TwitchResponse<T> = {
   pagination?: { cursor?: string };
 };
 
+/**
+ * Fetch a Twitch video by ID and map to unified Content.
+ *
+ * @param rest - REST manager for API requests
+ * @param id - Twitch video ID
+ * @returns unified Content (Video)
+ * @throws NotFoundError if video does not exist
+ * @precondition id is a valid Twitch video ID
+ * @postcondition returns Content mapped from the Twitch video resource
+ */
 export const twitchGetContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<TwitchResponse<TwitchVideo>>({
     method: "GET",
@@ -37,6 +47,16 @@ export const twitchGetContent = async (rest: RestManager, id: string): Promise<C
   return videoToVideo(item);
 };
 
+/**
+ * Fetch a Twitch channel by numeric ID or login name and map to unified Channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param id - Twitch user ID (numeric) or login name
+ * @returns unified Channel
+ * @throws NotFoundError if user does not exist
+ * @precondition id is a valid Twitch user ID or login name
+ * @postcondition returns Channel mapped from the Twitch user resource
+ */
 export const twitchGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const query: Record<string, string> = {};
 
@@ -62,6 +82,15 @@ export const twitchGetChannel = async (rest: RestManager, id: string): Promise<C
   return userToChannel(item);
 };
 
+/**
+ * Fetch active live streams for a Twitch channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param channelId - Twitch user ID
+ * @returns array of active LiveStream objects (empty if not live)
+ * @precondition channelId is a valid Twitch user ID
+ * @postcondition returns only streams with type "live"
+ */
 export const twitchGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
@@ -76,6 +105,16 @@ export const twitchGetLiveStreams = async (
   return res.data.data.filter((s) => s.type === "live").map(streamToLive);
 };
 
+/**
+ * Fetch paginated archive videos for a Twitch channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param channelId - Twitch user ID
+ * @param cursor - optional pagination cursor
+ * @returns paginated list of Video objects
+ * @precondition channelId is a valid Twitch user ID
+ * @postcondition returns archive-type videos with cursor for next page
+ */
 export const twitchGetVideos = async (
   rest: RestManager,
   channelId: string,
@@ -103,6 +142,14 @@ export const twitchGetVideos = async (
   };
 };
 
+/**
+ * Resolve a live stream to its archived video by matching stream_id.
+ *
+ * @param rest - REST manager for API requests
+ * @param live - live stream to check for archive
+ * @returns archived Video, or null if no archive found or no sessionId
+ * @postcondition returns Video if a matching archive exists, null otherwise
+ */
 export const twitchResolveArchive = async (
   rest: RestManager,
   live: LiveStream,

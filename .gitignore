@@ -35,5 +35,8 @@ coverage
 # AI agent docs (spec, plan, reference — not shipped)
 /docs
 
+# starlight-typedoc generated API reference
+apps/docs/src/content/docs/api
+
 # claude hooks state
 .claude/.post_edit_check_pending

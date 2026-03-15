@@ -1,17 +1,18 @@
 ---
 title: 応用
-sidebar:
-  order: 6
 ---
 
 ## OpenTelemetry 連携
 
-SDK はすべての API 呼び出しで OpenTelemetry トレースを出力します。OTel SDK が設定されていればトレースが自動的に表示され、設定されていなければオーバーヘッドはゼロです。
+SDK はすべての API 呼び出しで OpenTelemetry トレースを出力します。OTel SDK が設定されていればトレースが自動的に表示され、設定されていなければオーバーヘッドはゼロです（内部で no-op トレーサーを使用）。
+
+### セットアップ
+
+```bash
+pnpm add @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node
+```
 
 ```ts
-// OTel SDK のインストール（任意）
-// pnpm add @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node
-
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 
@@ -20,12 +21,71 @@ const sdk = new NodeSDK({
 });
 sdk.start();
 
-// unified-live のすべての API 呼び出しが以下の属性でトレースを出力:
-// - unified_live.platform ("youtube", "twitch" など)
-// - http.request.method ("GET")
-// - レート制限の状態
-// - エラー情報
+// unified-live のすべての API 呼び出しが自動的にトレースを出力
+const content = await client.getContent("https://youtube.com/watch?v=abc123");
 ```
+
+### スパンのフォーマット
+
+各 API リクエストは `unified-live.rest {platform} {method} {path}` という名前のスパンを生成します。
+
+例: `unified-live.rest youtube GET /videos`
+
+### スパン属性
+
+| 属性 | 型 | 説明 |
+| :--- | :--- | :--- |
+| `unified_live.platform` | `string` | プラットフォーム識別子（`"youtube"`, `"twitch"`, `"twitcasting"`） |
+| `http.request.method` | `string` | HTTP メソッド（`"GET"`） |
+| `url.path` | `string` | リクエストパス（例: `"/videos"`） |
+| `http.response.status_code` | `number` | HTTP レスポンスステータスコード |
+| `unified_live.rate_limit.remaining` | `number` | 残りレート制限トークン数 |
+| `unified_live.rate_limit.limit` | `number` | レート制限の総容量 |
+| `unified_live.quota.consumed` | `number` | 消費クォータユニット数（YouTube） |
+| `unified_live.quota.daily_remaining` | `number` | 残り日次クォータ（YouTube） |
+| `error.code` | `string` | エラーコード（例: `"RATE_LIMIT_EXCEEDED"`） |
+| `error.type` | `string` | エラークラス名 |
+| `error.has_cause` | `boolean` | エラーが原因をラップしているかどうか |
+
+### Jaeger での利用
+
+```bash
+# Jaeger をローカルで起動
+docker run -d --name jaeger \
+  -p 16686:16686 \
+  -p 4318:4318 \
+  jaegertracing/all-in-one:latest
+```
+
+```ts
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+
+const sdk = new NodeSDK({
+  traceExporter: new OTLPTraceExporter({
+    url: "http://localhost:4318/v1/traces",
+  }),
+});
+sdk.start();
+```
+
+`http://localhost:16686` を開き、サービス名 `unified-live` で検索してください。
+
+### トレーサーへの直接アクセス
+
+カスタム計装には、エクスポートされたトレーサーを使用します:
+
+```ts
+import { getTracer, SpanAttributes } from "@unified-live/core";
+
+const tracer = getTracer();
+const span = tracer.startSpan("my-custom-operation");
+span.setAttribute(SpanAttributes.PLATFORM, "youtube");
+// ... ロジック
+span.end();
+```
+
+---
 
 ## プラグインへの直接アクセス
 
@@ -66,7 +126,7 @@ const content = await client.getContentById("youtube", "abc123");
 
 推奨する `.env` の設定:
 
-```env
+```txt
 # YouTube
 YOUTUBE_API_KEY=AIza...
 

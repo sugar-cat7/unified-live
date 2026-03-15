@@ -1,7 +1,5 @@
 ---
 title: 基本概念
-sidebar:
-  order: 2
 ---
 
 ## Content

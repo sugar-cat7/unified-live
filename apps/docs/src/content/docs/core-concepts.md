@@ -1,7 +1,5 @@
 ---
 title: Core Concepts
-sidebar:
-  order: 2
 ---
 
 ## Content

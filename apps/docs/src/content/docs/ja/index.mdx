@@ -1,0 +1,52 @@
+---
+title: unified-live
+template: splash
+hero:
+  tagline: ライブ配信プラットフォームAPIの統一インターフェースを提供するTypeScript SDK
+  actions:
+    - text: はじめる
+      link: /unified-live/ja/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: APIリファレンス
+      link: /unified-live/api/
+      icon: document
+    - text: GitHubで見る
+      link: https://github.com/sugar-cat7/unified-live
+      icon: external
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## なぜ unified-live？
+
+<CardGrid>
+  <Card title="統一API" icon="rocket">
+    YouTube、Twitch、TwitCasting を1つのインターフェースで。URLを渡すだけでプラットフォームを自動検出し、`Content`、`Channel`、`LiveStream`、`Video` 型に正規化します。
+  </Card>
+  <Card title="プラグインアーキテクチャ" icon="puzzle">
+    必要なプラットフォームだけインストール。各プラットフォームは独立したパッケージ（`@unified-live/youtube`、`@unified-live/twitch`、`@unified-live/twitcasting`）で、認証・レート制限・URL解決を個別に管理します。
+  </Card>
+  <Card title="OpenTelemetry互換" icon="magnifier">
+    OTel SDKが未設定ならオーバーヘッドゼロのビルトイントレーシング。すべてのAPIコールでプラットフォーム、HTTPメソッド、レート制限状態、クォータ消費、エラー詳細のスパンを出力します。
+  </Card>
+  <Card title="自動レート制限" icon="setting">
+    トークンバケット（Twitch、TwitCasting）とクォータベース（YouTube）のレート制限を透過的に処理。指数バックオフでリトライし、クォータ消費をローカルで追跡します。
+  </Card>
+  <Card title="型安全" icon="approve-check">
+    Zodバリデーション付きスキーマと判別共用体（`Content = LiveStream | Video`）。コンパニオンオブジェクトの型ガード（`Content.isLive()`、`Content.isVideo()`）で安全な型絞り込み。
+  </Card>
+  <Card title="ランタイム非依存" icon="laptop">
+    Node.js 18+、Deno、Bun、Cloudflare Workers で動作。ネイティブ `fetch` を持つすべてのランタイムに対応。コアにNode.js固有の依存はありません。
+  </Card>
+</CardGrid>
+
+## 対応プラットフォーム
+
+| プラットフォーム | 公式API | unified-live が処理すること |
+| :--- | :--- | :--- |
+| YouTube | [Data API v3](https://developers.google.com/youtube/v3) | 日次クォータ追跡（10,000ユニット）、APIキー注入、エンドポイント毎のコスト管理 |
+| Twitch | [Helix API](https://dev.twitch.tv/docs/api/) | OAuth2 Client Credentials 自動リフレッシュ、トークンバケット（800リクエスト/60秒） |
+| TwitCasting | [API v2](https://apiv2-doc.twitcasting.tv/) | Basic Auth エンコード、トークンバケット（60リクエスト/60秒） |
+
+各プラットフォームAPIの課題の詳細は[概要](/unified-live/ja/overview/)をご覧ください。

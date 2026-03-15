@@ -1,12 +1,14 @@
 ---
 title: Platform Plugins
-sidebar:
-  order: 3
 ---
 
 Each platform has its own package with a factory function. You only install the platforms you need.
 
 ## YouTube
+
+> **Official docs:** [YouTube Data API v3](https://developers.google.com/youtube/v3)
+>
+> YouTube's quota system charges different costs per endpoint (1–101 units) from a daily pool of 10,000. The SDK tracks consumption locally and throws `QuotaExhaustedError` before you hit silent 403s.
 
 ```bash
 pnpm add @unified-live/core @unified-live/youtube
@@ -47,6 +49,10 @@ The SDK tracks quota consumption locally and throws `QuotaExhaustedError` when t
 
 ## Twitch
 
+> **Official docs:** [Twitch Helix API](https://dev.twitch.tv/docs/api/)
+>
+> Twitch requires OAuth2 Client Credentials with token refresh. The SDK handles the full token lifecycle — initial fetch, 90% expiry refresh, and automatic retry on 401.
+
 ```bash
 pnpm add @unified-live/core @unified-live/twitch
 ```
@@ -68,7 +74,7 @@ const twitch = createTwitchPlugin({
 
 ### Rate Limits
 
-Twitch allows 800 requests per 60 seconds. The SDK manages this automatically via token bucket, using rate limit headers from API responses.
+Twitch uses a token-bucket algorithm with rate limits communicated via `Ratelimit-Limit`/`Ratelimit-Remaining`/`Ratelimit-Reset` response headers. The SDK initializes with a default bucket size and dynamically adjusts based on actual API responses.
 
 ### Authentication
 
@@ -77,6 +83,10 @@ The SDK handles OAuth2 Client Credentials Grant automatically. Tokens are refres
 ---
 
 ## TwitCasting
+
+> **Official docs:** [TwitCasting API v2](https://apiv2-doc.twitcasting.tv/)
+>
+> TwitCasting has a strict 60 req/min rate limit. The SDK enforces this with a token bucket and transparent retries so you never see unexpected 429 errors.
 
 ```bash
 pnpm add @unified-live/core @unified-live/twitcasting
@@ -99,27 +109,27 @@ const twitcasting = createTwitCastingPlugin({
 
 ### Rate Limits
 
-TwitCasting allows 60 requests per 60 seconds. The SDK manages this automatically.
+Most TwitCasting endpoints allow 60 requests per 60 seconds. Some endpoints (supporter/supporting lists) have stricter limits of 30 requests per 60 seconds. The SDK manages this automatically.
 
 ### Authentication
 
-The SDK uses Basic Authentication (`base64(clientId:clientSecret)`), handled internally.
+The SDK uses Basic Authentication (`base64(clientId:clientSecret)`) for application-level access, handled internally. TwitCasting also supports Bearer Token for user-level operations, but this is not currently implemented.
 
 ---
 
 ## Registering Plugins
 
 ```ts
-import { createClient } from "@unified-live/core";
+import { UnifiedClient } from "@unified-live/core";
 
 // Option A: Register after creation
-const client = createClient();
+const client = UnifiedClient.create();
 client.register(youtube);
 client.register(twitch);
 client.register(twitcasting);
 
 // Option B: Pass plugins at creation
-const client = createClient({
+const client = UnifiedClient.create({
   plugins: [youtube, twitch, twitcasting],
 });
 ```

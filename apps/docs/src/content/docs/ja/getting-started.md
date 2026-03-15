@@ -1,7 +1,5 @@
 ---
 title: はじめに
-sidebar:
-  order: 1
 ---
 
 ## インストール
@@ -19,12 +17,12 @@ pnpm add @unified-live/core @unified-live/youtube @unified-live/twitch @unified-
 ## クイックスタート
 
 ```ts
-import { createClient } from "@unified-live/core";
+import { UnifiedClient } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 // 1. クライアントを作成
-const client = createClient();
+const client = UnifiedClient.create();
 
 // 2. プラットフォームプラグインを登録
 client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
@@ -53,6 +51,7 @@ client.dispose();
 
 ## 次のステップ
 
+- [概要](../overview/) — unified-live を使う理由とプラットフォーム API 比較
 - [基本概念](../core-concepts/) — Content, Channel, 型システム
 - [プラットフォームプラグイン](../platform-plugins/) — 各プラットフォームの設定
 - [エラーハンドリング](../error-handling/) — API エラーの処理

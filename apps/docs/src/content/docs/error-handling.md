@@ -1,7 +1,5 @@
 ---
 title: Error Handling
-sidebar:
-  order: 4
 ---
 
 All errors thrown by the SDK are instances of `UnifiedLiveError`. Use `try/catch` to handle them.

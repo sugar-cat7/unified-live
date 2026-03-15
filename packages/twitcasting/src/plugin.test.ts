@@ -32,8 +32,12 @@ const mockUser = {
 
 describe("createTwitCastingPlugin", () => {
   it("throws on missing credentials", () => {
-    expect(() => createTwitCastingPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) })).toThrow("clientId and clientSecret are required");
-    expect(() => createTwitCastingPlugin({ clientId: "id", clientSecret: "", fetch: createMockFetch([]) })).toThrow("clientId and clientSecret are required");
+    expect(() =>
+      createTwitCastingPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) }),
+    ).toThrow("clientId and clientSecret are required");
+    expect(() =>
+      createTwitCastingPlugin({ clientId: "id", clientSecret: "", fetch: createMockFetch([]) }),
+    ).toThrow("clientId and clientSecret are required");
   });
 
   it("creates a plugin with correct name", () => {
@@ -267,9 +271,7 @@ describe("createTwitCastingPlugin", () => {
     const plugin = createTwitCastingPlugin({
       clientId: "test-id",
       clientSecret: "test-secret",
-      fetch: createMockFetch([
-        { status: 200, body: { movie: liveMovie, broadcaster: mockUser } },
-      ]),
+      fetch: createMockFetch([{ status: 200, body: { movie: liveMovie, broadcaster: mockUser } }]),
     });
 
     const live = {

@@ -92,12 +92,8 @@ describe("createClientCredentialsTokenManager", () => {
         fetch: mockFetch,
       });
 
-      await expect(manager.getAuthHeader()).rejects.toThrow(
-        AuthenticationError,
-      );
-      await expect(manager.getAuthHeader()).rejects.toThrow(
-        expectedMessagePattern,
-      );
+      await expect(manager.getAuthHeader()).rejects.toThrow(AuthenticationError);
+      await expect(manager.getAuthHeader()).rejects.toThrow(expectedMessagePattern);
     },
   );
 

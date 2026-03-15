@@ -16,7 +16,8 @@ const createMockFetch = (
   handler: (url: string) => { body: unknown; status?: number },
 ): typeof globalThis.fetch => {
   return vi.fn(async (input: string | URL | Request) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const url =
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const { body, status } = handler(url);
     return new Response(JSON.stringify(body), {
       status: status ?? 200,
@@ -55,7 +56,11 @@ describe("TwitCasting Integration", () => {
 
   it("full consumer flow: UnifiedClient.create -> getContent by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleMovieResponse }));
-    const plugin = createTwitCastingPlugin({ clientId: "test-id", clientSecret: "test-secret", fetch: fetchFn });
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: fetchFn,
+    });
     client = UnifiedClient.create({ plugins: [plugin] });
 
     const content = await client.getContent("https://twitcasting.tv/testuser/movie/123");
@@ -87,7 +92,11 @@ describe("TwitCasting Integration", () => {
 
   it("getContentById bypasses URL matching", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleMovieResponse }));
-    const plugin = createTwitCastingPlugin({ clientId: "test-id", clientSecret: "test-secret", fetch: fetchFn });
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: fetchFn,
+    });
     client = UnifiedClient.create({ plugins: [plugin] });
 
     const content = await client.getContentById("twitcasting", "123");

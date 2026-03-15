@@ -82,7 +82,9 @@ describe("createYouTubePlugin", () => {
   });
 
   it("throws on empty API key", () => {
-    expect(() => createYouTubePlugin({ apiKey: "", fetch: createMockFetch([]) })).toThrow("API key is required");
+    expect(() => createYouTubePlugin({ apiKey: "", fetch: createMockFetch([]) })).toThrow(
+      "API key is required",
+    );
   });
 
   it("getContent returns a Video for a regular video", async () => {

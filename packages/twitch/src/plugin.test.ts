@@ -35,8 +35,12 @@ const createMockFetch = (
 
 describe("createTwitchPlugin", () => {
   it("throws on missing credentials", () => {
-    expect(() => createTwitchPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) })).toThrow("clientId and clientSecret are required");
-    expect(() => createTwitchPlugin({ clientId: "id", clientSecret: "", fetch: createMockFetch([]) })).toThrow("clientId and clientSecret are required");
+    expect(() =>
+      createTwitchPlugin({ clientId: "", clientSecret: "s", fetch: createMockFetch([]) }),
+    ).toThrow("clientId and clientSecret are required");
+    expect(() =>
+      createTwitchPlugin({ clientId: "id", clientSecret: "", fetch: createMockFetch([]) }),
+    ).toThrow("clientId and clientSecret are required");
   });
 
   it("creates a plugin with correct name", () => {
@@ -231,9 +235,7 @@ describe("createTwitchPlugin", () => {
     const plugin = createTwitchPlugin({
       clientId: "test-id",
       clientSecret: "test-secret",
-      fetch: createMockFetch([
-        { status: 200, body: { data: [mockVideo] } },
-      ]),
+      fetch: createMockFetch([{ status: 200, body: { data: [mockVideo] } }]),
     });
 
     const live = {
@@ -261,9 +263,7 @@ describe("createTwitchPlugin", () => {
     const plugin = createTwitchPlugin({
       clientId: "test-id",
       clientSecret: "test-secret",
-      fetch: createMockFetch([
-        { status: 200, body: { data: [] } },
-      ]),
+      fetch: createMockFetch([{ status: 200, body: { data: [] } }]),
     });
 
     const live = {

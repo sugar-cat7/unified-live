@@ -31,7 +31,11 @@ describe("createYouTubeQuotaStrategy", () => {
 
   it("tracks quota consumption via acquire", async () => {
     const strategy = createYouTubeQuotaStrategy(10_000);
-    const handle = await strategy.acquire({ method: "GET", path: "/search", bucketId: "search:list" });
+    const handle = await strategy.acquire({
+      method: "GET",
+      path: "/search",
+      bucketId: "search:list",
+    });
     handle.complete(new Headers());
 
     const status = strategy.getStatus();

@@ -40,7 +40,11 @@ const parseTwitCastingRateLimitHeaders = createRateLimitHeaderParser({
  */
 export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): PlatformPlugin => {
   if (!config.clientId || !config.clientSecret) {
-    throw new ValidationError("VALIDATION_INVALID_INPUT", "TwitCasting clientId and clientSecret are required", { platform: "twitcasting" });
+    throw new ValidationError(
+      "VALIDATION_INVALID_INPUT",
+      "TwitCasting clientId and clientSecret are required",
+      { platform: "twitcasting" },
+    );
   }
 
   return PlatformPlugin.create(

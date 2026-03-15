@@ -13,6 +13,12 @@ export type YTChannelResource = Schemas["Channel"];
 /** YouTube Data API v3 PlaylistItem resource (generated from Discovery Document). */
 export type YTPlaylistItemResource = Schemas["PlaylistItem"];
 
+/**
+ * Select the best available thumbnail (high > medium > default) from a YouTube resource.
+ *
+ * @param thumbnails - thumbnail details from the API
+ * @returns the selected thumbnail with dimensions, or undefined if none available
+ */
 const pickThumbnail = (
   thumbnails: Schemas["ThumbnailDetails"] | undefined,
 ): { url: string; width: number; height: number } | undefined => {
@@ -34,8 +40,8 @@ export const toContent = (item: YTVideoResource): Content => {
   const { id, snippet, contentDetails, statistics, liveStreamingDetails } = item;
   if (!id || !snippet || !contentDetails || !statistics) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message:
-        "YouTube video resource missing required parts (id, snippet, contentDetails, statistics)",
+      message: `YouTube video resource missing required parts (id, snippet, contentDetails, statistics)${id ? ` for video ${id}` : ""}`,
+      path: "/videos",
     });
   }
 
@@ -43,19 +49,22 @@ export const toContent = (item: YTVideoResource): Content => {
   const publishedAt = snippet.publishedAt;
   if (!channelId) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message: "YouTube video resource missing channelId",
+      message: `YouTube video resource missing channelId for video ${id}`,
+      path: "/videos",
     });
   }
   if (!publishedAt) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message: "YouTube video resource missing publishedAt",
+      message: `YouTube video resource missing publishedAt for video ${id}`,
+      path: "/videos",
     });
   }
 
   const thumbnail = pickThumbnail(snippet.thumbnails);
   if (!thumbnail) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message: "YouTube resource has no thumbnail",
+      message: `YouTube resource has no thumbnail for video ${id}`,
+      path: "/videos",
     });
   }
 
@@ -68,7 +77,7 @@ export const toContent = (item: YTVideoResource): Content => {
   const isLive = snippet.liveBroadcastContent === "live";
 
   if (isLive && liveStreamingDetails?.actualStartTime) {
-    return {
+    return Object.freeze({
       id,
       platform: "youtube",
       title: snippet.title ?? "",
@@ -80,10 +89,10 @@ export const toContent = (item: YTVideoResource): Content => {
       viewerCount: Number.parseInt(liveStreamingDetails.concurrentViewers ?? "0", 10),
       startedAt: new Date(liveStreamingDetails.actualStartTime),
       raw: item,
-    } satisfies LiveStream;
+    } satisfies LiveStream);
   }
 
-  return {
+  return Object.freeze({
     id,
     platform: "youtube",
     title: snippet.title ?? "",
@@ -96,7 +105,7 @@ export const toContent = (item: YTVideoResource): Content => {
     viewCount: Number.parseInt(statistics.viewCount ?? "0", 10),
     publishedAt: new Date(publishedAt),
     raw: item,
-  } satisfies Video;
+  } satisfies Video);
 };
 
 /**
@@ -113,17 +122,18 @@ export const toChannel = (item: YTChannelResource): Channel => {
   const { id, snippet } = item;
   if (!id || !snippet) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message: "YouTube channel resource missing required parts (id, snippet)",
+      message: `YouTube channel resource missing required parts (id, snippet)${id ? ` for channel ${id}` : ""}`,
+      path: "/channels",
     });
   }
 
-  return {
+  return Object.freeze({
     id,
     platform: "youtube",
     name: snippet.title ?? "",
     url: `https://www.youtube.com/channel/${id}`,
     thumbnail: pickThumbnail(snippet.thumbnails),
-  };
+  } satisfies Channel);
 };
 
 /**
@@ -135,15 +145,16 @@ export const toChannel = (item: YTChannelResource): Channel => {
  * @postcondition returns total seconds as a number >= 0
  * @idempotency Safe — pure function
  */
-const ISO_8601_DURATION = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+const ISO_8601_DURATION = /P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
 
 export const parseDuration = (duration: string): number => {
   const match = duration.match(ISO_8601_DURATION);
   if (!match) return 0;
 
-  const hours = Number.parseInt(match[1] ?? "0", 10);
-  const minutes = Number.parseInt(match[2] ?? "0", 10);
-  const seconds = Number.parseInt(match[3] ?? "0", 10);
+  const days = Number.parseInt(match[1] ?? "0", 10);
+  const hours = Number.parseInt(match[2] ?? "0", 10);
+  const minutes = Number.parseInt(match[3] ?? "0", 10);
+  const seconds = Number.parseInt(match[4] ?? "0", 10);
 
-  return hours * 3600 + minutes * 60 + seconds;
+  return days * 86400 + hours * 3600 + minutes * 60 + seconds;
 };

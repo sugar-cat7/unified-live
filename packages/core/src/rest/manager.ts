@@ -8,6 +8,7 @@ import {
   RateLimitError,
   UnifiedLiveError,
 } from "../errors";
+import { SpanStatusCode } from "@opentelemetry/api";
 import { getTracer, SpanAttributes } from "../telemetry/traces";
 import type { RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } from "./types";
@@ -15,6 +16,8 @@ import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } fro
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_BASE_DELAY = 1000;
 const DEFAULT_RETRYABLE_STATUSES = [500, 502, 503, 504];
+/** Client errors that should never be retried (408 is server-initiated timeout, not transient). */
+const NON_RETRYABLE_CLIENT_STATUSES = [400, 408, 413, 415, 422];
 
 export type RestManager = {
   readonly platform: string;
@@ -94,9 +97,21 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
   const maxRetries = options.retry?.maxRetries ?? DEFAULT_MAX_RETRIES;
   const baseDelay = options.retry?.baseDelay ?? DEFAULT_BASE_DELAY;
   const retryableStatuses = options.retry?.retryableStatuses ?? DEFAULT_RETRYABLE_STATUSES;
+  const timeout = options.retry?.timeout;
   const fetchFn = options.fetch ?? globalThis.fetch;
   const tracer = getTracer();
   let disposed = false;
+
+  // Cache parsed base URL for OTel span attributes (avoids parsing on every request)
+  let cachedHostname: string | undefined;
+  let cachedPort: number | undefined;
+  try {
+    const parsed = new URL(options.baseUrl);
+    cachedHostname = parsed.hostname;
+    cachedPort = parsed.port ? Number.parseInt(parsed.port, 10) : undefined;
+  } catch {
+    // ignore invalid URL
+  }
 
   const manager: RestManager = {
     platform: options.platform,
@@ -119,27 +134,47 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
           span.setAttribute(SpanAttributes.HTTP_METHOD, req.method);
           span.setAttribute(SpanAttributes.URL_PATH, req.path);
 
+          if (cachedHostname) {
+            span.setAttribute(SpanAttributes.SERVER_ADDRESS, cachedHostname);
+          }
+          if (cachedPort) {
+            span.setAttribute(SpanAttributes.SERVER_PORT, cachedPort);
+          }
+
           const handle = await manager.rateLimitStrategy.acquire(req);
 
           try {
+            // Hoist invariants out of the retry loop
+            const reqUrl = new URL(req.path, manager.baseUrl);
+            if (req.query) {
+              for (const [key, value] of Object.entries(req.query)) {
+                reqUrl.searchParams.set(key, value);
+              }
+            }
+            const url = reqUrl.toString();
+            const timeoutSignal = timeout && !req.signal ? AbortSignal.timeout(timeout) : undefined;
+            const signal = req.signal ?? timeoutSignal;
+            const serializedBody =
+              req.body !== undefined && req.bodyType !== "raw"
+                ? JSON.stringify(req.body)
+                : undefined;
+
             for (let attempt = 0; attempt <= maxRetries; attempt++) {
               const headers = await manager.createHeaders(req);
-              const reqUrl = new URL(req.path, manager.baseUrl);
-              if (req.query) {
-                for (const [key, value] of Object.entries(req.query)) {
-                  reqUrl.searchParams.set(key, value);
-                }
-              }
-              const url = reqUrl.toString();
 
               const init: RequestInit = {
                 method: req.method,
                 headers: { ...headers, ...req.headers },
+                signal,
               };
 
               if (req.body !== undefined) {
-                init.body = JSON.stringify(req.body);
-                (init.headers as Record<string, string>)["Content-Type"] = "application/json";
+                if (req.bodyType === "raw") {
+                  init.body = req.body as RequestInit["body"];
+                } else {
+                  init.body = serializedBody;
+                  (init.headers as Record<string, string>)["Content-Type"] = "application/json";
+                }
               }
 
               let response: Response;
@@ -160,15 +195,28 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
               if (response.status === 429 || response.status === 403) {
                 const shouldRetry = await manager.handleRateLimit(response, req, attempt);
                 if (shouldRetry && attempt < maxRetries) {
+                  span.addEvent("retry", {
+                    "unified_live.retry.attempt": attempt + 1,
+                    "unified_live.retry.reason": "rate_limit",
+                    "http.response.status_code": response.status,
+                  });
                   continue;
                 }
-                throw new RateLimitError(manager.platform);
+                const retryAfterSec = parseRetryAfter(response.headers.get("Retry-After"));
+                throw new RateLimitError(manager.platform, {
+                  retryAfter: retryAfterSec > 0 ? retryAfterSec : undefined,
+                });
               }
 
               // Auth error (401)
               if (response.status === 401) {
                 manager.tokenManager?.invalidate();
                 if (attempt < maxRetries) {
+                  span.addEvent("retry", {
+                    "unified_live.retry.attempt": attempt + 1,
+                    "unified_live.retry.reason": "auth_refresh",
+                    "http.response.status_code": 401,
+                  });
                   continue;
                 }
                 throw new AuthenticationError(manager.platform, {
@@ -181,17 +229,36 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 throw new NotFoundError(manager.platform, req.path);
               }
 
+              // Non-retryable client errors — fail immediately without retry
+              if (NON_RETRYABLE_CLIENT_STATUSES.includes(response.status)) {
+                throw new UnifiedLiveError(
+                  `Request to ${req.path} failed with status ${response.status}`,
+                  response.status === 408 ? "NETWORK_TIMEOUT" : "INTERNAL",
+                  {
+                    platform: manager.platform,
+                    method: req.method,
+                    path: req.path,
+                    status: response.status,
+                  },
+                );
+              }
+
               // Retryable server errors (5xx)
               if (retryableStatuses.includes(response.status)) {
                 if (attempt < maxRetries) {
                   const jitter = 0.5 + Math.random();
                   await sleep(baseDelay * 2 ** attempt * jitter);
+                  span.addEvent("retry", {
+                    "unified_live.retry.attempt": attempt + 1,
+                    "http.response.status_code": response.status,
+                  });
                   continue;
                 }
                 throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
-                  message: `Request failed after ${maxRetries} retries`,
+                  message: `${req.method} ${req.path} failed with status ${response.status} after ${maxRetries + 1} attempts`,
                   path: req.path,
                   method: req.method,
+                  status: response.status,
                 });
               }
 
@@ -202,13 +269,17 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 span.setAttribute(SpanAttributes.RATE_LIMIT_LIMIT, result.rateLimit.limit);
               }
 
+              if (attempt > 0) {
+                span.setAttribute(SpanAttributes.RETRY_COUNT, attempt);
+              }
+
               handle.complete(response.headers);
               span.end();
               return result;
             }
 
             throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
-              message: `Request failed after ${maxRetries} retries`,
+              message: `${req.method} ${req.path} failed after ${maxRetries + 1} attempts`,
               path: req.path,
               method: req.method,
             });
@@ -218,6 +289,8 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
               span.setAttribute(SpanAttributes.ERROR_TYPE, error.name);
               span.setAttribute(SpanAttributes.ERROR_HAS_CAUSE, !!error.cause);
             }
+            span.setStatus({ code: SpanStatusCode.ERROR, message: error instanceof Error ? error.message : String(error) });
+            span.recordException(error instanceof Error ? error : new Error(String(error)));
             handle.release();
             span.end();
             throw error;
@@ -290,12 +363,56 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     },
   };
 
+  // Prevent accidental deletion of function properties
+  for (const prop of ["request", "createHeaders", "runRequest", "handleResponse", "handleRateLimit", "parseRateLimitHeaders"] as const) {
+    Object.defineProperty(manager, prop, {
+      value: manager[prop],
+      writable: true,
+      enumerable: true,
+      configurable: false,
+    });
+  }
+  Object.defineProperty(manager, Symbol.dispose, {
+    value: manager[Symbol.dispose],
+    writable: false,
+    enumerable: false,
+    configurable: false,
+  });
+
   return manager;
 };
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+
+/**
+ * Companion object for the RestManager type.
+ * Provides type guard utility.
+ */
+export const RestManager = {
+  /**
+   * Type guard for RestManager.
+   *
+   * @param value - the value to check
+   * @returns true if value implements RestManager interface
+   */
+  is(value: unknown): value is RestManager {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string | symbol, unknown>;
+    return (
+      typeof obj.platform === "string" &&
+      typeof obj.baseUrl === "string" &&
+      typeof obj.request === "function" &&
+      typeof obj.createHeaders === "function" &&
+      typeof obj.runRequest === "function" &&
+      typeof obj.handleResponse === "function" &&
+      typeof obj.handleRateLimit === "function" &&
+      typeof obj.parseRateLimitHeaders === "function" &&
+      typeof obj[Symbol.dispose] === "function"
+    );
+  },
+} as const;
 
 /**
  * Parse a Retry-After header value into a bounded number of seconds.

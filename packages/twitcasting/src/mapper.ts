@@ -40,7 +40,7 @@ export type TCUser = {
  * @postcondition returns LiveStream with sessionId set to movie.id
  */
 export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
-  return {
+  return Object.freeze({
     id: movie.id,
     platform: "twitcasting",
     title: movie.title || `${user.name}'s live`,
@@ -60,7 +60,7 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
     viewerCount: movie.current_view_count,
     startedAt: new Date(movie.created * 1000),
     raw: movie,
-  };
+  } satisfies LiveStream);
 };
 
 /**
@@ -73,7 +73,7 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
  * @postcondition returns Video with sessionId set to movie.id
  */
 export const toVideo = (movie: TCMovie, user: TCUser): Video => {
-  return {
+  return Object.freeze({
     id: movie.id,
     platform: "twitcasting",
     title: movie.title || `${user.name}'s broadcast`,
@@ -94,7 +94,7 @@ export const toVideo = (movie: TCMovie, user: TCUser): Video => {
     viewCount: movie.total_view_count,
     publishedAt: new Date(movie.created * 1000),
     raw: movie,
-  };
+  } satisfies Video);
 };
 
 /**
@@ -118,7 +118,7 @@ export const toContent = (movie: TCMovie, user: TCUser): Content => {
  * @returns unified Channel
  */
 export const toChannel = (user: TCUser): Channel => {
-  return {
+  return Object.freeze({
     id: user.id,
     platform: "twitcasting",
     name: user.name,
@@ -128,5 +128,5 @@ export const toChannel = (user: TCUser): Channel => {
       width: 300,
       height: 300,
     },
-  };
+  } satisfies Channel);
 };

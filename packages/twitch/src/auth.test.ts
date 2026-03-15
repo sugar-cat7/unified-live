@@ -133,4 +133,66 @@ describe("createClientCredentialsTokenManager", () => {
     expect(c).toBe("Bearer deduped");
     expect(mockFetch).toHaveBeenCalledOnce();
   });
+
+  it("concurrent calls during refresh share the same promise", async () => {
+    let callCount = 0;
+    const mockFetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async () => {
+      callCount++;
+      // Simulate slow token fetch
+      await new Promise((r) => setTimeout(r, 50));
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          access_token: `token-${callCount}`,
+          expires_in: 3600,
+          token_type: "bearer",
+        }),
+      } as Response;
+    });
+
+    const manager = createClientCredentialsTokenManager({
+      clientId: "id",
+      clientSecret: "secret",
+      fetch: mockFetch,
+    });
+
+    // First call to populate cache
+    await manager.getAuthHeader();
+    expect(callCount).toBe(1);
+
+    // Invalidate and immediately fire concurrent calls
+    manager.invalidate();
+    const results = await Promise.all([
+      manager.getAuthHeader(),
+      manager.getAuthHeader(),
+    ]);
+
+    // Both should get the same token from the shared refresh
+    expect(results[0]).toBe(results[1]);
+    expect(callCount).toBe(2); // Only one additional fetch
+  });
+
+  it("sends correct content type and body parameters", async () => {
+    const mockFetch = makeMockFetch();
+    const manager = createClientCredentialsTokenManager({
+      clientId: "my-client",
+      clientSecret: "my-secret",
+      fetch: mockFetch,
+    });
+
+    await manager.getAuthHeader();
+
+    const callArgs = mockFetch.mock.calls[0];
+    const init = callArgs?.[1] as RequestInit;
+    expect(init.method).toBe("POST");
+    expect((init.headers as Record<string, string>)["Content-Type"]).toBe(
+      "application/x-www-form-urlencoded",
+    );
+
+    const body = init.body as URLSearchParams;
+    expect(body.get("client_id")).toBe("my-client");
+    expect(body.get("client_secret")).toBe("my-secret");
+    expect(body.get("grant_type")).toBe("client_credentials");
+  });
 });

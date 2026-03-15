@@ -1,4 +1,4 @@
-import { Content, UnifiedClient } from "@unified-live/core";
+import { Content, NotFoundError, UnifiedClient } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTwitCastingPlugin } from "./plugin";
 
@@ -111,5 +111,19 @@ describe("TwitCasting Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
     client[Symbol.dispose]();
+  });
+
+  it("getChannel throws NotFoundError for nonexistent user", async () => {
+    const fetchFn = createMockFetch(() => ({ body: { user: null } }));
+    const plugin = createTwitCastingPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: fetchFn,
+    });
+    client = UnifiedClient.create({ plugins: [plugin] });
+
+    await expect(client.getChannel("twitcasting", "nonexistent")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 });

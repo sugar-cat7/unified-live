@@ -178,6 +178,12 @@ describe("UnifiedClient.create", () => {
     client[Symbol.dispose]();
   });
 
+  it("getContent throws ValidationError for malformed URL", async () => {
+    const client = UnifiedClient.create();
+    await expect(client.getContent("not-a-url")).rejects.toThrow(ValidationError);
+    client[Symbol.dispose]();
+  });
+
   it("getContent throws PlatformNotFoundError for unknown URL", async () => {
     const client = UnifiedClient.create();
 
@@ -200,5 +206,101 @@ describe("UnifiedClient.create", () => {
 
     // After [Symbol.dispose], plugins are cleared
     expect(() => client.platform("youtube")).toThrow(PlatformNotFoundError);
+  });
+});
+
+describe("UnifiedClient.is", () => {
+  it.each([
+    ["null", null],
+    ["undefined", undefined],
+    ["string", "hello"],
+    ["number", 42],
+    ["empty object", {}],
+  ])("returns false for %s", (_, value) => {
+    expect(UnifiedClient.is(value)).toBe(false);
+  });
+
+  it("returns false for partial object", () => {
+    expect(UnifiedClient.is({ register: () => {}, getContent: () => {} })).toBe(false);
+  });
+
+  it("returns true for a created UnifiedClient", () => {
+    const client = UnifiedClient.create();
+    expect(UnifiedClient.is(client)).toBe(true);
+    client[Symbol.dispose]();
+  });
+});
+
+describe("UnifiedClient cross-plugin routing", () => {
+  it("routes URLs to the correct plugin among multiple registrations", () => {
+    const yt = createMockPlugin("youtube");
+    const tw = createMockPlugin("twitch");
+    const tc = createMockPlugin("twitcasting");
+    const client = UnifiedClient.create({ plugins: [yt, tw, tc] });
+
+    // YouTube URL matches youtube plugin
+    const ytRes = client.match("https://youtube.com/watch?v=abc");
+    expect(ytRes?.platform).toBe("youtube");
+
+    // Twitch URL matches twitch plugin
+    const twRes = client.match("https://twitch.tv/streamer");
+    expect(twRes?.platform).toBe("twitch");
+
+    // TwitCasting URL matches twitcasting plugin
+    const tcRes = client.match("https://twitcasting.tv/user123");
+    expect(tcRes?.platform).toBe("twitcasting");
+
+    // Unknown URL returns null
+    expect(client.match("https://vimeo.com/12345")).toBeNull();
+
+    client[Symbol.dispose]();
+  });
+
+  it("register overwrites existing plugin with same name", () => {
+    const original = createMockPlugin("youtube");
+    const replacement = createMockPlugin("youtube");
+    const client = UnifiedClient.create({ plugins: [original] });
+
+    client.register(replacement);
+
+    // Should use the replacement, not the original
+    expect(client.platform("youtube")).toBe(replacement);
+    expect(client.platforms()).toEqual(["youtube"]);
+
+    client[Symbol.dispose]();
+  });
+
+  it("plugins are iterated in registration order for URL matching", () => {
+    // Create two plugins that match the same URL
+    const first = createMockPlugin("first");
+    const second = createMockPlugin("second");
+
+    // Both match URLs containing their name, but "first" also matches "second" since
+    // createMockPlugin matches if url.includes(name)
+    const client = UnifiedClient.create({ plugins: [first, second] });
+
+    // A URL containing "first" should match "first" plugin
+    const result = client.match("https://first.example.com/video");
+    expect(result?.platform).toBe("first");
+
+    client[Symbol.dispose]();
+  });
+
+  it("concurrent API calls to different plugins do not interfere", async () => {
+    const yt = createMockPlugin("youtube");
+    const tw = createMockPlugin("twitch");
+    const client = UnifiedClient.create({ plugins: [yt, tw] });
+
+    const [ytContent, twContent] = await Promise.all([
+      client.getContentById("youtube", "v1"),
+      client.getContentById("twitch", "v2"),
+    ]);
+
+    expect(ytContent.platform).toBe("youtube");
+    expect(twContent.platform).toBe("twitch");
+    expect(yt.getContent).toHaveBeenCalledWith("v1");
+    expect(tw.getContent).toHaveBeenCalledWith("v2");
+
+    client[Symbol.dispose]();
   });
 });

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AuthenticationError, NotFoundError, UnifiedLiveError } from "../errors";
-import { createRestManager, parseRetryAfter } from "./manager";
+import { AuthenticationError, NetworkError, NotFoundError, UnifiedLiveError } from "../errors";
+import { createRestManager, parseRetryAfter, RestManager } from "./manager";
 import type { RateLimitHandle, RateLimitStrategy } from "./strategy";
-import type { RestRequest } from "./types";
+import { createRateLimitHeaderParser, type RestRequest } from "./types";
 
 const createMockStrategy = (): RateLimitStrategy => {
   return {
@@ -94,6 +94,30 @@ describe("createRestManager", () => {
     const url = new URL(calledUrl);
     expect(url.searchParams.get("q")).toBe("hello");
     expect(url.searchParams.get("limit")).toBe("10");
+  });
+
+  it("properly encodes special characters in query parameters", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    await manager.request({
+      method: "GET",
+      path: "/search",
+      query: { q: "hello world", filter: "type=live&sort=new", emoji: "\u{1F44D}" },
+    });
+
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("q")).toBe("hello world");
+    expect(url.searchParams.get("filter")).toBe("type=live&sort=new");
+    expect(url.searchParams.get("emoji")).toBe("\u{1F44D}");
   });
 
   it("retries on 5xx server errors", async () => {
@@ -330,6 +354,177 @@ describe("createRestManager", () => {
     );
   });
 
+  it("passes AbortSignal to fetch", async () => {
+    strategy = createMockStrategy();
+    const controller = new AbortController();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    await manager.request({ method: "GET", path: "/test", signal: controller.signal });
+
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
+    expect(calledInit.signal).toBe(controller.signal);
+  });
+
+  it("throws NetworkError with NETWORK_ABORT when signal is aborted", async () => {
+    strategy = createMockStrategy();
+    const controller = new AbortController();
+    controller.abort();
+
+    const fetchFn = vi.fn(async (_url: string, init?: RequestInit) => {
+      init?.signal?.throwIfAborted();
+      throw new Error("unreachable");
+    }) as unknown as typeof globalThis.fetch;
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    const err = await manager.request({ method: "GET", path: "/test", signal: controller.signal }).catch(e => e);
+    expect(err).toBeInstanceOf(NetworkError);
+    expect(err.code).toBe("NETWORK_ABORT");
+  });
+
+  it("applies timeout when configured", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      retry: { timeout: 5000 },
+    });
+
+    await manager.request({ method: "GET", path: "/test" });
+
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
+    expect(calledInit.signal).toBeDefined();
+  });
+
+  it.each([400, 408, 413, 415, 422])(
+    "throws immediately without retry on %d",
+    async (status) => {
+      strategy = createMockStrategy();
+      const fetchFn = createMockFetch([{ status }]);
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
+
+      await expect(
+        manager.request({ method: "GET", path: "/test" }),
+      ).rejects.toThrow(UnifiedLiveError);
+      expect(fetchFn).toHaveBeenCalledTimes(1); // No retries
+    },
+  );
+
+  it("sends raw body when bodyType is 'raw'", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    const formData = new URLSearchParams({ key: "value" });
+    await manager.request({
+      method: "POST",
+      path: "/submit",
+      body: formData,
+      bodyType: "raw",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
+    expect(calledInit.body).toBe(formData);
+  });
+
+  it("JSON-serializes body by default", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    await manager.request({
+      method: "POST",
+      path: "/data",
+      body: { key: "value" },
+    });
+
+    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
+    expect(calledInit.body).toBe('{"key":"value"}');
+    const headers = calledInit.headers as Record<string, string>;
+    expect(headers["Content-Type"]).toBe("application/json");
+  });
+
+  it("includes status in error context after retries exhausted", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([
+      { status: 503 },
+      { status: 503 },
+      { status: 503 },
+      { status: 503 },
+    ]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      retry: { baseDelay: 1 },
+    });
+
+    try {
+      await manager.request({ method: "GET", path: "/flaky" });
+      expect.unreachable("Should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(NetworkError);
+      const err = e as NetworkError;
+      expect(err.context.status).toBe(503);
+      expect(err.context.method).toBe("GET");
+      expect(err.context.path).toBe("/flaky");
+    }
+  });
+
+  it("function properties are overridable but not deletable", () => {
+    strategy = createMockStrategy();
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: createMockFetch([]),
+    });
+
+    // Assignment still works (writable: true)
+    const originalRequest = manager.request;
+    manager.request = vi.fn() as typeof manager.request;
+    expect(manager.request).not.toBe(originalRequest);
+
+    manager[Symbol.dispose]();
+  });
+
   it("[Symbol.dispose] cleans up strategy and tokenManager", () => {
     const tokenDispose = vi.fn();
     strategy = createMockStrategy();
@@ -365,5 +560,82 @@ describe("parseRetryAfter", () => {
     { header: "60", fallback: 1, expected: 60 },
   ])('parseRetryAfter("$header", $fallback) = $expected', ({ header, fallback, expected }) => {
     expect(parseRetryAfter(header, fallback)).toBe(expected);
+  });
+
+  it("uses default fallback when none provided", () => {
+    expect(parseRetryAfter(null)).toBe(1);
+  });
+
+  it("clamps negative fallback to 0", () => {
+    expect(parseRetryAfter(null, -5)).toBe(0);
+  });
+
+  it("clamps large fallback to 120", () => {
+    expect(parseRetryAfter(null, 300)).toBe(120);
+  });
+});
+
+describe("RestManager.is", () => {
+  it("returns false for non-objects", () => {
+    expect(RestManager.is(null)).toBe(false);
+    expect(RestManager.is("string")).toBe(false);
+    expect(RestManager.is(42)).toBe(false);
+  });
+
+  it("returns true for a created RestManager", () => {
+    const strategy = createMockStrategy();
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: createMockFetch([]),
+    });
+
+    expect(RestManager.is(manager)).toBe(true);
+    manager[Symbol.dispose]();
+  });
+});
+
+describe("createRateLimitHeaderParser", () => {
+  const parser = createRateLimitHeaderParser({
+    limit: "X-RateLimit-Limit",
+    remaining: "X-RateLimit-Remaining",
+    reset: "X-RateLimit-Reset",
+  });
+
+  it("parses valid rate limit headers", () => {
+    const headers = new Headers({
+      "X-RateLimit-Limit": "100",
+      "X-RateLimit-Remaining": "42",
+      "X-RateLimit-Reset": String(Math.floor(Date.now() / 1000) + 60),
+    });
+    const info = parser(headers);
+    expect(info).toBeDefined();
+    expect(info!.limit).toBe(100);
+    expect(info!.remaining).toBe(42);
+    expect(info!.resetsAt).toBeInstanceOf(Date);
+  });
+
+  it("returns undefined when headers are missing", () => {
+    expect(parser(new Headers())).toBeUndefined();
+  });
+
+  it("returns undefined when only some headers are present", () => {
+    const headers = new Headers({
+      "X-RateLimit-Limit": "100",
+    });
+    expect(parser(headers)).toBeUndefined();
+  });
+
+  it("handles NaN header values", () => {
+    const headers = new Headers({
+      "X-RateLimit-Limit": "not-a-number",
+      "X-RateLimit-Remaining": "42",
+      "X-RateLimit-Reset": "also-not-a-number",
+    });
+    const info = parser(headers);
+    expect(info).toBeDefined();
+    expect(info!.limit).toBeNaN();
+    expect(info!.remaining).toBe(42);
   });
 });

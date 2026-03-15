@@ -1,4 +1,5 @@
 import type { TokenManager } from "./auth/types";
+import { ValidationError } from "./errors";
 import { createRestManager, type RestManager } from "./rest/manager";
 import type { RateLimitStrategy } from "./rest/strategy";
 import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
@@ -153,6 +154,14 @@ export const PlatformPlugin = {
    * @postcondition returns a fully functional PlatformPlugin with wired RestManager
    */
   create(definition: PluginDefinition, methods: PluginMethods): PlatformPlugin {
+    if (!definition.baseUrl.startsWith("https://")) {
+      throw new ValidationError(
+        "VALIDATION_INVALID_URL",
+        `Plugin "${definition.name}" baseUrl must use HTTPS (got "${definition.baseUrl}")`,
+        { platform: definition.name },
+      );
+    }
+
     const rest = createRestManager({
       platform: definition.name,
       baseUrl: definition.baseUrl,

@@ -1,10 +1,16 @@
+// --- Auth ---
 export { TokenManager } from "./auth/types";
+
+// --- Client ---
 export type { UnifiedClientOptions } from "./client";
 export { UnifiedClient } from "./client";
-export type { ErrorCode, ErrorContext, NetworkCode, QuotaDetails } from "./errors";
+
+// --- Errors ---
+export type { ErrorContext, NetworkCode, QuotaDetails } from "./errors";
 export {
   AuthenticationError,
   classifyNetworkError,
+  ErrorCode,
   NetworkError,
   NotFoundError,
   ParseError,
@@ -14,35 +20,44 @@ export {
   UnifiedLiveError,
   ValidationError,
 } from "./errors";
+
+// --- Plugin ---
 export type { PluginCapabilities, PluginDefinition, PluginMethods } from "./plugin";
 export { PlatformPlugin } from "./plugin";
+
+// --- REST ---
 export type { TokenBucketConfig } from "./rest/bucket";
 export { createTokenBucketStrategy } from "./rest/bucket";
-export type { RestManager } from "./rest/manager";
-export { createRestManager, parseRetryAfter } from "./rest/manager";
+export { createRestManager, parseRetryAfter, RestManager } from "./rest/manager";
 export type { QuotaBudgetConfig } from "./rest/quota";
 export { createQuotaBudgetStrategy } from "./rest/quota";
-export type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./rest/strategy";
-export type {
-  RateLimitInfo,
-  RestManagerOptions,
-  RestRequest,
-  RestResponse,
-  RetryConfig,
-} from "./rest/types";
+export type { RateLimitHandle, RateLimitStatus } from "./rest/strategy";
+export { RateLimitStrategy } from "./rest/strategy";
+export type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse, RetryConfig } from "./rest/types";
 export { createRateLimitHeaderParser } from "./rest/types";
+
+// --- Result (internal) ---
 export type { ErrResult, OkResult, Result } from "./result";
 export { Err, Ok, unwrap, wrap } from "./result";
+
+// --- Telemetry ---
 export { getTracer, SpanAttributes } from "./telemetry/traces";
-export type { BroadcastSession, Channel, LiveStream, Page, ResolvedUrl, Video } from "./types";
+
+// --- Types ---
+export type { ResolvedUrl } from "./types";
 export {
+  BroadcastSession,
   broadcastSessionSchema,
-  Content,
+  Channel,
   channelRefSchema,
   channelSchema,
+  Content,
   contentSchema,
+  LiveStream,
   liveStreamSchema,
+  Page,
   resolvedUrlSchema,
   thumbnailSchema,
+  Video,
   videoSchema,
 } from "./types";

@@ -33,4 +33,8 @@ describe("matchTwitCastingUrl", () => {
   ])("returns null for non-TwitCasting URL: %s", (url) => {
     expect(matchTwitCastingUrl(url)).toBeNull();
   });
+
+  it("returns null for empty string", () => {
+    expect(matchTwitCastingUrl("")).toBeNull();
+  });
 });

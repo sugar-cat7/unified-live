@@ -25,4 +25,8 @@ describe("matchTwitchUrl", () => {
   ])("returns null for non-Twitch URL: %s", (url) => {
     expect(matchTwitchUrl(url)).toBeNull();
   });
+
+  it("returns null for empty string", () => {
+    expect(matchTwitchUrl("")).toBeNull();
+  });
 });

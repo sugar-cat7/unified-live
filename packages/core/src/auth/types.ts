@@ -47,4 +47,17 @@ export const TokenManager = {
       },
     };
   },
+
+  /**
+   * Type guard for TokenManager.
+   *
+   * @param value - the value to check
+   * @returns true if value implements TokenManager interface
+   * @postcondition returns true if value has getAuthHeader and invalidate methods
+   */
+  is(value: unknown): value is TokenManager {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string | symbol, unknown>;
+    return typeof obj.getAuthHeader === "function" && typeof obj.invalidate === "function";
+  },
 } as const;

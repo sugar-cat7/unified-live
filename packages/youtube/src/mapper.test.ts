@@ -95,6 +95,22 @@ describe("toContent", () => {
     expect(() => toContent(resource)).toThrow(error);
   });
 
+  it("throws ParseError for video missing contentDetails", () => {
+    const resource: YTVideoResource = {
+      ...baseVideoResource,
+      contentDetails: undefined,
+    };
+    expect(() => toContent(resource)).toThrow("missing required parts");
+  });
+
+  it("throws ParseError for video missing statistics", () => {
+    const resource: YTVideoResource = {
+      ...baseVideoResource,
+      statistics: undefined,
+    };
+    expect(() => toContent(resource)).toThrow("missing required parts");
+  });
+
   it("throws when video has no thumbnail at all", () => {
     const noThumb: YTVideoResource = {
       ...baseVideoResource,
@@ -176,6 +192,28 @@ describe("toChannel", () => {
   });
 });
 
+describe("Object.freeze", () => {
+  it("returned objects are frozen", () => {
+    const content = toContent(baseVideoResource);
+    expect(Object.isFrozen(content)).toBe(true);
+
+    const channel = toChannel({
+      id: "UC123",
+      snippet: {
+        title: "Test Channel",
+        thumbnails: {
+          high: {
+            url: "https://example.com/avatar.jpg",
+            width: 800,
+            height: 800,
+          },
+        },
+      },
+    });
+    expect(Object.isFrozen(channel)).toBe(true);
+  });
+});
+
 describe("parseDuration", () => {
   it.each([
     { input: "PT1H2M3S", expected: 3723 },
@@ -185,7 +223,8 @@ describe("parseDuration", () => {
     { input: "PT1H30M", expected: 5400 },
     { input: "PT0S", expected: 0 },
     { input: "", expected: 0 },
-    { input: "P1D", expected: 0 }, // Day-level not handled
+    { name: "days and hours", input: "P1DT3H", expected: 97200 },
+    { name: "days only", input: "P2D", expected: 172800 },
   ])("parseDuration($input) = $expected", ({ input, expected }) => {
     expect(parseDuration(input)).toBe(expected);
   });

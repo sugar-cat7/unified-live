@@ -1,4 +1,4 @@
-import { Content, UnifiedClient } from "@unified-live/core";
+import { Content, NotFoundError, UnifiedClient } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTwitchPlugin } from "./plugin";
 
@@ -107,5 +107,19 @@ describe("Twitch Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
     client[Symbol.dispose]();
+  });
+
+  it("getContent throws NotFoundError for nonexistent video", async () => {
+    const fetchFn = createMockFetch(() => ({ body: { data: [] } }));
+    const plugin = createTwitchPlugin({
+      clientId: "test-id",
+      clientSecret: "test-secret",
+      fetch: fetchFn,
+    });
+    client = UnifiedClient.create({ plugins: [plugin] });
+
+    await expect(client.getContent("https://www.twitch.tv/videos/99999")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 });

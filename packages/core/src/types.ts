@@ -75,6 +75,60 @@ export type Page<T> = {
   hasMore: boolean;
 };
 
+/**
+ * Companion object for the Page type.
+ * Provides transformation and factory utilities.
+ *
+ * @example
+ * ```ts
+ * const mapped = Page.map(page, (item) => item.id);
+ * const empty = Page.empty<Video>();
+ * ```
+ */
+export const Page = {
+  /**
+   * Transform items in a page while preserving pagination metadata.
+   *
+   * @param page - the source page
+   * @param fn - mapping function applied to each item
+   * @returns a new Page with transformed items
+   * @postcondition cursor, total, and hasMore are preserved
+   * @idempotency Safe — pure function
+   */
+  map: <T, U>(page: Page<T>, fn: (item: T) => U): Page<U> => ({
+    items: page.items.map(fn),
+    cursor: page.cursor,
+    total: page.total,
+    hasMore: page.hasMore,
+  }),
+
+  /**
+   * Create an empty page with no items.
+   *
+   * @returns an empty Page with hasMore=false
+   * @idempotency Safe — pure function
+   */
+  empty: <T>(): Page<T> => ({
+    items: [],
+    hasMore: false,
+  }),
+
+  /**
+   * Create an iterable wrapper for a Page, enabling for...of loops.
+   *
+   * @param page - the page to iterate
+   * @returns an iterable that yields page items
+   * @idempotency Safe — pure function
+   * @example
+   * ```ts
+   * for (const video of Page.iter(page)) { ... }
+   * ```
+   */
+  iter: <T>(page: Page<T>): Iterable<T> => ({
+    [Symbol.iterator]: () => page.items[Symbol.iterator](),
+  }),
+} as const;
+
 export const resolvedUrlSchema = z.object({
   platform: z.string().check(z.minLength(1)),
   type: z.enum(["content", "channel"]),
@@ -82,6 +136,98 @@ export const resolvedUrlSchema = z.object({
 });
 
 export type ResolvedUrl = z.infer<typeof resolvedUrlSchema>;
+
+/**
+ * Companion object for the LiveStream type.
+ * Provides lightweight structural type guard.
+ *
+ * @example
+ * ```ts
+ * if (LiveStream.is(value)) { ... }
+ * ```
+ */
+export const LiveStream = {
+  /**
+   * Structural type guard for LiveStream.
+   *
+   * @param value - the value to check
+   * @returns true if value has the LiveStream shape (type === "live")
+   */
+  is: (value: unknown): value is LiveStream => {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return obj.type === "live" && typeof obj.id === "string" && typeof obj.platform === "string";
+  },
+} as const;
+
+/**
+ * Companion object for the Video type.
+ * Provides lightweight structural type guard.
+ *
+ * @example
+ * ```ts
+ * if (Video.is(value)) { ... }
+ * ```
+ */
+export const Video = {
+  /**
+   * Structural type guard for Video.
+   *
+   * @param value - the value to check
+   * @returns true if value has the Video shape (type === "video")
+   */
+  is: (value: unknown): value is Video => {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return obj.type === "video" && typeof obj.id === "string" && typeof obj.platform === "string";
+  },
+} as const;
+
+/**
+ * Companion object for the Channel type.
+ * Provides lightweight structural type guard.
+ *
+ * @example
+ * ```ts
+ * if (Channel.is(value)) { ... }
+ * ```
+ */
+export const Channel = {
+  /**
+   * Structural type guard for Channel.
+   *
+   * @param value - the value to check
+   * @returns true if value has the Channel shape
+   */
+  is: (value: unknown): value is Channel => {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return typeof obj.id === "string" && typeof obj.platform === "string" && typeof obj.name === "string";
+  },
+} as const;
+
+/**
+ * Companion object for the BroadcastSession type.
+ * Provides lightweight structural type guard.
+ *
+ * @example
+ * ```ts
+ * if (BroadcastSession.is(value)) { ... }
+ * ```
+ */
+export const BroadcastSession = {
+  /**
+   * Structural type guard for BroadcastSession.
+   *
+   * @param value - the value to check
+   * @returns true if value has the BroadcastSession shape
+   */
+  is: (value: unknown): value is BroadcastSession => {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return typeof obj.sessionId === "string" && typeof obj.platform === "string";
+  },
+} as const;
 
 /**
  * Type guard namespace for Content discriminated union.

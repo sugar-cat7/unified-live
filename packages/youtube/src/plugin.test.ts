@@ -1,4 +1,4 @@
-import { Content, type LiveStream, NotFoundError, QuotaExhaustedError } from "@unified-live/core";
+import { Content, type LiveStream, NotFoundError, QuotaExhaustedError, ValidationError } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
 
@@ -94,6 +94,12 @@ describe("createYouTubePlugin", () => {
   it("throws on empty API key", () => {
     expect(() => createYouTubePlugin({ apiKey: "", fetch: createMockFetch([]) })).toThrow(
       "API key is required",
+    );
+  });
+
+  it("throws ValidationError for whitespace-only API key", () => {
+    expect(() => createYouTubePlugin({ apiKey: "   ", fetch: createMockFetch([]) })).toThrow(
+      ValidationError,
     );
   });
 
@@ -475,6 +481,28 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
 
     await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(QuotaExhaustedError);
+  });
+
+  it("handles 429 rate limit by retrying", async () => {
+    const fetchFn = createMockFetch([
+      {
+        status: 429,
+        body: {},
+        headers: { "Retry-After": "0" },
+      },
+      {
+        body: {
+          items: [sampleVideoItem],
+          pageInfo: { totalResults: 1, resultsPerPage: 5 },
+        },
+      },
+    ]);
+
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
+    const content = await plugin.getContent("dQw4w9WgXcQ");
+
+    expect(content.type).toBe("video");
+    expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
   it("[Symbol.dispose] releases resources", () => {

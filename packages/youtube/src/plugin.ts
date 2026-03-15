@@ -30,12 +30,13 @@ export type YouTubePluginConfig = {
  *
  * @param config - YouTube plugin configuration including API key
  * @returns configured PlatformPlugin for YouTube
+ * @throws {ValidationError} if apiKey is empty/whitespace
  * @precondition config.apiKey is a valid YouTube Data API v3 key
  * @postcondition returns a PlatformPlugin that handles YouTube URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
 export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin => {
-  if (!config.apiKey) {
+  if (!config.apiKey?.trim()) {
     throw new ValidationError("VALIDATION_INVALID_INPUT", "YouTube API key is required", {
       platform: "youtube",
     });

@@ -110,4 +110,78 @@ describe("createQuotaBudgetStrategy", () => {
     });
     expect(strategy.getStatus().queued).toBe(0);
   });
+
+  it("throws at exactly dailyLimit boundary", async () => {
+    strategy = createQuotaBudgetStrategy({
+      dailyLimit: 5,
+      costMap: { "videos:list": 5 },
+      platform: "youtube",
+    });
+
+    // Exactly at limit — should succeed
+    const handle = await strategy.acquire(makeReq("videos:list"));
+    handle.complete(new Headers());
+    expect(strategy.getStatus().remaining).toBe(0);
+
+    // One more unit should fail
+    await expect(strategy.acquire(makeReq("videos:list"))).rejects.toThrow(QuotaExhaustedError);
+  });
+
+  it("uses defaultCost when bucketId is undefined", async () => {
+    strategy = createQuotaBudgetStrategy({
+      dailyLimit: 100,
+      costMap: { "videos:list": 10 },
+      defaultCost: 3,
+      platform: "youtube",
+    });
+
+    await strategy.acquire(makeReq()); // no bucketId
+    expect(strategy.getStatus().remaining).toBe(97); // 100 - 3
+  });
+
+  it("release does not go below zero consumed", async () => {
+    strategy = createQuotaBudgetStrategy({
+      dailyLimit: 10,
+      costMap: { "videos:list": 5 },
+      platform: "youtube",
+    });
+
+    const handle = await strategy.acquire(makeReq("videos:list"));
+    handle.release();
+    handle.release(); // Double release
+    expect(strategy.getStatus().remaining).toBe(10); // Clamped at 0 consumed
+  });
+
+  it("resetsAt is a future Date", () => {
+    strategy = createQuotaBudgetStrategy({
+      dailyLimit: 100,
+      costMap: {},
+      platform: "youtube",
+    });
+
+    const status = strategy.getStatus();
+    expect(status.resetsAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("throws on negative cost map values", () => {
+    expect(() =>
+      createQuotaBudgetStrategy({
+        dailyLimit: 100,
+        costMap: { "search:list": -1 },
+        platform: "youtube",
+      }),
+    ).toThrow("negative cost");
+  });
+
+  it("dispose clears reset timer without error", () => {
+    strategy = createQuotaBudgetStrategy({
+      dailyLimit: 100,
+      costMap: {},
+      platform: "youtube",
+    });
+
+    // Should not throw
+    strategy[Symbol.dispose]();
+    strategy[Symbol.dispose](); // Double dispose is safe
+  });
 });

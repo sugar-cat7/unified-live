@@ -78,7 +78,7 @@ describe("createYouTubePlugin", () => {
   let plugin: ReturnType<typeof createYouTubePlugin>;
 
   afterEach(() => {
-    plugin?.dispose();
+    plugin?.[Symbol.dispose]();
   });
 
   it("reports correct capabilities", () => {
@@ -477,11 +477,11 @@ describe("createYouTubePlugin", () => {
     await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(QuotaExhaustedError);
   });
 
-  it("dispose releases resources", () => {
+  it("[Symbol.dispose] releases resources", () => {
     plugin = createYouTubePlugin({
       apiKey: "test-key",
       fetch: createMockFetch([]),
     });
-    expect(() => plugin.dispose()).not.toThrow();
+    expect(() => plugin[Symbol.dispose]()).not.toThrow();
   });
 });

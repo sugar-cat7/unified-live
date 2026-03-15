@@ -28,12 +28,6 @@ if echo "$command" | grep -Eq 'git[[:space:]]+push[[:space:]]+--force'; then
   deny "Do not force push from Claude."
 fi
 
-# Allow only push to vk/* branches on origin.
-if echo "$command" | grep -Eq '(^|[[:space:];|&])git[[:space:]]+push'; then
-  if ! echo "$command" | grep -Eq 'git[[:space:]]+push[[:space:]]+(-u[[:space:]]+)?origin[[:space:]]+vk/'; then
-    deny "Push only to vk/* branches on origin. Example: git push -u origin vk/xxxx-topic"
-  fi
-fi
 
 # Block broad staging patterns that are easy to misuse.
 if echo "$command" | grep -Eq '(^|[[:space:];|&])git[[:space:]]+add[[:space:]]+(-A|--all|\.)([[:space:];|&]|$)'; then

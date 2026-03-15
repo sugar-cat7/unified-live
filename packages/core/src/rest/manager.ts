@@ -78,7 +78,7 @@ export type RestManager = {
    * @postcondition rateLimitStrategy and tokenManager are disposed
    * @idempotency Safe — multiple calls have no additional effect
    */
-  dispose: () => void;
+  [Symbol.dispose]: () => void;
 };
 
 /**
@@ -283,10 +283,10 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
       return undefined;
     },
 
-    dispose: (): void => {
+    [Symbol.dispose]: (): void => {
       disposed = true;
-      manager.rateLimitStrategy.dispose();
-      manager.tokenManager?.dispose?.();
+      manager.rateLimitStrategy[Symbol.dispose]();
+      manager.tokenManager?.[Symbol.dispose]?.();
     },
   };
 

@@ -13,7 +13,7 @@ describe("createTokenBucketStrategy", () => {
   let strategy: ReturnType<typeof createTokenBucketStrategy>;
 
   afterEach(() => {
-    strategy?.dispose();
+    strategy?.[Symbol.dispose]();
   });
 
   it("allows requests within token limit", async () => {
@@ -79,14 +79,14 @@ describe("createTokenBucketStrategy", () => {
     expect(strategy.getStatus().remaining).toBe(42);
   });
 
-  it("dispose clears timers", () => {
+  it("[Symbol.dispose] clears timers", () => {
     strategy = createTokenBucketStrategy({
       global: { requests: 10, perMs: 60_000 },
       parseHeaders: noopParseHeaders,
     });
 
     // Should not throw
-    strategy.dispose();
+    strategy[Symbol.dispose]();
   });
 
   it("getStatus reports correct queued count", async () => {

@@ -31,7 +31,7 @@ const twitcasting = createTwitCastingPlugin({
 });
 
 // 2. Create unified client
-const client = UnifiedClient.create({
+using client = UnifiedClient.create({
   plugins: [youtube, twitch, twitcasting],
 });
 
@@ -60,6 +60,3 @@ do {
   }
   cursor = page.cursor;
 } while (cursor);
-
-// 6. Clean up
-client.dispose();

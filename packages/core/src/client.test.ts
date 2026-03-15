@@ -54,7 +54,7 @@ const createMockPlugin = (name: string): PlatformPlugin => {
     getChannel: vi.fn(async () => mockChannel),
     getLiveStreams: vi.fn(async () => []),
     getVideos: vi.fn(async () => ({ items: [], cursor: undefined, hasMore: false })),
-    dispose: vi.fn(),
+    [Symbol.dispose]: vi.fn(),
   };
 };
 
@@ -64,7 +64,7 @@ describe("UnifiedClient.create", () => {
     const client = UnifiedClient.create({ plugins: [plugin] });
 
     expect(client.platforms()).toEqual(["test-platform"]);
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
   it("registers plugins via options", () => {
@@ -72,7 +72,7 @@ describe("UnifiedClient.create", () => {
     const client = UnifiedClient.create({ plugins: [plugin] });
 
     expect(client.platform("youtube")).toBe(plugin);
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
   it("registers plugins via register()", () => {
@@ -81,13 +81,13 @@ describe("UnifiedClient.create", () => {
     client.register(plugin);
 
     expect(client.platform("youtube")).toBe(plugin);
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
   it("throws PlatformNotFoundError for unknown platform", () => {
     const client = UnifiedClient.create();
     expect(() => client.platform("unknown")).toThrow(PlatformNotFoundError);
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
   it("matches URL to correct plugin", () => {
@@ -112,7 +112,7 @@ describe("UnifiedClient.create", () => {
     const resolved3 = client.match("https://example.com/foo");
     expect(resolved3).toBeNull();
 
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
   it.each([
@@ -154,7 +154,7 @@ describe("UnifiedClient.create", () => {
       expect(plugin[pluginMethod]).toHaveBeenCalledWith(...pluginArgs);
       assertion(result);
 
-      client.dispose();
+      client[Symbol.dispose]();
     },
   );
 
@@ -166,7 +166,7 @@ describe("UnifiedClient.create", () => {
     expect(content.platform).toBe("youtube");
     expect(plugin.getContent).toHaveBeenCalledWith("test-id");
 
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
   it("getContent throws ValidationError on empty URL", async () => {
@@ -175,7 +175,7 @@ describe("UnifiedClient.create", () => {
     await expect(client.getContent("")).rejects.toThrow(ValidationError);
     await expect(client.getContent("")).rejects.toThrow("URL must be a non-empty string");
 
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
   it("getContent throws PlatformNotFoundError for unknown URL", async () => {
@@ -185,20 +185,20 @@ describe("UnifiedClient.create", () => {
       PlatformNotFoundError,
     );
 
-    client.dispose();
+    client[Symbol.dispose]();
   });
 
-  it("dispose calls dispose on all plugins and clears registry", () => {
+  it("[Symbol.dispose] calls [Symbol.dispose] on all plugins and clears registry", () => {
     const yt = createMockPlugin("youtube");
     const tw = createMockPlugin("twitch");
     const client = UnifiedClient.create({ plugins: [yt, tw] });
 
-    client.dispose();
+    client[Symbol.dispose]();
 
-    expect(yt.dispose).toHaveBeenCalledTimes(1);
-    expect(tw.dispose).toHaveBeenCalledTimes(1);
+    expect(yt[Symbol.dispose]).toHaveBeenCalledTimes(1);
+    expect(tw[Symbol.dispose]).toHaveBeenCalledTimes(1);
 
-    // After dispose, plugins are cleared
+    // After [Symbol.dispose], plugins are cleared
     expect(() => client.platform("youtube")).toThrow(PlatformNotFoundError);
   });
 });

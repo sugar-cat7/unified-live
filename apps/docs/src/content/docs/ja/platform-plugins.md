@@ -136,10 +136,11 @@ const client = UnifiedClient.create({
 
 ## リソースの解放
 
-使い終わったら `dispose()` を呼んで内部タイマーを解放してください:
+`using` を使うとスコープを抜けた時点で自動的に内部タイマーが解放されます:
 
 ```ts
-client.dispose();
+using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: "..." })] });
+// スコープ終了時に client[Symbol.dispose]() が自動的に呼ばれます
 ```
 
 ## 次のステップ

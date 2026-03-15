@@ -48,7 +48,7 @@ describe("YouTube Integration", () => {
   let client: ReturnType<typeof UnifiedClient.create>;
 
   afterEach(() => {
-    client?.dispose();
+    client?.[Symbol.dispose]();
   });
 
   it("full consumer flow: UnifiedClient.create -> getContent by URL", async () => {
@@ -98,7 +98,7 @@ describe("YouTube Integration", () => {
     expect(content.id).toBe("dQw4w9WgXcQ");
   });
 
-  it("dispose cleans up all resources", () => {
+  it("[Symbol.dispose] cleans up all resources", () => {
     const plugin = createYouTubePlugin({
       apiKey: "test-key",
       fetch: createMockFetch(() => ({ body: {} })),
@@ -106,6 +106,6 @@ describe("YouTube Integration", () => {
     client = UnifiedClient.create({ plugins: [plugin] });
 
     // Should not throw
-    client.dispose();
+    client[Symbol.dispose]();
   });
 });

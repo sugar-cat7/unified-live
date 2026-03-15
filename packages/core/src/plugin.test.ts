@@ -15,7 +15,7 @@ const createMockStrategy = (): RateLimitStrategy => {
       resetsAt: new Date(),
       queued: 0,
     }),
-    dispose: vi.fn(),
+    [Symbol.dispose]: vi.fn(),
   };
 };
 
@@ -69,7 +69,7 @@ describe("PlatformPlugin.create", () => {
   let plugin: PlatformPlugin | undefined;
 
   afterEach(() => {
-    plugin?.dispose();
+    plugin?.[Symbol.dispose]();
     plugin = undefined;
   });
 
@@ -273,17 +273,17 @@ describe("PlatformPlugin.create", () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
-  it("dispose calls rest.dispose", () => {
+  it("[Symbol.dispose] calls rest[Symbol.dispose]", () => {
     const strategy = createMockStrategy();
     plugin = PlatformPlugin.create(
       createMinimalDefinition({ rateLimitStrategy: strategy }),
       createMockMethods(),
     );
 
-    plugin.dispose();
+    plugin[Symbol.dispose]();
 
-    expect(strategy.dispose).toHaveBeenCalledTimes(1);
-    plugin = undefined; // prevent double dispose in afterEach
+    expect(strategy[Symbol.dispose]).toHaveBeenCalledTimes(1);
+    plugin = undefined; // prevent double [Symbol.dispose] in afterEach
   });
 });
 
@@ -315,7 +315,7 @@ describe("PlatformPlugin.is", () => {
 
     expect(PlatformPlugin.is(plugin)).toBe(true);
 
-    plugin.dispose();
+    plugin[Symbol.dispose]();
   });
 
   it("returns true for a manually constructed object with all required properties", () => {
@@ -334,7 +334,7 @@ describe("PlatformPlugin.is", () => {
       getChannel: async () => ({}),
       getLiveStreams: async () => [],
       getVideos: async () => ({ items: [] }),
-      dispose: () => {},
+      [Symbol.dispose]: () => {},
     };
 
     expect(PlatformPlugin.is(obj)).toBe(true);

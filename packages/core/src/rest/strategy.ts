@@ -30,5 +30,5 @@ export type RateLimitStrategy = {
   /** Current rate limit status (for telemetry). */
   getStatus(): RateLimitStatus;
   /** Release timers and resources. */
-  dispose(): void;
+  [Symbol.dispose](): void;
 };

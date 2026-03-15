@@ -111,7 +111,7 @@ export type UnifiedClient = {
    *
    * @idempotency Safe to call multiple times
    */
-  dispose(): void;
+  [Symbol.dispose](): void;
 };
 
 /**
@@ -219,9 +219,9 @@ export const UnifiedClient = {
         return [...plugins.keys()];
       },
 
-      dispose(): void {
+      [Symbol.dispose](): void {
         for (const plugin of plugins.values()) {
-          plugin.dispose();
+          plugin[Symbol.dispose]();
         }
         plugins.clear();
       },

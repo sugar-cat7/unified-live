@@ -129,7 +129,7 @@ export type PlatformPlugin = {
   resolveArchive?(live: LiveStream): Promise<Video | null>;
 
   /** Release resources (timers, connections). */
-  dispose(): void;
+  [Symbol.dispose](): void;
 };
 
 /**
@@ -198,7 +198,7 @@ export const PlatformPlugin = {
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
-      dispose: () => rest.dispose(),
+      [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 
     return plugin;
@@ -213,7 +213,7 @@ export const PlatformPlugin = {
    */
   is(value: unknown): value is PlatformPlugin {
     if (typeof value !== "object" || value === null) return false;
-    const obj = value as Record<string, unknown>;
+    const obj = value as Record<string | symbol, unknown>;
     return (
       typeof obj.name === "string" &&
       typeof obj.match === "function" &&
@@ -222,7 +222,7 @@ export const PlatformPlugin = {
       typeof obj.getChannel === "function" &&
       typeof obj.getLiveStreams === "function" &&
       typeof obj.getVideos === "function" &&
-      typeof obj.dispose === "function" &&
+      typeof obj[Symbol.dispose] === "function" &&
       obj.rest !== undefined &&
       typeof obj.capabilities === "object" &&
       obj.capabilities !== null

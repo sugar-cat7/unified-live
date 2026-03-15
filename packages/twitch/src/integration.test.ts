@@ -47,7 +47,7 @@ describe("Twitch Integration", () => {
   let client: ReturnType<typeof UnifiedClient.create>;
 
   afterEach(() => {
-    client?.dispose();
+    client?.[Symbol.dispose]();
   });
 
   it("full consumer flow: UnifiedClient.create -> getContent by URL", async () => {
@@ -99,13 +99,13 @@ describe("Twitch Integration", () => {
     expect(content.id).toBe("12345");
   });
 
-  it("dispose cleans up all resources", () => {
+  it("[Symbol.dispose] cleans up all resources", () => {
     const plugin = createTwitchPlugin({
       clientId: "test-id",
       clientSecret: "test-secret",
       fetch: createMockFetch(() => ({ body: {} })),
     });
     client = UnifiedClient.create({ plugins: [plugin] });
-    client.dispose();
+    client[Symbol.dispose]();
   });
 });

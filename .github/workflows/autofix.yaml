@@ -30,7 +30,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run oxlint --fix
-        run: pnpm lint:fix || true
+        run: pnpm lint:fix
+        continue-on-error: true
 
       - name: Run oxfmt
         run: pnpm format

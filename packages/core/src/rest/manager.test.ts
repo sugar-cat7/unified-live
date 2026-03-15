@@ -314,6 +314,22 @@ describe("createRestManager", () => {
     );
   });
 
+  it("throws after dispose is called", async () => {
+    strategy = createMockStrategy();
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: createMockFetch([]),
+    });
+
+    manager.dispose();
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
+      "has been disposed",
+    );
+  });
+
   it("dispose cleans up strategy and tokenManager", () => {
     const tokenDispose = vi.fn();
     strategy = createMockStrategy();

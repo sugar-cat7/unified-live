@@ -15,12 +15,12 @@
     "typescript/no-inferrable-types": "error",
     "typescript/prefer-enum-initializers": "error",
     "jsdoc/check-tag-names": "off",
-    "jsdoc/require-param": "warn",
-    "jsdoc/require-param-description": "warn",
+    "jsdoc/require-param": "error",
+    "jsdoc/require-param-description": "error",
     "jsdoc/require-param-name": "error",
-    "jsdoc/require-returns": "warn",
-    "jsdoc/require-returns-description": "warn",
-    "jsdoc/require-yields": "warn"
+    "jsdoc/require-returns": "error",
+    "jsdoc/require-returns-description": "error",
+    "jsdoc/require-yields": "error"
   },
   "ignorePatterns": [
     "dist",

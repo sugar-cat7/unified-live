@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
+  minify: true,
   deps: {
     neverBundle: ["@unified-live/core"],
   },

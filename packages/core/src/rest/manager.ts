@@ -96,6 +96,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
   const retryableStatuses = options.retry?.retryableStatuses ?? DEFAULT_RETRYABLE_STATUSES;
   const fetchFn = options.fetch ?? globalThis.fetch;
   const tracer = getTracer();
+  let disposed = false;
 
   const manager: RestManager = {
     platform: options.platform,
@@ -104,6 +105,9 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     tokenManager: options.tokenManager,
 
     request: async <T>(req: RestRequest): Promise<RestResponse<T>> => {
+      if (disposed) {
+        throw new Error(`RestManager for "${options.platform}" has been disposed`);
+      }
       return tracer.startActiveSpan(
         `unified-live.rest ${manager.platform} ${req.method} ${req.path}`,
         async (span) => {
@@ -176,7 +180,8 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
               // Retryable server errors (5xx)
               if (retryableStatuses.includes(response.status)) {
                 if (attempt < maxRetries) {
-                  await sleep(baseDelay * 2 ** attempt);
+                  const jitter = 0.5 + Math.random();
+                  await sleep(baseDelay * 2 ** attempt * jitter);
                   continue;
                 }
                 throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
@@ -275,6 +280,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     },
 
     dispose: (): void => {
+      disposed = true;
       manager.rateLimitStrategy.dispose();
       manager.tokenManager?.dispose?.();
     },

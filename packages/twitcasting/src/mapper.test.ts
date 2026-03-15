@@ -68,6 +68,17 @@ describe("movieToLive", () => {
     expect(result.channel.name).toBe("TestUser");
     expect(result.url).toBe("https://twitcasting.tv/testuser/movie/movie123");
   });
+
+  it("preserves raw data", () => {
+    const result = movieToLive(mockLiveMovie, mockUser);
+    expect(result.raw).toBe(mockLiveMovie);
+  });
+
+  it("uses user name as fallback when title is empty", () => {
+    const noTitle = { ...mockLiveMovie, title: "" };
+    const result = movieToLive(noTitle, mockUser);
+    expect(result.title).toBe("TestUser's live");
+  });
 });
 
 describe("movieToVideo", () => {
@@ -81,6 +92,28 @@ describe("movieToVideo", () => {
     expect(result.duration).toBe(3600);
     expect(result.viewCount).toBe(5000);
     expect(result.sessionId).toBe("movie789");
+  });
+
+  it("preserves raw data", () => {
+    const result = movieToVideo(mockArchiveMovie, mockUser);
+    expect(result.raw).toBe(mockArchiveMovie);
+  });
+
+  it("uses user name as fallback when title is empty", () => {
+    const noTitle = { ...mockArchiveMovie, title: "" };
+    const result = movieToVideo(noTitle, mockUser);
+    expect(result.title).toBe("TestUser's broadcast");
+  });
+
+  it("handles zero duration", () => {
+    const zeroDuration = { ...mockArchiveMovie, duration: 0 };
+    const result = movieToVideo(zeroDuration, mockUser);
+    expect(result.duration).toBe(0);
+  });
+
+  it("converts epoch timestamp to correct date", () => {
+    const result = movieToVideo(mockArchiveMovie, mockUser);
+    expect(result.publishedAt).toEqual(new Date(1741334400 * 1000));
   });
 });
 

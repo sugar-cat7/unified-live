@@ -10,5 +10,3 @@ catalog:
   typescript: 5.9.3
   vitest: 3.2.3
   zod: 4.2.1
-
-sharedWorkspaceLockfile: false

@@ -52,6 +52,11 @@ describe("streamToLive", () => {
     expect(result.channel.id).toBe("user456");
     expect(result.url).toBe("https://www.twitch.tv/testuser");
   });
+
+  it("preserves raw data", () => {
+    const result = streamToLive(mockStream);
+    expect(result.raw).toBe(mockStream);
+  });
 });
 
 describe("videoToVideo", () => {
@@ -71,6 +76,19 @@ describe("videoToVideo", () => {
     const video = { ...mockVideo, stream_id: null };
     const result = videoToVideo(video);
     expect(result.sessionId).toBe("v789");
+  });
+
+  it("preserves raw data", () => {
+    const result = videoToVideo(mockVideo);
+    expect(result.raw).toBe(mockVideo);
+  });
+
+  it("formats thumbnail URL replacing placeholders", () => {
+    const result = videoToVideo(mockVideo);
+    expect(result.thumbnail.url).not.toContain("{width}");
+    expect(result.thumbnail.url).not.toContain("{height}");
+    expect(result.thumbnail.width).toBe(640);
+    expect(result.thumbnail.height).toBe(360);
   });
 });
 
@@ -94,6 +112,9 @@ describe("parseTwitchDuration", () => {
     ["30s", 30],
     ["1h", 3600],
     ["", 0],
+    ["0h0m0s", 0],
+    ["10h", 36000],
+    ["invalid", 0],
   ])("parses %s to %d seconds", (input, expected) => {
     expect(parseTwitchDuration(input)).toBe(expected);
   });

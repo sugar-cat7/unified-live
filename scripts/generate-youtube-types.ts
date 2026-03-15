@@ -58,6 +58,9 @@ type DiscoveryDoc = {
 /**
  * Convert a Google Discovery schema property to an OpenAPI 3.1 schema.
  * Handles $ref rewriting, format mapping, and nested objects.
+ *
+ * @param prop - Discovery schema property definition
+ * @returns OpenAPI 3.1 schema object
  */
 const convertProperty = (prop: DiscoverySchema): Record<string, unknown> => {
   if (prop.$ref) {
@@ -124,6 +127,9 @@ const convertProperty = (prop: DiscoverySchema): Record<string, unknown> => {
 
 /**
  * Convert a top-level Discovery schema to an OpenAPI 3.1 schema object.
+ *
+ * @param schema - Discovery schema definition
+ * @returns OpenAPI 3.1 schema object
  */
 const convertSchema = (schema: DiscoverySchema): Record<string, unknown> => {
   const result: Record<string, unknown> = {
@@ -141,6 +147,10 @@ const convertSchema = (schema: DiscoverySchema): Record<string, unknown> => {
 
 /**
  * Resolve transitive $ref dependencies for the required schemas.
+ *
+ * @param schemas - all Discovery Document schemas
+ * @param required - set of schema names the SDK needs
+ * @returns set of all required schema names including transitive deps
  */
 const resolveRefs = (
   schemas: Record<string, DiscoverySchema>,

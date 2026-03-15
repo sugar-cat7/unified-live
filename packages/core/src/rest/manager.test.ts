@@ -16,7 +16,7 @@ const createMockStrategy = (): RateLimitStrategy => {
       resetsAt: new Date(),
       queued: 0,
     }),
-    dispose: vi.fn(),
+    [Symbol.dispose]: vi.fn(),
   };
 };
 
@@ -46,7 +46,7 @@ describe("createRestManager", () => {
   let strategy: RateLimitStrategy;
 
   afterEach(() => {
-    strategy?.dispose();
+    strategy?.[Symbol.dispose]();
   });
 
   it("makes a successful GET request", async () => {
@@ -194,7 +194,7 @@ describe("createRestManager", () => {
         resetsAt: new Date(),
         queued: 0,
       }),
-      dispose: vi.fn(),
+      [Symbol.dispose]: vi.fn(),
     };
 
     const fetchFn = createMockFetch([{ status: 200, body: {} }]);
@@ -225,7 +225,7 @@ describe("createRestManager", () => {
         resetsAt: new Date(),
         queued: 0,
       }),
-      dispose: vi.fn(),
+      [Symbol.dispose]: vi.fn(),
     };
 
     const fetchFn = createMockFetch([{ status: 404 }]);
@@ -323,14 +323,14 @@ describe("createRestManager", () => {
       fetch: createMockFetch([]),
     });
 
-    manager.dispose();
+    manager[Symbol.dispose]();
 
     await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
       "has been disposed",
     );
   });
 
-  it("dispose cleans up strategy and tokenManager", () => {
+  it("[Symbol.dispose] cleans up strategy and tokenManager", () => {
     const tokenDispose = vi.fn();
     strategy = createMockStrategy();
 
@@ -342,12 +342,12 @@ describe("createRestManager", () => {
       tokenManager: {
         getAuthHeader: async () => "",
         invalidate: vi.fn(),
-        dispose: tokenDispose,
+        [Symbol.dispose]: tokenDispose,
       },
     });
 
-    manager.dispose();
-    expect(strategy.dispose).toHaveBeenCalledTimes(1);
+    manager[Symbol.dispose]();
+    expect(strategy[Symbol.dispose]).toHaveBeenCalledTimes(1);
     expect(tokenDispose).toHaveBeenCalledTimes(1);
   });
 });

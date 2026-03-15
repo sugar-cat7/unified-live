@@ -123,7 +123,7 @@ export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitS
       };
     },
 
-    dispose(): void {
+    [Symbol.dispose](): void {
       if (resetTimer !== undefined) {
         clearTimeout(resetTimer);
         resetTimer = undefined;

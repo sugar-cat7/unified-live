@@ -73,7 +73,7 @@ export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitS
       };
     },
 
-    dispose(): void {
+    [Symbol.dispose](): void {
       clearInterval(refillTimer);
       // Unblock all waiters
       while (waiters.length > 0) {

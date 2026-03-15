@@ -12,7 +12,7 @@ export type TokenManager = {
   /** Invalidate current token (called on 401 response). */
   invalidate(): void;
   /** Release resources (timers, etc.). */
-  dispose?(): void;
+  [Symbol.dispose]?(): void;
 };
 
 /**

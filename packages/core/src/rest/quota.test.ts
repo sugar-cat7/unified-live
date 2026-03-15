@@ -13,7 +13,7 @@ describe("createQuotaBudgetStrategy", () => {
   let strategy: ReturnType<typeof createQuotaBudgetStrategy>;
 
   afterEach(() => {
-    strategy?.dispose();
+    strategy?.[Symbol.dispose]();
   });
 
   it("deducts cost per bucketId", async () => {

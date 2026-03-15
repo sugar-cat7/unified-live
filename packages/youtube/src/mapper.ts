@@ -34,22 +34,29 @@ export const toContent = (item: YTVideoResource): Content => {
   const { id, snippet, contentDetails, statistics, liveStreamingDetails } = item;
   if (!id || !snippet || !contentDetails || !statistics) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
-      message: "YouTube video resource missing required parts (id, snippet, contentDetails, statistics)",
+      message:
+        "YouTube video resource missing required parts (id, snippet, contentDetails, statistics)",
     });
   }
 
   const channelId = snippet.channelId;
   const publishedAt = snippet.publishedAt;
   if (!channelId) {
-    throw new ParseError("youtube", "PARSE_RESPONSE", { message: "YouTube video resource missing channelId" });
+    throw new ParseError("youtube", "PARSE_RESPONSE", {
+      message: "YouTube video resource missing channelId",
+    });
   }
   if (!publishedAt) {
-    throw new ParseError("youtube", "PARSE_RESPONSE", { message: "YouTube video resource missing publishedAt" });
+    throw new ParseError("youtube", "PARSE_RESPONSE", {
+      message: "YouTube video resource missing publishedAt",
+    });
   }
 
   const thumbnail = pickThumbnail(snippet.thumbnails);
   if (!thumbnail) {
-    throw new ParseError("youtube", "PARSE_RESPONSE", { message: "YouTube resource has no thumbnail" });
+    throw new ParseError("youtube", "PARSE_RESPONSE", {
+      message: "YouTube resource has no thumbnail",
+    });
   }
 
   const channel = {

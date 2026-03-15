@@ -191,7 +191,8 @@ const main = async () => {
     info: {
       title: "YouTube Data API v3 (subset)",
       version: "v3",
-      description: "Auto-generated from Google Discovery Document. Contains only schemas used by unified-live SDK.",
+      description:
+        "Auto-generated from Google Discovery Document. Contains only schemas used by unified-live SDK.",
     },
     paths: {},
     components: {
@@ -204,7 +205,10 @@ const main = async () => {
     },
   };
 
-  const outDir = path.resolve(new URL("..", import.meta.url).pathname, "packages/youtube/src/generated");
+  const outDir = path.resolve(
+    new URL("..", import.meta.url).pathname,
+    "packages/youtube/src/generated",
+  );
   fs.mkdirSync(outDir, { recursive: true });
 
   // Generate TypeScript types

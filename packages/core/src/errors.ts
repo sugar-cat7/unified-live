@@ -3,6 +3,8 @@
  *
  * Categories: NOT_FOUND, AUTHENTICATION_*, RATE_LIMIT_*, QUOTA_*,
  * NETWORK_*, PARSE_*, VALIDATION_*, PLATFORM_*, INTERNAL.
+ *
+ * @category Errors
  */
 export type ErrorCode =
   | "NOT_FOUND"
@@ -25,6 +27,7 @@ export type ErrorCode =
  * Structured metadata attached to every SDK error.
  *
  * @postcondition platform is always present
+ * @category Errors
  */
 export type ErrorContext = {
   /** Platform name (always present). */
@@ -47,6 +50,7 @@ export type ErrorContext = {
  * @precondition context.platform is a non-empty string
  * @postcondition instanceof UnifiedLiveError === true for all SDK errors
  * @idempotent constructing with the same arguments yields equivalent errors
+ * @category Errors
  */
 export class UnifiedLiveError extends Error {
   readonly code: ErrorCode;
@@ -74,7 +78,11 @@ export class UnifiedLiveError extends Error {
   }
 }
 
-/** Resource not found on platform. */
+/**
+ * Resource not found on platform.
+ *
+ * @category Errors
+ */
 export class NotFoundError extends UnifiedLiveError {
   declare readonly code: "NOT_FOUND";
 
@@ -91,7 +99,11 @@ export class NotFoundError extends UnifiedLiveError {
 
 type AuthenticationCode = "AUTHENTICATION_INVALID" | "AUTHENTICATION_EXPIRED";
 
-/** Credentials invalid or expired. */
+/**
+ * Credentials invalid or expired.
+ *
+ * @category Errors
+ */
 export class AuthenticationError extends UnifiedLiveError {
   declare readonly code: AuthenticationCode;
 
@@ -113,7 +125,11 @@ export class AuthenticationError extends UnifiedLiveError {
   }
 }
 
-/** Rate limit exceeded after max retries. */
+/**
+ * Rate limit exceeded after max retries.
+ *
+ * @category Errors
+ */
 export class RateLimitError extends UnifiedLiveError {
   declare readonly code: "RATE_LIMIT_EXCEEDED";
   readonly retryAfter?: number;
@@ -130,6 +146,7 @@ export class RateLimitError extends UnifiedLiveError {
   }
 }
 
+/** @category Errors */
 export type QuotaDetails = {
   consumed: number;
   limit: number;
@@ -137,7 +154,11 @@ export type QuotaDetails = {
   requestedCost: number;
 };
 
-/** YouTube daily quota exhausted. */
+/**
+ * YouTube daily quota exhausted.
+ *
+ * @category Errors
+ */
 export class QuotaExhaustedError extends UnifiedLiveError {
   declare readonly code: "QUOTA_EXHAUSTED";
   readonly details: QuotaDetails;
@@ -154,13 +175,18 @@ export class QuotaExhaustedError extends UnifiedLiveError {
   }
 }
 
+/** @category Errors */
 export type NetworkCode =
   | "NETWORK_TIMEOUT"
   | "NETWORK_CONNECTION"
   | "NETWORK_DNS"
   | "NETWORK_ABORT";
 
-/** Fetch-level network failure. */
+/**
+ * Fetch-level network failure.
+ *
+ * @category Errors
+ */
 export class NetworkError extends UnifiedLiveError {
   declare readonly code: NetworkCode;
 
@@ -186,7 +212,11 @@ export class NetworkError extends UnifiedLiveError {
 
 type ParseCode = "PARSE_JSON" | "PARSE_RESPONSE";
 
-/** Response parsing failure. */
+/**
+ * Response parsing failure.
+ *
+ * @category Errors
+ */
 export class ParseError extends UnifiedLiveError {
   declare readonly code: ParseCode;
 
@@ -212,7 +242,11 @@ export class ParseError extends UnifiedLiveError {
 
 type ValidationCode = "VALIDATION_INVALID_URL" | "VALIDATION_INVALID_INPUT";
 
-/** Input validation failure. */
+/**
+ * Input validation failure.
+ *
+ * @category Errors
+ */
 export class ValidationError extends UnifiedLiveError {
   declare readonly code: ValidationCode;
 
@@ -226,7 +260,11 @@ export class ValidationError extends UnifiedLiveError {
   }
 }
 
-/** Platform not registered in client. */
+/**
+ * Platform not registered in client.
+ *
+ * @category Errors
+ */
 export class PlatformNotFoundError extends UnifiedLiveError {
   declare readonly code: "PLATFORM_NOT_FOUND";
 
@@ -246,6 +284,7 @@ export class PlatformNotFoundError extends UnifiedLiveError {
  * @precondition error is a caught fetch exception
  * @postcondition returns one of NETWORK_ABORT, NETWORK_TIMEOUT, NETWORK_DNS, NETWORK_CONNECTION
  * @idempotent same error always produces same code
+ * @category Errors
  */
 export const classifyNetworkError = (error: Error): NetworkCode => {
   const msg = error.message.toLowerCase();

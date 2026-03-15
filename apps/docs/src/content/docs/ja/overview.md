@@ -65,6 +65,18 @@ console.log(content.type); // "live" | "video"
 | **URL解決**            | URLからプラットフォームを自動検出、プラットフォーム毎に複数のURL形式をサポート                                                             |
 | **オブザーバビリティ** | すべてのAPIコールに対するOpenTelemetryスパン（OTel未設定時はオーバーヘッドゼロ）                                                           |
 
+### 機能マトリクス
+
+| 機能                         | YouTube | Twitch | TwitCasting |
+| :--------------------------- | :-----: | :----: | :---------: |
+| URL からコンテンツ取得       |   ✅    |   ✅   |     ✅      |
+| ID からコンテンツ取得        |   ✅    |   ✅   |     ✅      |
+| ライブ配信一覧               |   ✅    |   ✅   |     ✅      |
+| 動画一覧（ページネーション） |   ✅    |   ✅   |     ✅      |
+| チャンネル情報取得           |   ✅    |   ✅   |     ✅      |
+| アーカイブ解決               |   ✅    |   ✅   |     ❌      |
+| OpenTelemetry トレーシング   |   ✅    |   ✅   |     ✅      |
+
 ## 公式APIドキュメント
 
 - [YouTube Data API v3](https://developers.google.com/youtube/v3/docs) — Googleの動画プラットフォームAPI（SDKは **v3** を対象）
@@ -75,3 +87,4 @@ console.log(content.type); // "live" | "video"
 
 - [はじめる](../getting-started/) — インストールと最初のクエリ実行
 - [コアコンセプト](../core-concepts/) — Content、Channel、型システム
+- [使用例](../examples/) — 実践的なコードレシピ

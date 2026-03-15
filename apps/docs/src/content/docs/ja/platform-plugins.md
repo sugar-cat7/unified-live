@@ -4,6 +4,16 @@ title: プラットフォームプラグイン
 
 各プラットフォームは独立したパッケージとして提供されます。必要なプラットフォームだけをインストールできます。
 
+## プラットフォーム一覧
+
+| プラットフォーム | ステータス | 認証                         | レート制限                  | アーカイブ解決 |
+| :--------------- | :--------- | :--------------------------- | :-------------------------- | :------------- |
+| YouTube          | ✅ 安定    | API キー（クエリパラメータ） | クォータバジェット (10k/日) | ✅ 対応        |
+| Twitch           | ✅ 安定    | OAuth2 Client Credentials    | トークンバケット (800/分)   | ✅ 対応        |
+| TwitCasting      | ✅ 安定    | Basic Auth (base64)          | トークンバケット (60/分)    | ❌ 未対応      |
+
+---
+
 ## YouTube
 
 > **公式ドキュメント:** [YouTube Data API v3](https://developers.google.com/youtube/v3)
@@ -147,3 +157,4 @@ using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: ".
 
 - [エラーハンドリング](../error-handling/) — API エラーの処理
 - [ページネーション](../pagination/) — 動画リストの取得
+- [プラグインの作成](../creating-a-plugin/) — 独自プラグインの構築

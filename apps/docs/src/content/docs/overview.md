@@ -65,6 +65,18 @@ console.log(content.type); // "live" | "video"
 | **URL Resolution**     | Auto-detects platform from URL, supports multiple URL formats per platform                                                             |
 | **Observability**      | OpenTelemetry spans for every API call (zero overhead when OTel is not configured)                                                     |
 
+### Feature Matrix
+
+| Feature                  | YouTube | Twitch | TwitCasting |
+| :----------------------- | :-----: | :----: | :---------: |
+| Get content by URL       |   ✅    |   ✅   |     ✅      |
+| Get content by ID        |   ✅    |   ✅   |     ✅      |
+| List live streams        |   ✅    |   ✅   |     ✅      |
+| List videos (pagination) |   ✅    |   ✅   |     ✅      |
+| Get channel info         |   ✅    |   ✅   |     ✅      |
+| Archive resolution       |   ✅    |   ✅   |     ❌      |
+| OpenTelemetry tracing    |   ✅    |   ✅   |     ✅      |
+
 ## Official API Documentation
 
 - [YouTube Data API v3](https://developers.google.com/youtube/v3/docs) — Google's video platform API (SDK targets **v3**)
@@ -75,3 +87,4 @@ console.log(content.type); // "live" | "video"
 
 - [Getting Started](../getting-started/) — Install and run your first query
 - [Core Concepts](../core-concepts/) — Content, Channel, and the type system
+- [Examples](../examples/) — Practical code recipes

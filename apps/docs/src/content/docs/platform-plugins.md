@@ -4,6 +4,16 @@ title: Platform Plugins
 
 Each platform has its own package with a factory function. You only install the platforms you need.
 
+## Platform Status
+
+| Platform    | Status    | Auth                      | Rate Limiting          | Archive Resolution |
+| :---------- | :-------- | :------------------------ | :--------------------- | :----------------- |
+| YouTube     | ✅ Stable | API Key (query param)     | Quota Budget (10k/day) | ✅ Supported       |
+| Twitch      | ✅ Stable | OAuth2 Client Credentials | Token Bucket (800/min) | ✅ Supported       |
+| TwitCasting | ✅ Stable | Basic Auth (base64)       | Token Bucket (60/min)  | ❌ Not supported   |
+
+---
+
 ## YouTube
 
 > **Official docs:** [YouTube Data API v3](https://developers.google.com/youtube/v3)
@@ -147,3 +157,4 @@ using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: ".
 
 - [Error Handling](../error-handling/) — Handling API errors
 - [Pagination](../pagination/) — Fetching video lists
+- [Creating a Plugin](../creating-a-plugin/) — Build your own platform plugin

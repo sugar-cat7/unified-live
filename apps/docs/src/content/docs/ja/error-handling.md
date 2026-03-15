@@ -1,7 +1,5 @@
 ---
 title: エラーハンドリング
-sidebar:
-  order: 4
 ---
 
 SDK がスローするエラーはすべて `UnifiedLiveError` のインスタンスです。`try/catch` で処理します。

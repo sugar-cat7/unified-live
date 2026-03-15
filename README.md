@@ -1,37 +1,118 @@
-# unified-live
+<p align="center">
+  <h1 align="center">unified-live</h1>
+</p>
 
-A TypeScript SDK providing a unified interface for live streaming platform APIs (YouTube, Twitch, TwitCasting).
+<p align="center">
+  A TypeScript SDK providing a unified interface for live streaming platform APIs.
+</p>
 
-## Documentation
+<p align="center">
+  <a href="https://github.com/sugar-cat7/unified-live/actions/workflows/pr-check.yaml"><img src="https://github.com/sugar-cat7/unified-live/actions/workflows/pr-check.yaml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/sugar-cat7/unified-live/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue.svg" alt="TypeScript" /></a>
+</p>
 
-| Category                                                   | Overview                                                                       |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| [docs/reference/](docs/reference/)                         | Glossary, decisions, overview                                                  |
-| [docs/plan/unified-live-sdk/](docs/plan/unified-live-sdk/) | Feature specifications (types, plugins, client API, infrastructure, packaging) |
-| [docs/backend/](docs/backend/)                             | SDK architecture reference                                                     |
-| [docs/testing/](docs/testing/)                             | Testing guidelines                                                             |
-| [docs/security/](docs/security/)                           | Security and linting                                                           |
+<p align="center">
+  <a href="https://sugar-cat7.github.io/unified-live">Documentation</a>
+  <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+  <a href="https://sugar-cat7.github.io/unified-live/getting-started/">Getting Started</a>
+  <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+  <a href="https://sugar-cat7.github.io/unified-live/api/">API Reference</a>
+  <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-## Skills
+---
 
-Key skills are located in `.agent/skills/`.
+Pass a URL — the SDK auto-detects the platform, normalizes the response, and handles auth, rate limits, and retries.
 
-- `plan-feature`: Generate specification documents from requirements
-- `init-impl`: Generate phased implementation checklist from specifications
-- `unit-testing` / `integration-testing`: Implementation guidelines for each test type
-- `update-docs`: Sync docs with code changes
+## Features
 
-## Quality Check
+- **Unified API** — One interface for YouTube, Twitch, and TwitCasting. `Content`, `Channel`, `LiveStream`, `Video` types work across all platforms.
+- **Plugin Architecture** — Install only the platforms you need. Each platform is a separate package with its own auth, rate limiting, and URL resolution.
+- **OpenTelemetry Compatible** — Built-in tracing with zero overhead when OTel SDK is not configured. Every API call emits spans with platform, HTTP, rate limit, and quota attributes.
+- **Automatic Rate Limiting** — Token bucket (Twitch, TwitCasting) and quota-based (YouTube) strategies handled transparently with exponential backoff retries.
+- **Type-Safe** — Zod-validated schemas with discriminated unions. `Content.isLive()` / `Content.isVideo()` type guards for safe narrowing.
+- **Runtime Agnostic** — Works on Node.js 18+, Deno, Bun, Cloudflare Workers — any runtime with native `fetch`.
 
-Always run the following after code changes.
+## Quick Start
 
 ```bash
+pnpm add @unified-live/core @unified-live/youtube @unified-live/twitch
+```
+
+```ts
+import { UnifiedClient } from "@unified-live/core";
+import { createYouTubePlugin } from "@unified-live/youtube";
+import { createTwitchPlugin } from "@unified-live/twitch";
+
+const client = UnifiedClient.create({
+  plugins: [
+    createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
+    createTwitchPlugin({
+      clientId: process.env.TWITCH_CLIENT_ID!,
+      clientSecret: process.env.TWITCH_CLIENT_SECRET!,
+    }),
+  ],
+});
+
+// Auto-detects platform from URL
+const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+
+console.log(content.title); // Video title
+console.log(content.platform); // "youtube"
+console.log(content.type); // "live" or "video"
+
+client.dispose();
+```
+
+## Packages
+
+| Package                                             | Description                                                                  |
+| :-------------------------------------------------- | :--------------------------------------------------------------------------- |
+| [`@unified-live/core`](packages/core)               | Client, plugin system, unified types, error hierarchy, OpenTelemetry tracing |
+| [`@unified-live/youtube`](packages/youtube)         | YouTube Data API v3 — quota-based rate limiting, API key auth                |
+| [`@unified-live/twitch`](packages/twitch)           | Twitch Helix API — token bucket rate limiting, OAuth2 Client Credentials     |
+| [`@unified-live/twitcasting`](packages/twitcasting) | TwitCasting API v2 — token bucket rate limiting, Basic Auth                  |
+
+## Supported Runtimes
+
+| Runtime            | Version     |
+| :----------------- | :---------- |
+| Node.js            | 18, 20, 22+ |
+| Deno               | 1.x+        |
+| Bun                | 1.x+        |
+| Cloudflare Workers | Supported   |
+
+> Any runtime with native `fetch` is supported. No Node.js-specific dependencies in core.
+
+## Feature Status
+
+| Feature                 | Status |
+| :---------------------- | :----- |
+| YouTube plugin          | Stable |
+| Twitch plugin           | Stable |
+| TwitCasting plugin      | Stable |
+| OpenTelemetry tracing   | Stable |
+| Automatic retries       | Stable |
+| Cursor-based pagination | Stable |
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+```bash
+# Setup
+pnpm install
+
+# Quality check (build + lint + type-check + test)
 ./scripts/post-edit-check.sh
 ```
 
-## Claude Code
+## Authors
 
-- Project instructions: `CLAUDE.md`
-- Permission/Hook settings: `.claude/settings.json`
-- Custom `/` skills: `.claude/skills/`
-- `PreToolUse` blocks dangerous Bash commands (`git push`, `git add -A`, `git reset --hard`)
+- **sugar-cat7** - [GitHub](https://github.com/sugar-cat7)
+
+## License
+
+[MIT](LICENSE)

@@ -1,5 +1,6 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import starlightTypeDoc, { typeDocSidebarGroup } from "starlight-typedoc";
 
 export default defineConfig({
   site: "https://sugar-cat7.github.io",
@@ -19,12 +20,37 @@ export default defineConfig({
           href: "https://github.com/sugar-cat7/unified-live",
         },
       ],
+      plugins: [
+        starlightTypeDoc({
+          entryPoints: ["../../packages/core/src/index.ts"],
+          tsconfig: "../../packages/core/tsconfig.typedoc.json",
+          sidebar: {
+            label: "API Reference",
+            collapsed: true,
+          },
+          typeDoc: {
+            skipErrorChecking: true,
+          },
+        }),
+      ],
       sidebar: [
         {
-          label: "Tutorial",
-          translations: { ja: "チュートリアル" },
-          autogenerate: { directory: "." },
+          label: "Introduction",
+          translations: { ja: "はじめに" },
+          items: [{ slug: "overview" }, { slug: "getting-started" }],
         },
+        {
+          label: "Guides",
+          translations: { ja: "ガイド" },
+          items: [
+            { slug: "core-concepts" },
+            { slug: "platform-plugins" },
+            { slug: "error-handling" },
+            { slug: "pagination" },
+            { slug: "advanced" },
+          ],
+        },
+        typeDocSidebarGroup,
       ],
     }),
   ],

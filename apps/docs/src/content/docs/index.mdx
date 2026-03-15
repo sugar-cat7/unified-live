@@ -8,7 +8,52 @@ hero:
       link: /unified-live/getting-started/
       icon: right-arrow
       variant: primary
+    - text: API Reference
+      link: /unified-live/api/
+      icon: document
     - text: View on GitHub
       link: https://github.com/sugar-cat7/unified-live
       icon: external
 ---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## Why unified-live?
+
+<CardGrid>
+  <Card title="Unified API" icon="rocket">
+    One interface for YouTube, Twitch, and TwitCasting. Pass a URL — the SDK auto-detects the
+    platform, normalizes the response into `Content`, `Channel`, `LiveStream`, and `Video` types.
+  </Card>
+  <Card title="Plugin Architecture" icon="puzzle">
+    Install only the platforms you need. Each platform is a separate package
+    (`@unified-live/youtube`, `@unified-live/twitch`, `@unified-live/twitcasting`) with its own
+    auth, rate limiting, and URL resolution.
+  </Card>
+  <Card title="OpenTelemetry Compatible" icon="magnifier">
+    Built-in tracing with zero overhead when OTel SDK is not configured. Every API call emits spans
+    with platform, HTTP method, rate limit state, quota consumption, and error details.
+  </Card>
+  <Card title="Automatic Rate Limiting" icon="setting">
+    Token bucket (Twitch, TwitCasting) and quota-based (YouTube) strategies are handled
+    transparently. The SDK retries with exponential backoff and tracks quota consumption locally.
+  </Card>
+  <Card title="Type-Safe" icon="approve-check">
+    Zod-validated schemas with discriminated unions (`Content = LiveStream | Video`). Companion
+    object type guards (`Content.isLive()`, `Content.isVideo()`) for safe narrowing.
+  </Card>
+  <Card title="Runtime Agnostic" icon="laptop">
+    Works on Node.js 18+, Deno, Bun, and Cloudflare Workers — any runtime with native `fetch`. No
+    Node.js-specific dependencies in the core.
+  </Card>
+</CardGrid>
+
+## Supported Platforms
+
+| Platform    | Official API                                            | What unified-live handles                                                                  |
+| :---------- | :------------------------------------------------------ | :----------------------------------------------------------------------------------------- |
+| YouTube     | [Data API v3](https://developers.google.com/youtube/v3) | Daily quota tracking (10,000 units), API key injection, quota-per-endpoint cost management |
+| Twitch      | [Helix API](https://dev.twitch.tv/docs/api/)            | OAuth2 Client Credentials auto-refresh, token bucket rate limiting (800 req/60s)           |
+| TwitCasting | [API v2](https://apiv2-doc.twitcasting.tv/)             | Basic auth encoding, token bucket rate limiting (60 req/60s)                               |
+
+Read the [Overview](/unified-live/overview/) for a detailed comparison of each platform's API challenges.

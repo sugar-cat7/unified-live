@@ -1,7 +1,5 @@
 ---
 title: Pagination
-sidebar:
-  order: 5
 ---
 
 ## Fetching Videos

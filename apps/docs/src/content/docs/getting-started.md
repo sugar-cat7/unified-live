@@ -1,7 +1,5 @@
 ---
 title: Getting Started
-sidebar:
-  order: 1
 ---
 
 ## Installation
@@ -19,12 +17,12 @@ pnpm add @unified-live/core @unified-live/youtube @unified-live/twitch @unified-
 ## Quick Start
 
 ```ts
-import { createClient } from "@unified-live/core";
+import { UnifiedClient } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 // 1. Create a client
-const client = createClient();
+const client = UnifiedClient.create();
 
 // 2. Register platform plugins
 client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
@@ -53,6 +51,7 @@ client.dispose();
 
 ## Next Steps
 
+- [Overview](../overview/) — Why unified-live and platform API comparison
 - [Core Concepts](../core-concepts/) — Content, Channel, and type system
 - [Platform Plugins](../platform-plugins/) — Configuration for each platform
 - [Error Handling](../error-handling/) — Handling API errors gracefully

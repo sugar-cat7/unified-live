@@ -60,4 +60,3 @@ do {
   }
   cursor = page.cursor;
 } while (cursor);
-

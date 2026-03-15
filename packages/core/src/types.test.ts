@@ -374,4 +374,3 @@ describe("Page.empty", () => {
     expect(page.total).toBeUndefined();
   });
 });
-

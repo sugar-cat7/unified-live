@@ -126,179 +126,174 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
           { platform: options.platform },
         );
       }
-      return tracer.startActiveSpan(
-        `unified-live.rest ${req.method}`,
-        async (span) => {
-          span.setAttribute(SpanAttributes.PLATFORM, manager.platform);
-          span.setAttribute(SpanAttributes.HTTP_METHOD, req.method);
-          span.setAttribute(SpanAttributes.URL_PATH, req.path);
+      return tracer.startActiveSpan(`unified-live.rest ${req.method}`, async (span) => {
+        span.setAttribute(SpanAttributes.PLATFORM, manager.platform);
+        span.setAttribute(SpanAttributes.HTTP_METHOD, req.method);
+        span.setAttribute(SpanAttributes.URL_PATH, req.path);
 
-          if (cachedHostname) {
-            span.setAttribute(SpanAttributes.SERVER_ADDRESS, cachedHostname);
-          }
-          if (cachedPort) {
-            span.setAttribute(SpanAttributes.SERVER_PORT, cachedPort);
-          }
+        if (cachedHostname) {
+          span.setAttribute(SpanAttributes.SERVER_ADDRESS, cachedHostname);
+        }
+        if (cachedPort) {
+          span.setAttribute(SpanAttributes.SERVER_PORT, cachedPort);
+        }
 
-          const handle = await manager.rateLimitStrategy.acquire(req);
+        const handle = await manager.rateLimitStrategy.acquire(req);
 
-          try {
-            // Hoist invariants out of the retry loop
-            const reqUrl = new URL(req.path, manager.baseUrl);
-            if (req.query) {
-              for (const [key, value] of Object.entries(req.query)) {
-                reqUrl.searchParams.set(key, value);
-              }
+        try {
+          // Hoist invariants out of the retry loop
+          const reqUrl = new URL(req.path, manager.baseUrl);
+          if (req.query) {
+            for (const [key, value] of Object.entries(req.query)) {
+              reqUrl.searchParams.set(key, value);
             }
-            const url = reqUrl.toString();
-            const timeoutSignal = timeout && !req.signal ? AbortSignal.timeout(timeout) : undefined;
-            const signal = req.signal ?? timeoutSignal;
-            const serializedBody =
-              req.body !== undefined && req.bodyType !== "raw"
-                ? JSON.stringify(req.body)
-                : undefined;
+          }
+          const url = reqUrl.toString();
+          const timeoutSignal = timeout && !req.signal ? AbortSignal.timeout(timeout) : undefined;
+          const signal = req.signal ?? timeoutSignal;
+          const serializedBody =
+            req.body !== undefined && req.bodyType !== "raw" ? JSON.stringify(req.body) : undefined;
 
-            for (let attempt = 0; attempt <= maxRetries; attempt++) {
-              const headers = await manager.createHeaders(req);
+          for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            const headers = await manager.createHeaders(req);
 
-              const init: RequestInit = {
-                method: req.method,
-                headers: { ...headers, ...req.headers },
-                signal,
-              };
-
-              if (req.body !== undefined) {
-                if (req.bodyType === "raw") {
-                  init.body = req.body as RequestInit["body"];
-                } else {
-                  init.body = serializedBody;
-                  (init.headers as Record<string, string>)["Content-Type"] = "application/json";
-                }
-              }
-
-              let response: Response;
-              try {
-                response = await manager.runRequest(url, init);
-              } catch (e) {
-                const err = e instanceof Error ? e : new Error(String(e));
-                const code = classifyNetworkError(err);
-                throw new NetworkError(manager.platform, code, {
-                  path: req.path,
-                  method: req.method,
-                  cause: err,
-                });
-              }
-              span.setAttribute(SpanAttributes.HTTP_STATUS, response.status);
-
-              // Rate limit handling (429 or 403)
-              if (response.status === 429 || response.status === 403) {
-                const shouldRetry = await manager.handleRateLimit(response, req, attempt);
-                if (shouldRetry && attempt < maxRetries) {
-                  span.addEvent("retry", {
-                    "unified_live.retry.attempt": attempt + 1,
-                    "unified_live.retry.reason": "rate_limit",
-                    "http.response.status_code": response.status,
-                  });
-                  continue;
-                }
-                const retryAfterSec = parseRetryAfter(response.headers.get("Retry-After"));
-                throw new RateLimitError(manager.platform, {
-                  retryAfter: retryAfterSec > 0 ? retryAfterSec : undefined,
-                });
-              }
-
-              // Auth error (401)
-              if (response.status === 401) {
-                manager.tokenManager?.invalidate();
-                if (attempt < maxRetries) {
-                  span.addEvent("retry", {
-                    "unified_live.retry.attempt": attempt + 1,
-                    "unified_live.retry.reason": "auth_refresh",
-                    "http.response.status_code": 401,
-                  });
-                  continue;
-                }
-                throw new AuthenticationError(manager.platform, {
-                  code: "AUTHENTICATION_EXPIRED",
-                });
-              }
-
-              // Not found (404)
-              if (response.status === 404) {
-                throw new NotFoundError(manager.platform, req.path);
-              }
-
-              // Non-retryable client errors — fail immediately without retry
-              if (NON_RETRYABLE_CLIENT_STATUSES.includes(response.status)) {
-                throw new UnifiedLiveError(
-                  `Request to ${req.path} failed with status ${response.status}`,
-                  response.status === 408 ? "NETWORK_TIMEOUT" : "INTERNAL",
-                  {
-                    platform: manager.platform,
-                    method: req.method,
-                    path: req.path,
-                    status: response.status,
-                  },
-                );
-              }
-
-              // Retryable server errors (5xx)
-              if (retryableStatuses.includes(response.status)) {
-                if (attempt < maxRetries) {
-                  const jitter = 0.5 + Math.random();
-                  await sleep(baseDelay * 2 ** attempt * jitter);
-                  span.addEvent("retry", {
-                    "unified_live.retry.attempt": attempt + 1,
-                    "http.response.status_code": response.status,
-                  });
-                  continue;
-                }
-                throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
-                  message: `${req.method} ${req.path} failed with status ${response.status} after ${maxRetries + 1} attempts`,
-                  path: req.path,
-                  method: req.method,
-                  status: response.status,
-                });
-              }
-
-              const result = await manager.handleResponse<T>(response, req);
-
-              if (result.rateLimit) {
-                span.setAttribute(SpanAttributes.RATE_LIMIT_REMAINING, result.rateLimit.remaining);
-                span.setAttribute(SpanAttributes.RATE_LIMIT_LIMIT, result.rateLimit.limit);
-              }
-
-              if (attempt > 0) {
-                span.setAttribute(SpanAttributes.RETRY_COUNT, attempt);
-              }
-
-              handle.complete(response.headers);
-              span.end();
-              return result;
-            }
-
-            throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
-              message: `${req.method} ${req.path} failed after ${maxRetries + 1} attempts`,
-              path: req.path,
+            const init: RequestInit = {
               method: req.method,
-            });
-          } catch (error) {
-            if (error instanceof UnifiedLiveError) {
-              span.setAttribute(SpanAttributes.ERROR_CODE, error.code);
-              span.setAttribute(SpanAttributes.ERROR_TYPE, error.name);
-              span.setAttribute(SpanAttributes.ERROR_HAS_CAUSE, !!error.cause);
+              headers: { ...headers, ...req.headers },
+              signal,
+            };
+
+            if (req.body !== undefined) {
+              if (req.bodyType === "raw") {
+                init.body = req.body as RequestInit["body"];
+              } else {
+                init.body = serializedBody;
+                (init.headers as Record<string, string>)["Content-Type"] = "application/json";
+              }
             }
-            span.setStatus({
-              code: 2, // SpanStatusCode.ERROR
-              message: error instanceof Error ? error.message : String(error),
-            });
-            span.recordException(error instanceof Error ? error : new Error(String(error)));
-            handle.release();
+
+            let response: Response;
+            try {
+              response = await manager.runRequest(url, init);
+            } catch (e) {
+              const err = e instanceof Error ? e : new Error(String(e));
+              const code = classifyNetworkError(err);
+              throw new NetworkError(manager.platform, code, {
+                path: req.path,
+                method: req.method,
+                cause: err,
+              });
+            }
+            span.setAttribute(SpanAttributes.HTTP_STATUS, response.status);
+
+            // Rate limit handling (429 or 403)
+            if (response.status === 429 || response.status === 403) {
+              const shouldRetry = await manager.handleRateLimit(response, req, attempt);
+              if (shouldRetry && attempt < maxRetries) {
+                span.addEvent("retry", {
+                  "unified_live.retry.attempt": attempt + 1,
+                  "unified_live.retry.reason": "rate_limit",
+                  "http.response.status_code": response.status,
+                });
+                continue;
+              }
+              const retryAfterSec = parseRetryAfter(response.headers.get("Retry-After"));
+              throw new RateLimitError(manager.platform, {
+                retryAfter: retryAfterSec > 0 ? retryAfterSec : undefined,
+              });
+            }
+
+            // Auth error (401)
+            if (response.status === 401) {
+              manager.tokenManager?.invalidate();
+              if (attempt < maxRetries) {
+                span.addEvent("retry", {
+                  "unified_live.retry.attempt": attempt + 1,
+                  "unified_live.retry.reason": "auth_refresh",
+                  "http.response.status_code": 401,
+                });
+                continue;
+              }
+              throw new AuthenticationError(manager.platform, {
+                code: "AUTHENTICATION_EXPIRED",
+              });
+            }
+
+            // Not found (404)
+            if (response.status === 404) {
+              throw new NotFoundError(manager.platform, req.path);
+            }
+
+            // Non-retryable client errors — fail immediately without retry
+            if (NON_RETRYABLE_CLIENT_STATUSES.includes(response.status)) {
+              throw new UnifiedLiveError(
+                `Request to ${req.path} failed with status ${response.status}`,
+                response.status === 408 ? "NETWORK_TIMEOUT" : "INTERNAL",
+                {
+                  platform: manager.platform,
+                  method: req.method,
+                  path: req.path,
+                  status: response.status,
+                },
+              );
+            }
+
+            // Retryable server errors (5xx)
+            if (retryableStatuses.includes(response.status)) {
+              if (attempt < maxRetries) {
+                const jitter = 0.5 + Math.random();
+                await sleep(baseDelay * 2 ** attempt * jitter);
+                span.addEvent("retry", {
+                  "unified_live.retry.attempt": attempt + 1,
+                  "http.response.status_code": response.status,
+                });
+                continue;
+              }
+              throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
+                message: `${req.method} ${req.path} failed with status ${response.status} after ${maxRetries + 1} attempts`,
+                path: req.path,
+                method: req.method,
+                status: response.status,
+              });
+            }
+
+            const result = await manager.handleResponse<T>(response, req);
+
+            if (result.rateLimit) {
+              span.setAttribute(SpanAttributes.RATE_LIMIT_REMAINING, result.rateLimit.remaining);
+              span.setAttribute(SpanAttributes.RATE_LIMIT_LIMIT, result.rateLimit.limit);
+            }
+
+            if (attempt > 0) {
+              span.setAttribute(SpanAttributes.RETRY_COUNT, attempt);
+            }
+
+            handle.complete(response.headers);
             span.end();
-            throw error;
+            return result;
           }
-        },
-      );
+
+          throw new NetworkError(manager.platform, "NETWORK_CONNECTION", {
+            message: `${req.method} ${req.path} failed after ${maxRetries + 1} attempts`,
+            path: req.path,
+            method: req.method,
+          });
+        } catch (error) {
+          if (error instanceof UnifiedLiveError) {
+            span.setAttribute(SpanAttributes.ERROR_CODE, error.code);
+            span.setAttribute(SpanAttributes.ERROR_TYPE, error.name);
+            span.setAttribute(SpanAttributes.ERROR_HAS_CAUSE, !!error.cause);
+          }
+          span.setStatus({
+            code: 2, // SpanStatusCode.ERROR
+            message: error instanceof Error ? error.message : String(error),
+          });
+          span.recordException(error instanceof Error ? error : new Error(String(error)));
+          handle.release();
+          span.end();
+          throw error;
+        }
+      });
     },
 
     createHeaders: async (_req: RestRequest): Promise<Record<string, string>> => {

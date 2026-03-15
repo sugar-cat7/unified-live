@@ -112,7 +112,6 @@ export const Page = {
     items: [],
     hasMore: false,
   }),
-
 } as const;
 
 export const resolvedUrlSchema = z.object({

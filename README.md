@@ -46,7 +46,7 @@ import { UnifiedClient } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
-const client = UnifiedClient.create({
+using client = UnifiedClient.create({
   plugins: [
     createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
     createTwitchPlugin({
@@ -62,8 +62,6 @@ const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9W
 console.log(content.title); // Video title
 console.log(content.platform); // "youtube"
 console.log(content.type); // "live" or "video"
-
-client.dispose();
 ```
 
 ## Packages

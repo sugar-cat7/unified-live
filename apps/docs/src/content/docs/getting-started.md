@@ -22,7 +22,7 @@ import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 // 1. Create a client
-const client = UnifiedClient.create();
+using client = UnifiedClient.create();
 
 // 2. Register platform plugins
 client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
@@ -39,9 +39,6 @@ const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9W
 console.log(content.title); // Video title
 console.log(content.platform); // "youtube"
 console.log(content.type); // "live" or "video"
-
-// 4. Clean up when done
-client.dispose();
 ```
 
 ## Requirements

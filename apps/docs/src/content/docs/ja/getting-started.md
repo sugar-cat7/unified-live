@@ -22,7 +22,7 @@ import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 // 1. クライアントを作成
-const client = UnifiedClient.create();
+using client = UnifiedClient.create();
 
 // 2. プラットフォームプラグインを登録
 client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
@@ -39,9 +39,6 @@ const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9W
 console.log(content.title); // 動画タイトル
 console.log(content.platform); // "youtube"
 console.log(content.type); // "live" または "video"
-
-// 4. 使い終わったらリソースを解放
-client.dispose();
 ```
 
 ## 動作要件

@@ -136,10 +136,11 @@ const client = UnifiedClient.create({
 
 ## Cleanup
 
-Always call `dispose()` when you're done to release internal timers:
+Use `using` to automatically release internal timers when the client goes out of scope:
 
 ```ts
-client.dispose();
+using client = UnifiedClient.create({ plugins: [youtube({ apiKey: "..." })] });
+// client[Symbol.dispose]() is called automatically at end of scope
 ```
 
 ## Next Steps

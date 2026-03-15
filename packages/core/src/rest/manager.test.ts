@@ -314,7 +314,7 @@ describe("createRestManager", () => {
     );
   });
 
-  it("throws after dispose is called", async () => {
+  it("throws after [Symbol.dispose] is called", async () => {
     strategy = createMockStrategy();
     const manager = createRestManager({
       platform: "test",

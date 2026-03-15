@@ -166,7 +166,7 @@ export const youtubeGetVideos = async (
     bucketId: "channels:list",
   });
 
-  const channel = channelRes.data.items[0];
+  const channel = channelRes.data.items?.[0];
   if (!channel) {
     throw new NotFoundError("youtube", channelId);
   }

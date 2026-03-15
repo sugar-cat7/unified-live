@@ -5,6 +5,7 @@ import { AuthenticationError } from "../errors";
  *
  * @precondition An implementation must be provided per platform
  * @postcondition getAuthHeader always returns a valid Authorization header value
+ * @category Plugin Development
  */
 export type TokenManager = {
   /** Returns a valid auth header value (e.g., "Bearer <token>"). */
@@ -19,6 +20,7 @@ export type TokenManager = {
  * Companion object for the TokenManager type.
  * Provides factory utilities for common auth patterns.
  *
+ * @category Plugin Development
  * @example
  * ```ts
  * const tm = TokenManager.static("Bearer my-token");

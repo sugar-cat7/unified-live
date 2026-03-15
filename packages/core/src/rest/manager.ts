@@ -16,6 +16,7 @@ const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_BASE_DELAY = 1000;
 const DEFAULT_RETRYABLE_STATUSES = [500, 502, 503, 504];
 
+/** @category Plugin Development */
 export type RestManager = {
   readonly platform: string;
   readonly baseUrl: string;
@@ -89,6 +90,7 @@ export type RestManager = {
  * @precondition options.rateLimitStrategy is initialized
  * @postcondition returns a RestManager with all methods set
  * @idempotency Not idempotent — each call creates a new manager instance
+ * @category Plugin Development
  */
 export const createRestManager = (options: RestManagerOptions): RestManager => {
   const maxRetries = options.retry?.maxRetries ?? DEFAULT_MAX_RETRIES;
@@ -301,6 +303,7 @@ const sleep = (ms: number): Promise<void> => {
  * Parse a Retry-After header value into a bounded number of seconds.
  * Returns fallback if the header is missing, NaN, or out of bounds.
  *
+ * @internal
  * @param header - raw Retry-After header value (may be null)
  * @param fallback - default seconds if header is missing or invalid
  * @returns seconds in range [0, 120], or fallback if header is missing/invalid

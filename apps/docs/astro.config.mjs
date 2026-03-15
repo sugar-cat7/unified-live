@@ -30,6 +30,17 @@ export default defineConfig({
           },
           typeDoc: {
             skipErrorChecking: true,
+            excludeInternal: true,
+            categorizeByGroup: true,
+            categoryOrder: [
+              "Client",
+              "Types",
+              "Errors",
+              "Plugins",
+              "Plugin Development",
+              "Observability",
+              "*",
+            ],
           },
         }),
       ],
@@ -48,6 +59,14 @@ export default defineConfig({
             { slug: "error-handling" },
             { slug: "pagination" },
             { slug: "advanced" },
+          ],
+        },
+        {
+          label: "Cookbook",
+          translations: { ja: "クックブック" },
+          items: [
+            { slug: "examples" },
+            { slug: "creating-a-plugin" },
           ],
         },
         typeDocSidebarGroup,

@@ -1,5 +1,6 @@
 import type { RestRequest } from "./types";
 
+/** @category Plugin Development */
 export type RateLimitHandle = {
   /** Called after successful response — updates state from response headers. */
   complete(headers: Headers): void;
@@ -7,6 +8,7 @@ export type RateLimitHandle = {
   release(): void;
 };
 
+/** @category Plugin Development */
 export type RateLimitStatus = {
   remaining: number;
   limit: number;
@@ -19,6 +21,7 @@ export type RateLimitStatus = {
  *
  * @precondition One strategy instance per platform
  * @postcondition acquire() resolves when it's safe to proceed with the request
+ * @category Plugin Development
  */
 export type RateLimitStrategy = {
   /**

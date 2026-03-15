@@ -12,12 +12,17 @@ const TRACER_NAME = "unified-live";
  * @precondition none
  * @postcondition returns a Tracer instance (possibly no-op)
  * @idempotency Safe — always returns the same tracer
+ * @category Observability
  */
 export const getTracer = (): Tracer => {
   return trace.getTracer(TRACER_NAME);
 };
 
-/** Standard span attribute keys used by the SDK. */
+/**
+ * Standard span attribute keys used by the SDK.
+ *
+ * @category Observability
+ */
 export const SpanAttributes = {
   PLATFORM: "unified_live.platform",
   HTTP_METHOD: "http.request.method",

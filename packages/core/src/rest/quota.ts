@@ -2,6 +2,7 @@ import { QuotaExhaustedError } from "../errors";
 import type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./strategy";
 import type { RestRequest } from "./types";
 
+/** @category Plugin Development */
 export type QuotaBudgetConfig = {
   dailyLimit?: number;
   costMap: Record<string, number>;
@@ -54,6 +55,7 @@ const nextResetTime = (): Date => {
  * @precondition costMap maps bucketId strings to their quota costs
  * @postcondition acquire() throws QuotaExhaustedError when quota is exceeded
  * @idempotency Not idempotent — each acquire() consumes quota
+ * @category Plugin Development
  */
 export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitStrategy => {
   const dailyLimit = config.dailyLimit ?? 10_000;

@@ -1,6 +1,7 @@
 import type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestRequest } from "./types";
 
+/** @category Plugin Development */
 export type TokenBucketConfig = {
   global: { requests: number; perMs: number };
   parseHeaders: (headers: Headers) => RateLimitInfo | undefined;
@@ -14,6 +15,7 @@ export type TokenBucketConfig = {
  * @precondition global.requests > 0 and global.perMs > 0
  * @postcondition acquire() blocks when no tokens are available, resolves on refill
  * @idempotency Not idempotent — each acquire() consumes a token
+ * @category Plugin Development
  */
 export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitStrategy => {
   let remaining = config.global.requests;

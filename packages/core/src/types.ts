@@ -1,11 +1,21 @@
 import { z } from "zod/v4";
 
+/**
+ * Image thumbnail with validated URL and positive integer dimensions.
+ *
+ * @category Types
+ */
 export const thumbnailSchema = z.object({
   url: z.url(),
   width: z.int().check(z.positive()),
   height: z.int().check(z.positive()),
 });
 
+/**
+ * Lightweight channel reference embedded in content objects.
+ *
+ * @category Types
+ */
 export const channelRefSchema = z.object({
   id: z.string().check(z.minLength(1)),
   name: z.string(),
@@ -23,14 +33,32 @@ const contentBaseSchema = z.object({
   raw: z.unknown(),
 });
 
+/**
+ * Zod schema for a currently-active live stream.
+ * Validates viewer count (non-negative) and start time.
+ *
+ * @category Types
+ */
 export const liveStreamSchema = contentBaseSchema.extend({
   type: z.literal("live"),
   viewerCount: z.int().check(z.nonnegative()),
   startedAt: z.date(),
 });
 
+/**
+ * A currently-active live stream on any supported platform.
+ * Discriminated by `type: "live"`. Use `Content.isLive()` to narrow from Content.
+ *
+ * @category Types
+ */
 export type LiveStream = z.infer<typeof liveStreamSchema>;
 
+/**
+ * Zod schema for an archived or uploaded video.
+ * Validates duration, view count, and publish date.
+ *
+ * @category Types
+ */
 export const videoSchema = contentBaseSchema.extend({
   type: z.literal("video"),
   duration: z.number().check(z.nonnegative()),
@@ -38,12 +66,34 @@ export const videoSchema = contentBaseSchema.extend({
   publishedAt: z.date(),
 });
 
+/**
+ * An archived or uploaded video on any supported platform.
+ * Discriminated by `type: "video"`. Use `Content.isVideo()` to narrow from Content.
+ *
+ * @category Types
+ */
 export type Video = z.infer<typeof videoSchema>;
 
+/**
+ * Discriminated union schema for content. Discriminates on `type` field.
+ *
+ * @category Types
+ */
 export const contentSchema = z.discriminatedUnion("type", [liveStreamSchema, videoSchema]);
 
+/**
+ * A piece of content (live stream or video) on any supported platform.
+ * Use `Content.isLive()` / `Content.isVideo()` to narrow.
+ *
+ * @category Types
+ */
 export type Content = z.infer<typeof contentSchema>;
 
+/**
+ * Zod schema for a streaming channel or user account.
+ *
+ * @category Types
+ */
 export const channelSchema = z.object({
   id: z.string().check(z.minLength(1)),
   platform: z.string().check(z.minLength(1)),
@@ -52,8 +102,18 @@ export const channelSchema = z.object({
   thumbnail: thumbnailSchema.optional(),
 });
 
+/**
+ * A streaming channel or user account on any supported platform.
+ *
+ * @category Types
+ */
 export type Channel = z.infer<typeof channelSchema>;
 
+/**
+ * Zod schema for a broadcast session linking live and archive content.
+ *
+ * @category Types
+ */
 export const broadcastSessionSchema = z.object({
   sessionId: z.string().check(z.minLength(1)),
   platform: z.string().check(z.minLength(1)),
@@ -66,8 +126,21 @@ export const broadcastSessionSchema = z.object({
   }),
 });
 
+/**
+ * Links a live broadcast to its eventual archive video.
+ * `contentIds` maps between the live stream ID and archive video ID.
+ *
+ * @category Types
+ */
 export type BroadcastSession = z.infer<typeof broadcastSessionSchema>;
 
+/**
+ * Cursor-based pagination wrapper.
+ * `hasMore` indicates whether additional pages exist.
+ * Pass `cursor` to the next call to fetch the next page.
+ *
+ * @category Types
+ */
 export type Page<T> = {
   items: T[];
   cursor?: string;
@@ -75,12 +148,23 @@ export type Page<T> = {
   hasMore: boolean;
 };
 
+/**
+ * Zod schema for a resolved platform URL.
+ *
+ * @category Types
+ */
 export const resolvedUrlSchema = z.object({
   platform: z.string().check(z.minLength(1)),
   type: z.enum(["content", "channel"]),
   id: z.string().check(z.minLength(1)),
 });
 
+/**
+ * Result of resolving a platform URL without network calls.
+ * Contains detected platform, resource type, and platform-specific ID.
+ *
+ * @category Types
+ */
 export type ResolvedUrl = z.infer<typeof resolvedUrlSchema>;
 
 /**
@@ -88,6 +172,7 @@ export type ResolvedUrl = z.infer<typeof resolvedUrlSchema>;
  *
  * @precondition content must be a valid Content value
  * @postcondition narrows to LiveStream or Video
+ * @category Types
  */
 export const Content = {
   isLive: (content: Content): content is LiveStream => content.type === "live",

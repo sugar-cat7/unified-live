@@ -37,10 +37,7 @@ export default defineConfig({
         {
           label: "Introduction",
           translations: { ja: "はじめに" },
-          items: [
-            { slug: "overview" },
-            { slug: "getting-started" },
-          ],
+          items: [{ slug: "overview" }, { slug: "getting-started" }],
         },
         {
           label: "Guides",

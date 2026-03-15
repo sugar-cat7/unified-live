@@ -33,19 +33,19 @@ const content = await client.getContent("https://youtube.com/watch?v=abc123");
 
 ### スパン属性
 
-| 属性 | 型 | 説明 |
-| :--- | :--- | :--- |
-| `unified_live.platform` | `string` | プラットフォーム識別子（`"youtube"`, `"twitch"`, `"twitcasting"`） |
-| `http.request.method` | `string` | HTTP メソッド（`"GET"`） |
-| `url.path` | `string` | リクエストパス（例: `"/videos"`） |
-| `http.response.status_code` | `number` | HTTP レスポンスステータスコード |
-| `unified_live.rate_limit.remaining` | `number` | 残りレート制限トークン数 |
-| `unified_live.rate_limit.limit` | `number` | レート制限の総容量 |
-| `unified_live.quota.consumed` | `number` | 消費クォータユニット数（YouTube） |
-| `unified_live.quota.daily_remaining` | `number` | 残り日次クォータ（YouTube） |
-| `error.code` | `string` | エラーコード（例: `"RATE_LIMIT_EXCEEDED"`） |
-| `error.type` | `string` | エラークラス名 |
-| `error.has_cause` | `boolean` | エラーが原因をラップしているかどうか |
+| 属性                                 | 型        | 説明                                                               |
+| :----------------------------------- | :-------- | :----------------------------------------------------------------- |
+| `unified_live.platform`              | `string`  | プラットフォーム識別子（`"youtube"`, `"twitch"`, `"twitcasting"`） |
+| `http.request.method`                | `string`  | HTTP メソッド（`"GET"`）                                           |
+| `url.path`                           | `string`  | リクエストパス（例: `"/videos"`）                                  |
+| `http.response.status_code`          | `number`  | HTTP レスポンスステータスコード                                    |
+| `unified_live.rate_limit.remaining`  | `number`  | 残りレート制限トークン数                                           |
+| `unified_live.rate_limit.limit`      | `number`  | レート制限の総容量                                                 |
+| `unified_live.quota.consumed`        | `number`  | 消費クォータユニット数（YouTube）                                  |
+| `unified_live.quota.daily_remaining` | `number`  | 残り日次クォータ（YouTube）                                        |
+| `error.code`                         | `string`  | エラーコード（例: `"RATE_LIMIT_EXCEEDED"`）                        |
+| `error.type`                         | `string`  | エラークラス名                                                     |
+| `error.has_cause`                    | `boolean` | エラーが原因をラップしているかどうか                               |
 
 ### Jaeger での利用
 

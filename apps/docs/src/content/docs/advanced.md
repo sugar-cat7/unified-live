@@ -33,19 +33,19 @@ Example: `unified-live.rest youtube GET /videos`
 
 ### Span Attributes
 
-| Attribute | Type | Description |
-| :--- | :--- | :--- |
-| `unified_live.platform` | `string` | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`) |
-| `http.request.method` | `string` | HTTP method (`"GET"`) |
-| `url.path` | `string` | Request path (e.g., `"/videos"`) |
-| `http.response.status_code` | `number` | HTTP response status code |
-| `unified_live.rate_limit.remaining` | `number` | Remaining rate limit tokens |
-| `unified_live.rate_limit.limit` | `number` | Total rate limit capacity |
-| `unified_live.quota.consumed` | `number` | Quota units consumed (YouTube) |
-| `unified_live.quota.daily_remaining` | `number` | Daily quota remaining (YouTube) |
-| `error.code` | `string` | Error code (e.g., `"RATE_LIMIT_EXCEEDED"`) |
-| `error.type` | `string` | Error class name |
-| `error.has_cause` | `boolean` | Whether the error wraps a cause |
+| Attribute                            | Type      | Description                                                    |
+| :----------------------------------- | :-------- | :------------------------------------------------------------- |
+| `unified_live.platform`              | `string`  | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`) |
+| `http.request.method`                | `string`  | HTTP method (`"GET"`)                                          |
+| `url.path`                           | `string`  | Request path (e.g., `"/videos"`)                               |
+| `http.response.status_code`          | `number`  | HTTP response status code                                      |
+| `unified_live.rate_limit.remaining`  | `number`  | Remaining rate limit tokens                                    |
+| `unified_live.rate_limit.limit`      | `number`  | Total rate limit capacity                                      |
+| `unified_live.quota.consumed`        | `number`  | Quota units consumed (YouTube)                                 |
+| `unified_live.quota.daily_remaining` | `number`  | Daily quota remaining (YouTube)                                |
+| `error.code`                         | `string`  | Error code (e.g., `"RATE_LIMIT_EXCEEDED"`)                     |
+| `error.type`                         | `string`  | Error class name                                               |
+| `error.has_cause`                    | `boolean` | Whether the error wraps a cause                                |
 
 ### Using with Jaeger
 

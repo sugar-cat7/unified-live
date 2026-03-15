@@ -54,6 +54,7 @@ Always run the following before submitting a PR:
 ```
 
 This runs:
+
 - `pnpm build` — Build all packages
 - `pnpm lint` — Lint with oxlint
 - `pnpm knip` — Check for unused exports
@@ -73,6 +74,7 @@ Follow the [Angular commit convention](https://github.com/angular/angular/blob/m
 **Scope:** Package name (`core`, `youtube`, `twitch`, `twitcasting`, `docs`)
 
 **Examples:**
+
 ```
 feat(core): add batch content fetching
 fix(youtube): handle quota reset timezone

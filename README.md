@@ -59,42 +59,42 @@ const client = UnifiedClient.create({
 // Auto-detects platform from URL
 const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
-console.log(content.title);    // Video title
+console.log(content.title); // Video title
 console.log(content.platform); // "youtube"
-console.log(content.type);     // "live" or "video"
+console.log(content.type); // "live" or "video"
 
 client.dispose();
 ```
 
 ## Packages
 
-| Package | Description |
-| :--- | :--- |
-| [`@unified-live/core`](packages/core) | Client, plugin system, unified types, error hierarchy, OpenTelemetry tracing |
-| [`@unified-live/youtube`](packages/youtube) | YouTube Data API v3 — quota-based rate limiting, API key auth |
-| [`@unified-live/twitch`](packages/twitch) | Twitch Helix API — token bucket rate limiting, OAuth2 Client Credentials |
-| [`@unified-live/twitcasting`](packages/twitcasting) | TwitCasting API v2 — token bucket rate limiting, Basic Auth |
+| Package                                             | Description                                                                  |
+| :-------------------------------------------------- | :--------------------------------------------------------------------------- |
+| [`@unified-live/core`](packages/core)               | Client, plugin system, unified types, error hierarchy, OpenTelemetry tracing |
+| [`@unified-live/youtube`](packages/youtube)         | YouTube Data API v3 — quota-based rate limiting, API key auth                |
+| [`@unified-live/twitch`](packages/twitch)           | Twitch Helix API — token bucket rate limiting, OAuth2 Client Credentials     |
+| [`@unified-live/twitcasting`](packages/twitcasting) | TwitCasting API v2 — token bucket rate limiting, Basic Auth                  |
 
 ## Supported Runtimes
 
-| Runtime | Version |
-| :--- | :--- |
-| Node.js | 18, 20, 22+ |
-| Deno | 1.x+ |
-| Bun | 1.x+ |
-| Cloudflare Workers | Supported |
+| Runtime            | Version     |
+| :----------------- | :---------- |
+| Node.js            | 18, 20, 22+ |
+| Deno               | 1.x+        |
+| Bun                | 1.x+        |
+| Cloudflare Workers | Supported   |
 
 > Any runtime with native `fetch` is supported. No Node.js-specific dependencies in core.
 
 ## Feature Status
 
-| Feature | Status |
-| :--- | :--- |
-| YouTube plugin | Stable |
-| Twitch plugin | Stable |
-| TwitCasting plugin | Stable |
-| OpenTelemetry tracing | Stable |
-| Automatic retries | Stable |
+| Feature                 | Status |
+| :---------------------- | :----- |
+| YouTube plugin          | Stable |
+| Twitch plugin           | Stable |
+| TwitCasting plugin      | Stable |
+| OpenTelemetry tracing   | Stable |
+| Automatic retries       | Stable |
 | Cursor-based pagination | Stable |
 
 ## Contributing

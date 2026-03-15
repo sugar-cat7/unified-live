@@ -6,13 +6,13 @@ title: 概要
 
 YouTube、Twitch、TwitCasting をまたいだライブ配信データを集約するアプリケーションを構築するには、3つのまったく異なるAPI — 認証方式、レート制限モデル、データ形式、URL構造がすべて異なる — を扱う必要があります。
 
-| | [YouTube Data API v3](https://developers.google.com/youtube/v3) | [Twitch Helix API](https://dev.twitch.tv/docs/api/) | [TwitCasting API v2](https://apiv2-doc.twitcasting.tv/) |
-| :--- | :--- | :--- | :--- |
-| **認証** | APIキー（クエリパラメータ） | OAuth2 Client Credentials | Basic Auth（base64） |
-| **レート制限** | クォータベース（10,000ユニット/日） | トークンバケット（ヘッダー駆動） | トークンバケット（60リクエスト/60秒） |
-| **コストモデル** | エンドポイント毎のコスト（1〜101ユニット） | 定額（1リクエスト = 1トークン） | 定額（1リクエスト = 1トークン） |
-| **配信 vs. アーカイブ** | 同一の動画ID | 異なる動画ID | 同一のムービーID |
-| **チャンネルID** | `UC...` プレフィックス、`@handle` | ログイン名 | ユーザーID |
+|                         | [YouTube Data API v3](https://developers.google.com/youtube/v3) | [Twitch Helix API](https://dev.twitch.tv/docs/api/) | [TwitCasting API v2](https://apiv2-doc.twitcasting.tv/) |
+| :---------------------- | :-------------------------------------------------------------- | :-------------------------------------------------- | :------------------------------------------------------ |
+| **認証**                | APIキー（クエリパラメータ）                                     | OAuth2 Client Credentials                           | Basic Auth（base64）                                    |
+| **レート制限**          | クォータベース（10,000ユニット/日）                             | トークンバケット（ヘッダー駆動）                    | トークンバケット（60リクエスト/60秒）                   |
+| **コストモデル**        | エンドポイント毎のコスト（1〜101ユニット）                      | 定額（1リクエスト = 1トークン）                     | 定額（1リクエスト = 1トークン）                         |
+| **配信 vs. アーカイブ** | 同一の動画ID                                                    | 異なる動画ID                                        | 同一のムービーID                                        |
+| **チャンネルID**        | `UC...` プレフィックス、`@handle`                               | ログイン名                                          | ユーザーID                                              |
 
 ### よくある課題
 
@@ -49,21 +49,21 @@ const content = await client.getContent("https://www.twitch.tv/videos/123456");
 const content = await client.getContent("https://twitcasting.tv/user/movie/789");
 
 // すべて同じ Content 型で返される
-console.log(content.title);    // string
+console.log(content.title); // string
 console.log(content.platform); // "youtube" | "twitch" | "twitcasting"
-console.log(content.type);     // "live" | "video"
+console.log(content.type); // "live" | "video"
 ```
 
 ### SDK が処理すること
 
-| 関心事 | unified-live の処理方法 |
-| :--- | :--- |
-| **認証** | APIキー注入（YouTube）、OAuth2自動リフレッシュ（Twitch）、Basic Auth エンコード（TwitCasting） |
-| **レート制限** | `QuotaExhaustedError` 付きローカルクォータ追跡（YouTube）、ヘッダー解析付きトークンバケット（Twitch）、固定トークンバケット（TwitCasting） |
-| **リトライ** | 429/5xx に対する指数バックオフ、401 でのトークンリフレッシュ |
-| **データ正規化** | すべてのプラットフォームを統一された `Content`、`Channel`、`LiveStream`、`Video` 型にマッピング |
-| **URL解決** | URLからプラットフォームを自動検出、プラットフォーム毎に複数のURL形式をサポート |
-| **オブザーバビリティ** | すべてのAPIコールに対するOpenTelemetryスパン（OTel未設定時はオーバーヘッドゼロ） |
+| 関心事                 | unified-live の処理方法                                                                                                                    |
+| :--------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| **認証**               | APIキー注入（YouTube）、OAuth2自動リフレッシュ（Twitch）、Basic Auth エンコード（TwitCasting）                                             |
+| **レート制限**         | `QuotaExhaustedError` 付きローカルクォータ追跡（YouTube）、ヘッダー解析付きトークンバケット（Twitch）、固定トークンバケット（TwitCasting） |
+| **リトライ**           | 429/5xx に対する指数バックオフ、401 でのトークンリフレッシュ                                                                               |
+| **データ正規化**       | すべてのプラットフォームを統一された `Content`、`Channel`、`LiveStream`、`Video` 型にマッピング                                            |
+| **URL解決**            | URLからプラットフォームを自動検出、プラットフォーム毎に複数のURL形式をサポート                                                             |
+| **オブザーバビリティ** | すべてのAPIコールに対するOpenTelemetryスパン（OTel未設定時はオーバーヘッドゼロ）                                                           |
 
 ## 公式APIドキュメント
 

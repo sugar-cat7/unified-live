@@ -6,13 +6,13 @@ title: Overview
 
 Building an application that aggregates live streaming data across YouTube, Twitch, and TwitCasting means dealing with three completely different APIs — each with its own authentication scheme, rate limiting model, data format, and URL structure.
 
-| | [YouTube Data API v3](https://developers.google.com/youtube/v3) | [Twitch Helix API](https://dev.twitch.tv/docs/api/) | [TwitCasting API v2](https://apiv2-doc.twitcasting.tv/) |
-| :--- | :--- | :--- | :--- |
-| **Auth** | API Key (query parameter) | OAuth2 Client Credentials | Basic Auth (base64) |
-| **Rate Limiting** | Quota-based (10,000 units/day) | Token bucket (header-driven) | Token bucket (60 req/60s) |
-| **Cost Model** | Per-endpoint cost (1–101 units) | Flat (1 req = 1 token) | Flat (1 req = 1 token) |
-| **Live vs. Archive** | Same video ID | Different video IDs | Same movie ID |
-| **Channel ID** | `UC...` prefix, `@handle` | Login name | User ID |
+|                      | [YouTube Data API v3](https://developers.google.com/youtube/v3) | [Twitch Helix API](https://dev.twitch.tv/docs/api/) | [TwitCasting API v2](https://apiv2-doc.twitcasting.tv/) |
+| :------------------- | :-------------------------------------------------------------- | :-------------------------------------------------- | :------------------------------------------------------ |
+| **Auth**             | API Key (query parameter)                                       | OAuth2 Client Credentials                           | Basic Auth (base64)                                     |
+| **Rate Limiting**    | Quota-based (10,000 units/day)                                  | Token bucket (header-driven)                        | Token bucket (60 req/60s)                               |
+| **Cost Model**       | Per-endpoint cost (1–101 units)                                 | Flat (1 req = 1 token)                              | Flat (1 req = 1 token)                                  |
+| **Live vs. Archive** | Same video ID                                                   | Different video IDs                                 | Same movie ID                                           |
+| **Channel ID**       | `UC...` prefix, `@handle`                                       | Login name                                          | User ID                                                 |
 
 ### Common Pain Points
 
@@ -49,21 +49,21 @@ const content = await client.getContent("https://www.twitch.tv/videos/123456");
 const content = await client.getContent("https://twitcasting.tv/user/movie/789");
 
 // All return the same Content type
-console.log(content.title);    // string
+console.log(content.title); // string
 console.log(content.platform); // "youtube" | "twitch" | "twitcasting"
-console.log(content.type);     // "live" | "video"
+console.log(content.type); // "live" | "video"
 ```
 
 ### What the SDK Handles for You
 
-| Concern | How unified-live handles it |
-| :--- | :--- |
-| **Authentication** | API key injection (YouTube), OAuth2 auto-refresh (Twitch), Basic auth encoding (TwitCasting) |
-| **Rate Limiting** | Local quota tracking with `QuotaExhaustedError` (YouTube), token bucket with header parsing (Twitch), fixed token bucket (TwitCasting) |
-| **Retries** | Exponential backoff for 429/5xx, token refresh on 401 |
-| **Data Normalization** | All platforms map to unified `Content`, `Channel`, `LiveStream`, `Video` types |
-| **URL Resolution** | Auto-detects platform from URL, supports multiple URL formats per platform |
-| **Observability** | OpenTelemetry spans for every API call (zero overhead when OTel is not configured) |
+| Concern                | How unified-live handles it                                                                                                            |
+| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **Authentication**     | API key injection (YouTube), OAuth2 auto-refresh (Twitch), Basic auth encoding (TwitCasting)                                           |
+| **Rate Limiting**      | Local quota tracking with `QuotaExhaustedError` (YouTube), token bucket with header parsing (Twitch), fixed token bucket (TwitCasting) |
+| **Retries**            | Exponential backoff for 429/5xx, token refresh on 401                                                                                  |
+| **Data Normalization** | All platforms map to unified `Content`, `Channel`, `LiveStream`, `Video` types                                                         |
+| **URL Resolution**     | Auto-detects platform from URL, supports multiple URL formats per platform                                                             |
+| **Observability**      | OpenTelemetry spans for every API call (zero overhead when OTel is not configured)                                                     |
 
 ## Official API Documentation
 

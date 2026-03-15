@@ -61,7 +61,12 @@ export type UnifiedClient = {
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getVideos(platform: string, channelId: string, cursor?: string, pageSize?: number): Promise<Page<Video>>;
+  getVideos(
+    platform: string,
+    channelId: string,
+    cursor?: string,
+    pageSize?: number,
+  ): Promise<Page<Video>>;
 
   /**
    * Retrieve channel information.
@@ -182,7 +187,12 @@ export const UnifiedClient = {
         return plugin.getLiveStreams(channelId);
       },
 
-      async getVideos(platform: string, channelId: string, cursor?: string, pageSize?: number): Promise<Page<Video>> {
+      async getVideos(
+        platform: string,
+        channelId: string,
+        cursor?: string,
+        pageSize?: number,
+      ): Promise<Page<Video>> {
         const plugin = getPlugin(platform);
         return plugin.getVideos(channelId, cursor, pageSize);
       },

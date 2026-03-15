@@ -1,12 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  toContent,
-  toLive,
-  toVideo,
-  type TCMovie,
-  type TCUser,
-  toChannel,
-} from "./mapper";
+import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
 
 const mockUser: TCUser = {
   id: "user456",

@@ -32,7 +32,11 @@ const mockUser = {
 
 describe("createTwitCastingPlugin", () => {
   it("reports correct capabilities", () => {
-    const plugin = createTwitCastingPlugin({ clientId: "id", clientSecret: "secret", fetch: createMockFetch([]) });
+    const plugin = createTwitCastingPlugin({
+      clientId: "id",
+      clientSecret: "secret",
+      fetch: createMockFetch([]),
+    });
     expect(plugin.capabilities).toEqual({
       supportsLiveStreams: true,
       supportsArchiveResolution: true,

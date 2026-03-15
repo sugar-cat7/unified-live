@@ -35,7 +35,11 @@ const createMockFetch = (
 
 describe("createTwitchPlugin", () => {
   it("reports correct capabilities", () => {
-    const plugin = createTwitchPlugin({ clientId: "id", clientSecret: "secret", fetch: createMockFetch([]) });
+    const plugin = createTwitchPlugin({
+      clientId: "id",
+      clientSecret: "secret",
+      fetch: createMockFetch([]),
+    });
     expect(plugin.capabilities).toEqual({
       supportsLiveStreams: true,
       supportsArchiveResolution: true,

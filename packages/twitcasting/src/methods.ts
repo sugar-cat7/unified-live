@@ -7,14 +7,7 @@ import {
   type RestManager,
   type Video,
 } from "@unified-live/core";
-import {
-  toContent,
-  toLive,
-  toVideo,
-  type TCMovie,
-  type TCUser,
-  toChannel,
-} from "./mapper";
+import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
 
 type TCMovieResponse = {
   movie: TCMovie;
@@ -151,7 +144,8 @@ export const twitcastingGetVideos = async (
     .filter((m) => !m.is_live)
     .map((m) => toVideo(m, userRes.data.user));
 
-  const nextCursor = videos.length > 0 && moviesRes.data.movies.length === pageSize ? videos.at(-1)!.id : undefined;
+  const nextCursor =
+    videos.length > 0 && moviesRes.data.movies.length === pageSize ? videos.at(-1)!.id : undefined;
   return {
     items: videos,
     cursor: nextCursor,

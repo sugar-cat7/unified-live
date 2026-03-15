@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - YouTube API types auto-generated from Google Discovery Document
 - Weekly GitHub Actions workflow to keep YouTube types in sync
 - `parseRetryAfter()` utility with NaN guard and upper bound (120s)
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSDoc on all `methods.ts` functions across platforms
 
 ### Changed
+
 - **BREAKING:** Twitch mapper renames: `streamToLive` → `toLive`, `videoToVideo` → `toVideo`, `userToChannel` → `toChannel`, `parseTwitchDuration` → `parseDuration`
 - **BREAKING:** TwitCasting mapper renames: `movieToContent` → `toContent`, `movieToLive` → `toLive`, `movieToVideo` → `toVideo`, `userToChannel` → `toChannel`
 - **BREAKING:** `Page<T>` now requires `hasMore: boolean` field
@@ -35,12 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - knip config excludes generated files
 
 ### Fixed
+
 - `Retry-After` header parsing: NaN guard prevents retry storms from malformed headers
 - `autofix.yaml` uses `continue-on-error` instead of `|| true` to surface lint errors
 
 ## [0.1.0] - 2026-03-15
 
 ### Added
+
 - Initial release with YouTube, Twitch, and TwitCasting support
 - Unified `Content`, `Channel`, `LiveStream`, `Video` types
 - Plugin architecture with `PlatformPlugin` and `UnifiedClient`

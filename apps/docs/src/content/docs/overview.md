@@ -74,7 +74,7 @@ console.log(tc.type); // "live" | "video"
 | List live streams        |   ✅    |   ✅   |     ✅      |
 | List videos (pagination) |   ✅    |   ✅   |     ✅      |
 | Get channel info         |   ✅    |   ✅   |     ✅      |
-| Archive resolution       |   ✅    |   ✅   |     ❌      |
+| Archive resolution       |   ✅    |   ✅   |     ✅      |
 | OpenTelemetry tracing    |   ✅    |   ✅   |     ✅      |
 
 ## Official API Documentation

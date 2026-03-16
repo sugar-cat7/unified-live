@@ -36,6 +36,8 @@ try {
     console.log(`Not found: ${err.message}`);
   } else if (err instanceof UnifiedLiveError) {
     console.log(`SDK error [${err.code}]: ${err.message}`);
+  } else {
+    throw err; // re-throw non-SDK errors
   }
 }
 ```

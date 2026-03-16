@@ -76,15 +76,19 @@ const parseHeaders = createRateLimitHeaderParser({
   reset: "X-RateLimit-Reset",
 });
 
-const createDefinition = (apiKey: string): PluginDefinition => ({
+const createDefinition = (config: {
+  apiKey: string;
+  fetch?: typeof globalThis.fetch;
+}): PluginDefinition => ({
   name: "example",
   baseUrl: "https://api.example.tv/v1",
   rateLimitStrategy: createTokenBucketStrategy({
     global: { requests: 100, perMs: 60_000 }, // 100リクエスト/分
     parseHeaders,
   }),
-  tokenManager: TokenManager.static(`Bearer ${apiKey}`),
+  tokenManager: TokenManager.static(`Bearer ${config.apiKey}`),
   matchUrl: matchExampleUrl,
+  fetch: config.fetch,
   capabilities: {
     supportsLiveStreams: true,
     supportsArchiveResolution: false,
@@ -174,8 +178,11 @@ const methods: PluginMethods = {
 `PlatformPlugin.create()` で definition と methods を組み合わせます:
 
 ```ts
-export const createExamplePlugin = (config: { apiKey: string }): PlatformPlugin => {
-  return PlatformPlugin.create(createDefinition(config.apiKey), methods);
+export const createExamplePlugin = (config: {
+  apiKey: string;
+  fetch?: typeof globalThis.fetch;
+}): PlatformPlugin => {
+  return PlatformPlugin.create(createDefinition(config), methods);
 };
 ```
 
@@ -212,7 +219,7 @@ const createOAuth2TokenManager = (config: {
   let expiresAt = 0;
 
   return {
-    async getAuthHeader() {
+    getAuthHeader: async () => {
       if (!token || Date.now() > expiresAt) {
         const res = await fetch("https://api.example.tv/oauth2/token", {
           method: "POST",
@@ -230,7 +237,7 @@ const createOAuth2TokenManager = (config: {
       }
       return `Bearer ${token}`;
     },
-    invalidate() {
+    invalidate: () => {
       token = null;
       expiresAt = 0;
     },
@@ -358,16 +365,12 @@ const matchUrl = (url: string): ResolvedUrl | null => {
 // データメソッド
 const getContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<any>({ method: "GET", path: `/videos/${id}` });
-  return {
-    /* res.data を Content にマッピング */
-  } as Content;
+  return res.data as Content; // プラットフォームレスポンスを Content にマッピング
 };
 
 const getChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${id}` });
-  return {
-    /* res.data を Channel にマッピング */
-  } as Channel;
+  return res.data as Channel; // プラットフォームレスポンスを Channel にマッピング
 };
 
 const getLiveStreams = async (rest: RestManager, channelId: string): Promise<LiveStream[]> => {

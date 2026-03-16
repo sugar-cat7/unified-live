@@ -36,6 +36,8 @@ try {
     console.log(`見つかりません: ${err.message}`);
   } else if (err instanceof UnifiedLiveError) {
     console.log(`SDKエラー [${err.code}]: ${err.message}`);
+  } else {
+    throw err; // SDK以外のエラーは再スロー
   }
 }
 ```

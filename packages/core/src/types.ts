@@ -215,6 +215,7 @@ export type ResolvedUrl = z.infer<typeof resolvedUrlSchema>;
  * ```ts
  * if (LiveStream.is(value)) { ... }
  * ```
+ * @category Types
  */
 export const LiveStream = {
   /**
@@ -238,6 +239,7 @@ export const LiveStream = {
  * ```ts
  * if (Video.is(value)) { ... }
  * ```
+ * @category Types
  */
 export const Video = {
   /**
@@ -261,6 +263,7 @@ export const Video = {
  * ```ts
  * if (Channel.is(value)) { ... }
  * ```
+ * @category Types
  */
 export const Channel = {
   /**
@@ -286,6 +289,7 @@ export const Channel = {
  * ```ts
  * if (BroadcastSession.is(value)) { ... }
  * ```
+ * @category Types
  */
 export const BroadcastSession = {
   /**

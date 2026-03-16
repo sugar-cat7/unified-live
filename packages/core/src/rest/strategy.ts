@@ -54,6 +54,7 @@ export type RateLimitStrategy = {
  * ```ts
  * if (RateLimitStrategy.is(unknown)) { ... }
  * ```
+ * @category Plugin Development
  */
 export const RateLimitStrategy = {
   /**

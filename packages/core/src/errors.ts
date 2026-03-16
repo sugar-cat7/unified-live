@@ -31,6 +31,7 @@ export type ErrorCode =
  * ```ts
  * if (ErrorCode.isNetwork(error.code)) { ... }
  * ```
+ * @category Errors
  */
 export const ErrorCode = {
   /**

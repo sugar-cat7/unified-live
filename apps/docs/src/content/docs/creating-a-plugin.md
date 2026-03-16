@@ -301,7 +301,7 @@ Use a mock `fetch` to test data methods without hitting real APIs:
 import { describe, it, expect, vi } from "vitest";
 
 describe("createExamplePlugin", () => {
-  it("fetches content by URL", async () => {
+  it("fetches content by ID", async () => {
     const mockFetch = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ video: { id: "123", title: "Test" } }), {
         status: 200,

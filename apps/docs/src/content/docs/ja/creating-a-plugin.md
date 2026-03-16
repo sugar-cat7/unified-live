@@ -301,7 +301,7 @@ describe("matchExampleUrl", () => {
 import { describe, it, expect, vi } from "vitest";
 
 describe("createExamplePlugin", () => {
-  it("URL でコンテンツを取得", async () => {
+  it("ID でコンテンツを取得", async () => {
     const mockFetch = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ video: { id: "123", title: "Test" } }), {
         status: 200,

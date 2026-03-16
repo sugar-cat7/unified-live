@@ -2,6 +2,7 @@ import type { Tracer } from "@opentelemetry/api";
 import { trace } from "@opentelemetry/api";
 
 const TRACER_NAME = "unified-live";
+const TRACER_VERSION = "0.1.0";
 
 /**
  * Returns the SDK tracer instance.
@@ -15,7 +16,7 @@ const TRACER_NAME = "unified-live";
  * @category Observability
  */
 export const getTracer = (): Tracer => {
-  return trace.getTracer(TRACER_NAME);
+  return trace.getTracer(TRACER_NAME, TRACER_VERSION);
 };
 
 /**
@@ -24,15 +25,29 @@ export const getTracer = (): Tracer => {
  * @category Observability
  */
 export const SpanAttributes = {
+  // Platform attributes
   PLATFORM: "unified_live.platform",
+
+  // HTTP semantic conventions (stable)
   HTTP_METHOD: "http.request.method",
   URL_PATH: "url.path",
   HTTP_STATUS: "http.response.status_code",
+  SERVER_ADDRESS: "server.address",
+  SERVER_PORT: "server.port",
+
+  // Rate limit attributes
   RATE_LIMIT_REMAINING: "unified_live.rate_limit.remaining",
   RATE_LIMIT_LIMIT: "unified_live.rate_limit.limit",
+
+  // Quota attributes
   QUOTA_CONSUMED: "unified_live.quota.consumed",
   QUOTA_DAILY_REMAINING: "unified_live.quota.daily_remaining",
-  ERROR_CODE: "error.code",
+
+  // Error attributes (namespaced to avoid OTel convention collision)
+  ERROR_CODE: "unified_live.error.code",
   ERROR_TYPE: "error.type",
-  ERROR_HAS_CAUSE: "error.has_cause",
+  ERROR_HAS_CAUSE: "unified_live.error.has_cause",
+
+  // Retry attributes
+  RETRY_COUNT: "unified_live.retry.count",
 } as const;

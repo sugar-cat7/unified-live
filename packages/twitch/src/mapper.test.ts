@@ -104,6 +104,19 @@ describe("toChannel", () => {
   });
 });
 
+describe("Object.freeze", () => {
+  it("returned objects are frozen", () => {
+    const live = toLive(mockStream);
+    expect(Object.isFrozen(live)).toBe(true);
+
+    const video = toVideo(mockVideo);
+    expect(Object.isFrozen(video)).toBe(true);
+
+    const channel = toChannel(mockUser);
+    expect(Object.isFrozen(channel)).toBe(true);
+  });
+});
+
 describe("parseDuration", () => {
   it.each([
     ["3h2m1s", 10921],

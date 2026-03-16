@@ -24,6 +24,59 @@ export type ErrorCode =
   | "INTERNAL";
 
 /**
+ * Companion object for the ErrorCode type.
+ * Provides category helpers for error classification in monitoring and alerting.
+ *
+ * @example
+ * ```ts
+ * if (ErrorCode.isNetwork(error.code)) { ... }
+ * ```
+ */
+export const ErrorCode = {
+  /**
+   * Whether the error code represents a network-level failure.
+   *
+   * @param code - the error code to check
+   * @returns true if the code is a network error
+   */
+  isNetwork: (code: ErrorCode): boolean =>
+    code === "NETWORK_TIMEOUT" ||
+    code === "NETWORK_CONNECTION" ||
+    code === "NETWORK_DNS" ||
+    code === "NETWORK_ABORT",
+
+  /**
+   * Whether the error code represents an authentication failure.
+   *
+   * @param code - the error code to check
+   * @returns true if the code is an auth error
+   */
+  isAuth: (code: ErrorCode): boolean =>
+    code === "AUTHENTICATION_INVALID" || code === "AUTHENTICATION_EXPIRED",
+
+  /**
+   * Whether the error code represents a client-side error (validation, not found).
+   *
+   * @param code - the error code to check
+   * @returns true if the code is a client error
+   */
+  isClientError: (code: ErrorCode): boolean =>
+    code === "NOT_FOUND" ||
+    code === "VALIDATION_INVALID_URL" ||
+    code === "VALIDATION_INVALID_INPUT" ||
+    code === "PLATFORM_NOT_FOUND",
+
+  /**
+   * Whether the error code represents a rate limiting issue.
+   *
+   * @param code - the error code to check
+   * @returns true if the code is a rate limit error
+   */
+  isRateLimit: (code: ErrorCode): boolean =>
+    code === "RATE_LIMIT_EXCEEDED" || code === "QUOTA_EXHAUSTED",
+} as const;
+
+/**
  * Structured metadata attached to every SDK error.
  *
  * @postcondition platform is always present
@@ -76,7 +129,54 @@ export class UnifiedLiveError extends Error {
   get platform(): string {
     return this.context.platform;
   }
+
+  get [Symbol.toStringTag](): string {
+    return this.name;
+  }
+
+  /**
+   * Structured representation for JSON.stringify and structured logging.
+   *
+   * @returns a plain object with error details including cause chain
+   * @postcondition returned object is JSON-serializable
+   */
+  toJSON(): Record<string, unknown> {
+    const serializeCause = (err: unknown, depth = 0): Record<string, unknown> | undefined => {
+      if (!(err instanceof Error) || depth > 10) return undefined;
+      return {
+        name: err.name,
+        message: err.message,
+        ...(err.cause ? { cause: serializeCause(err.cause, depth + 1) } : {}),
+      };
+    };
+
+    return {
+      name: this.name,
+      message: this.message,
+      code: this.code,
+      context: this.context,
+      ...(this.cause ? { cause: serializeCause(this.cause) } : {}),
+    };
+  }
+
+  /**
+   * Whether this error is transient and the operation may succeed on retry.
+   *
+   * @returns true for rate limits, network issues, and server errors
+   * @postcondition auth errors, not found, validation, and parse errors return false
+   */
+  get retryable(): boolean {
+    return RETRYABLE_CODES.has(this.code);
+  }
 }
+
+const RETRYABLE_CODES: ReadonlySet<ErrorCode> = new Set<ErrorCode>([
+  "RATE_LIMIT_EXCEEDED",
+  "QUOTA_EXHAUSTED",
+  "NETWORK_TIMEOUT",
+  "NETWORK_CONNECTION",
+  "NETWORK_DNS",
+]);
 
 /**
  * Resource not found on platform.
@@ -144,6 +244,13 @@ export class RateLimitError extends UnifiedLiveError {
     this.name = "RateLimitError";
     this.retryAfter = options?.retryAfter;
   }
+
+  override toJSON(): Record<string, unknown> {
+    return {
+      ...super.toJSON(),
+      retryAfter: this.retryAfter,
+    };
+  }
 }
 
 /** @category Errors */
@@ -173,6 +280,16 @@ export class QuotaExhaustedError extends UnifiedLiveError {
     this.name = "QuotaExhaustedError";
     this.details = details;
   }
+
+  override toJSON(): Record<string, unknown> {
+    return {
+      ...super.toJSON(),
+      details: {
+        ...this.details,
+        resetsAt: this.details.resetsAt.toISOString(),
+      },
+    };
+  }
 }
 
 /** @category Errors */
@@ -197,13 +314,14 @@ export class NetworkError extends UnifiedLiveError {
       message?: string;
       path?: string;
       method?: ErrorContext["method"];
+      status?: number;
       cause?: Error;
     },
   ) {
     super(
       options?.message ?? `Network error: ${code}`,
       code,
-      { platform, path: options?.path, method: options?.method },
+      { platform, path: options?.path, method: options?.method, status: options?.status },
       { cause: options?.cause },
     );
     this.name = "NetworkError";

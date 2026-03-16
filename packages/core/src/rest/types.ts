@@ -2,8 +2,10 @@ import type { TokenManager } from "../auth/types";
 import type { RateLimitStrategy } from "./strategy";
 
 /**
- * A REST request to a platform API.
+ * Describes an outgoing HTTP request to a platform API.
  *
+ * @precondition path is a relative path (e.g., "/videos")
+ * @postcondition query values are URL-encoded by the RestManager
  * @category Plugin Development
  */
 export type RestRequest = {
@@ -11,14 +13,23 @@ export type RestRequest = {
   path: string;
   query?: Record<string, string>;
   body?: unknown;
+  /**
+   * Body serialization format.
+   * - "json" (default): JSON.stringify the body and set Content-Type: application/json
+   * - "raw": pass body directly to fetch (e.g., for FormData, URLSearchParams, ReadableStream)
+   */
+  bodyType?: "json" | "raw";
   headers?: Record<string, string>;
+  /** AbortSignal to cancel the request. */
+  signal?: AbortSignal;
   /** Rate limit bucket key (e.g., "videos:list", "search:list"). */
   bucketId?: string;
 };
 
 /**
- * A parsed REST response with typed data and optional rate limit info.
+ * Parsed response from a platform API request.
  *
+ * @postcondition data contains the parsed JSON response body
  * @category Plugin Development
  */
 export type RestResponse<T = unknown> = {
@@ -29,7 +40,7 @@ export type RestResponse<T = unknown> = {
 };
 
 /**
- * Rate limit state extracted from platform response headers.
+ * Rate limit metadata extracted from response headers.
  *
  * @category Plugin Development
  */
@@ -43,6 +54,8 @@ export type RateLimitInfo = {
 /**
  * Configuration options for creating a RestManager.
  *
+ * @precondition baseUrl must use HTTPS
+ * @precondition rateLimitStrategy must be initialized
  * @category Plugin Development
  */
 export type RestManagerOptions = {
@@ -56,7 +69,7 @@ export type RestManagerOptions = {
 };
 
 /**
- * Retry behavior configuration for failed requests.
+ * Configuration for request retry behavior.
  *
  * @category Plugin Development
  */
@@ -64,6 +77,8 @@ export type RetryConfig = {
   maxRetries?: number;
   baseDelay?: number;
   retryableStatuses?: number[];
+  /** Request timeout in milliseconds. Applied when no user-provided signal exists. */
+  timeout?: number;
 };
 
 /**

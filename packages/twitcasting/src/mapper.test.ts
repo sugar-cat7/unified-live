@@ -122,6 +122,19 @@ describe("toContent", () => {
   });
 });
 
+describe("Object.freeze", () => {
+  it("returned objects are frozen", () => {
+    const live = toLive(mockLiveMovie, mockUser);
+    expect(Object.isFrozen(live)).toBe(true);
+
+    const video = toVideo(mockArchiveMovie, mockUser);
+    expect(Object.isFrozen(video)).toBe(true);
+
+    const channel = toChannel(mockUser);
+    expect(Object.isFrozen(channel)).toBe(true);
+  });
+});
+
 describe("toChannel", () => {
   it("converts a TwitCasting user to Channel", () => {
     const result = toChannel(mockUser);

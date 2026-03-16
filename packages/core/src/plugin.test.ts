@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ValidationError } from "./errors";
 import { PlatformPlugin, type PluginDefinition, type PluginMethods } from "./plugin";
 import type { RateLimitHandle, RateLimitStrategy } from "./rest/strategy";
 import type { ResolvedUrl } from "./types";
@@ -71,6 +72,24 @@ describe("PlatformPlugin.create", () => {
   afterEach(() => {
     plugin?.[Symbol.dispose]();
     plugin = undefined;
+  });
+
+  it("throws ValidationError for non-HTTPS baseUrl", () => {
+    expect(() =>
+      PlatformPlugin.create(
+        { ...createMinimalDefinition(), baseUrl: "http://api.example.com" },
+        createMockMethods(),
+      ),
+    ).toThrow(ValidationError);
+  });
+
+  it("throws ValidationError for invalid baseUrl", () => {
+    expect(() =>
+      PlatformPlugin.create(
+        { ...createMinimalDefinition(), baseUrl: "not-a-url" },
+        createMockMethods(),
+      ),
+    ).toThrow(ValidationError);
   });
 
   it("creates a plugin with required fields only", () => {

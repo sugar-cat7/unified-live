@@ -39,6 +39,7 @@ export const Err = <E extends UnifiedLiveError>(err: E): ErrResult<E> => {
 
 /**
  * Wrap a promise into a Result, catching thrown errors.
+ * @internal
  *
  * @internal
  * @param p - the promise to wrap
@@ -62,6 +63,7 @@ export const wrap = async <T, E extends UnifiedLiveError>(
 /**
  * Unwrap a Result — returns the value or throws the error.
  * Use at public API boundaries to convert Result back to thrown exceptions.
+ * @internal
  *
  * @internal
  * @param result - the Result to unwrap

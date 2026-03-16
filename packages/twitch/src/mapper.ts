@@ -48,7 +48,7 @@ export type TwitchUser = {
  * @postcondition returns LiveStream with sessionId set to stream.id
  */
 export const toLive = (stream: TwitchStream): LiveStream => {
-  return {
+  return Object.freeze({
     id: stream.id,
     platform: "twitch",
     title: stream.title,
@@ -64,7 +64,7 @@ export const toLive = (stream: TwitchStream): LiveStream => {
     viewerCount: stream.viewer_count,
     startedAt: new Date(stream.started_at),
     raw: stream,
-  };
+  } satisfies LiveStream);
 };
 
 /**
@@ -76,7 +76,7 @@ export const toLive = (stream: TwitchStream): LiveStream => {
  * @postcondition returns Video with sessionId set to stream_id (if available)
  */
 export const toVideo = (video: TwitchVideo): Video => {
-  return {
+  return Object.freeze({
     id: video.id,
     platform: "twitch",
     title: video.title,
@@ -93,7 +93,7 @@ export const toVideo = (video: TwitchVideo): Video => {
     viewCount: video.view_count,
     publishedAt: new Date(video.published_at),
     raw: video,
-  };
+  } satisfies Video);
 };
 
 /**
@@ -103,7 +103,7 @@ export const toVideo = (video: TwitchVideo): Video => {
  * @returns unified Channel
  */
 export const toChannel = (user: TwitchUser): Channel => {
-  return {
+  return Object.freeze({
     id: user.id,
     platform: "twitch",
     name: user.display_name,
@@ -113,7 +113,7 @@ export const toChannel = (user: TwitchUser): Channel => {
       width: 300,
       height: 300,
     },
-  };
+  } satisfies Channel);
 };
 
 /**
@@ -136,6 +136,12 @@ export const parseDuration = (duration: string): number => {
   return hours * 3600 + minutes * 60 + seconds;
 };
 
+/**
+ * Replace Twitch thumbnail URL template placeholders with a standard 640x360 resolution.
+ *
+ * @param templateUrl - thumbnail URL with {width}/{height} placeholders
+ * @returns resolved thumbnail with URL and dimensions
+ */
 const formatThumbnailUrl = (templateUrl: string) => {
   const url = templateUrl
     .replace("%{width}", "640")

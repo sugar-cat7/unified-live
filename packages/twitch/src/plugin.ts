@@ -34,12 +34,13 @@ const parseTwitchRateLimitHeaders = createRateLimitHeaderParser({
  *
  * @param config - Twitch plugin configuration including client credentials
  * @returns configured PlatformPlugin for Twitch
+ * @throws {ValidationError} if clientId or clientSecret are empty/whitespace
  * @precondition config.clientId and config.clientSecret are valid Twitch app credentials
  * @postcondition returns a PlatformPlugin that handles Twitch URLs and API calls
  * @idempotency Not idempotent — each call creates a new plugin instance
  */
 export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin => {
-  if (!config.clientId || !config.clientSecret) {
+  if (!config.clientId?.trim() || !config.clientSecret?.trim()) {
     throw new ValidationError(
       "VALIDATION_INVALID_INPUT",
       "Twitch clientId and clientSecret are required",

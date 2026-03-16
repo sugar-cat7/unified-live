@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  BroadcastSession,
   broadcastSessionSchema,
-  Content,
+  Channel,
   channelRefSchema,
   channelSchema,
+  Content,
   contentSchema,
+  LiveStream,
   liveStreamSchema,
+  Page,
   resolvedUrlSchema,
   thumbnailSchema,
+  Video,
   videoSchema,
 } from "./types";
 
@@ -273,5 +278,99 @@ describe("Content type guards", () => {
   it("isVideo returns false for live", () => {
     const content = contentSchema.parse(baseLiveStream);
     expect(Content.isVideo(content)).toBe(false);
+  });
+});
+
+describe("LiveStream.is", () => {
+  it("returns true for valid LiveStream", () => {
+    expect(LiveStream.is(baseLiveStream)).toBe(true);
+  });
+
+  it("returns false for Video", () => {
+    expect(LiveStream.is(baseVideo)).toBe(false);
+  });
+
+  it("returns false for non-object", () => {
+    expect(LiveStream.is("not an object")).toBe(false);
+  });
+});
+
+describe("Video.is", () => {
+  it("returns true for valid Video", () => {
+    expect(Video.is(baseVideo)).toBe(true);
+  });
+
+  it("returns false for LiveStream", () => {
+    expect(Video.is(baseLiveStream)).toBe(false);
+  });
+});
+
+describe("Channel.is", () => {
+  it("returns true for valid Channel", () => {
+    const channel = {
+      id: "ch1",
+      platform: "test",
+      name: "Test Channel",
+      url: "https://example.com/ch1",
+    };
+    expect(Channel.is(channel)).toBe(true);
+  });
+
+  it("returns false for invalid object", () => {
+    expect(Channel.is({ id: "ch1" })).toBe(false);
+  });
+});
+
+describe("BroadcastSession.is", () => {
+  it("returns true for valid BroadcastSession", () => {
+    const session = {
+      sessionId: "s1",
+      platform: "twitch",
+      channel: validChannelRef,
+      startedAt: new Date(),
+      contentIds: { liveId: "l1" },
+    };
+    expect(BroadcastSession.is(session)).toBe(true);
+  });
+
+  it("returns false for invalid object", () => {
+    expect(BroadcastSession.is({ sessionId: "" })).toBe(false);
+  });
+});
+
+describe("Page.map", () => {
+  it("transforms items while preserving pagination metadata", () => {
+    const page: Page<{ id: string; name: string }> = {
+      items: [
+        { id: "1", name: "Alice" },
+        { id: "2", name: "Bob" },
+      ],
+      cursor: "next-page",
+      total: 10,
+      hasMore: true,
+    };
+
+    const mapped = Page.map(page, (item) => item.id);
+    expect(mapped.items).toEqual(["1", "2"]);
+    expect(mapped.cursor).toBe("next-page");
+    expect(mapped.total).toBe(10);
+    expect(mapped.hasMore).toBe(true);
+  });
+
+  it("handles empty page", () => {
+    const page: Page<string> = { items: [], hasMore: false };
+    const mapped = Page.map(page, (s) => s.length);
+    expect(mapped.items).toEqual([]);
+    expect(mapped.hasMore).toBe(false);
+  });
+});
+
+describe("Page.empty", () => {
+  it("creates an empty page", () => {
+    const page = Page.empty<string>();
+    expect(page.items).toEqual([]);
+    expect(page.hasMore).toBe(false);
+    expect(page.cursor).toBeUndefined();
+    expect(page.total).toBeUndefined();
   });
 });

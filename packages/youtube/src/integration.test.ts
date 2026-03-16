@@ -1,4 +1,4 @@
-import { Content, UnifiedClient } from "@unified-live/core";
+import { Content, NotFoundError, UnifiedClient } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
 
@@ -107,5 +107,15 @@ describe("YouTube Integration", () => {
 
     // Should not throw
     client[Symbol.dispose]();
+  });
+
+  it("getContent throws NotFoundError for nonexistent video", async () => {
+    const plugin = createYouTubePlugin({
+      apiKey: "test-key",
+      fetch: createMockFetch(() => ({ body: { items: [] } })),
+    });
+
+    await expect(plugin.getContent("nonexistent")).rejects.toThrow(NotFoundError);
+    plugin[Symbol.dispose]();
   });
 });

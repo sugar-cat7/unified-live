@@ -22,24 +22,38 @@ export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitS
   const limit = config.global.requests;
   let resetsAt = new Date(Date.now() + config.global.perMs);
   const waiters: Array<() => void> = [];
+  let disposed = false;
+  let refillTimer: ReturnType<typeof setInterval> | undefined;
 
-  const refillTimer = setInterval(() => {
-    remaining = limit;
-    resetsAt = new Date(Date.now() + config.global.perMs);
-    // Wake all waiters
-    while (waiters.length > 0) {
-      const resolve = waiters.shift();
-      resolve?.();
+  const ensureRefillTimer = (): void => {
+    if (refillTimer !== undefined || disposed) return;
+    refillTimer = setInterval(() => {
+      remaining = limit;
+      resetsAt = new Date(Date.now() + config.global.perMs);
+      // Wake all waiters
+      while (waiters.length > 0) {
+        const resolve = waiters.shift();
+        resolve?.();
+      }
+    }, config.global.perMs);
+
+    if (typeof refillTimer === "object" && typeof refillTimer.unref === "function") {
+      refillTimer.unref();
     }
-  }, config.global.perMs);
-
-  if ("unref" in refillTimer) {
-    refillTimer.unref();
-  }
+  };
 
   return {
     acquire(_req: RestRequest): Promise<RateLimitHandle> {
+      ensureRefillTimer();
       const tryAcquire = (): Promise<RateLimitHandle> => {
+        if (disposed) {
+          // Return a no-op handle when disposed — allows pending promises to resolve
+          return Promise.resolve({
+            complete() {},
+            release() {},
+          } satisfies RateLimitHandle);
+        }
+
         if (remaining > 0) {
           remaining--;
           const handle: RateLimitHandle = {
@@ -76,7 +90,10 @@ export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitS
     },
 
     [Symbol.dispose](): void {
-      clearInterval(refillTimer);
+      disposed = true;
+      if (refillTimer !== undefined) {
+        clearInterval(refillTimer);
+      }
       // Unblock all waiters
       while (waiters.length > 0) {
         const resolve = waiters.shift();

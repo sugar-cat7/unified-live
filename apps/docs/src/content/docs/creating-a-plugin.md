@@ -63,24 +63,25 @@ const matchExampleUrl = (url: string): ResolvedUrl | null => {
 Define your `PluginDefinition` with all platform-specific settings. This will be assembled inside a factory function (see Step 4):
 
 ```ts
-import { TokenManager, createTokenBucketStrategy, type PluginDefinition } from "@unified-live/core";
+import {
+  TokenManager,
+  createTokenBucketStrategy,
+  createRateLimitHeaderParser,
+  type PluginDefinition,
+} from "@unified-live/core";
+
+const parseHeaders = createRateLimitHeaderParser({
+  limit: "X-RateLimit-Limit",
+  remaining: "X-RateLimit-Remaining",
+  reset: "X-RateLimit-Reset",
+});
 
 const createDefinition = (apiKey: string): PluginDefinition => ({
   name: "example",
   baseUrl: "https://api.example.tv/v1",
   rateLimitStrategy: createTokenBucketStrategy({
     global: { requests: 100, perMs: 60_000 }, // 100 req/min
-    parseHeaders: (headers) => {
-      const limit = headers.get("X-RateLimit-Limit");
-      const remaining = headers.get("X-RateLimit-Remaining");
-      const reset = headers.get("X-RateLimit-Reset");
-      if (!limit || !remaining || !reset) return undefined;
-      return {
-        limit: parseInt(limit, 10),
-        remaining: parseInt(remaining, 10),
-        resetsAt: new Date(parseInt(reset, 10) * 1000),
-      };
-    },
+    parseHeaders,
   }),
   tokenManager: TokenManager.static(`Bearer ${apiKey}`),
   matchUrl: matchExampleUrl,
@@ -174,7 +175,7 @@ Combine definition and methods with `PlatformPlugin.create()`:
 
 ```ts
 export const createExamplePlugin = (config: { apiKey: string }): PlatformPlugin => {
-  return PlatformPlugin.create(definition, methods);
+  return PlatformPlugin.create(createDefinition(config.apiKey), methods);
 };
 ```
 

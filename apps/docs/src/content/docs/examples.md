@@ -19,7 +19,7 @@ const client = UnifiedClient.create({
 const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 console.log(content.title, content.type); // "live" or "video"
 
-client.dispose();
+client[Symbol.dispose]();
 ```
 
 ### List Live Streams for a Channel
@@ -76,7 +76,7 @@ const allStreams = [...ytStreams, ...twitchStreams].sort((a, b) => b.viewerCount
 
 console.log(`${allStreams.length} streams across platforms`);
 
-client.dispose();
+client[Symbol.dispose]();
 ```
 
 ### Live Stream Monitor
@@ -101,7 +101,7 @@ await poll(); // initial check
 
 // Cleanup
 clearInterval(interval);
-client.dispose();
+client[Symbol.dispose]();
 ```
 
 ### Type-Safe Content Branching
@@ -155,7 +155,7 @@ const client = UnifiedClient.create({
 const content = await client.getContent("https://www.twitch.tv/videos/123456");
 // A span "unified-live.rest twitch GET /videos" is sent to your collector
 
-client.dispose();
+client[Symbol.dispose]();
 await sdk.shutdown();
 ```
 
@@ -209,7 +209,7 @@ const mockPlugin: PlatformPlugin = {
   }),
   getLiveStreams: async () => [],
   getVideos: async () => ({ items: [mockContent as Video], hasMore: false }),
-  dispose: () => {},
+  [Symbol.dispose]: () => {},
 };
 
 // Use in tests

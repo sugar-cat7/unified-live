@@ -317,7 +317,7 @@ describe("createExamplePlugin", () => {
     const content = await plugin.getContent("123");
     expect(content.title).toBe("Test");
 
-    plugin.dispose();
+    plugin[Symbol.dispose]();
   });
 });
 ```

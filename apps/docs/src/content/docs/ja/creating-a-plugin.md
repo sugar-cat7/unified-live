@@ -220,8 +220,13 @@ const createOAuth2TokenManager = (config: {
         const res = await fetch("https://api.example.tv/oauth2/token", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `grant_type=client_credentials&client_id=${config.clientId}&client_secret=${config.clientSecret}`,
+          body: new URLSearchParams({
+            grant_type: "client_credentials",
+            client_id: config.clientId,
+            client_secret: config.clientSecret,
+          }).toString(),
         });
+        if (!res.ok) throw new Error(`Token endpoint returned ${res.status}`);
         const data = await res.json();
         token = data.access_token;
         expiresAt = Date.now() + data.expires_in * 1000 * 0.9; // 90%で更新

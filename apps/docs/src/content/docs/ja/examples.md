@@ -22,6 +22,24 @@ console.log(content.title, content.type); // "live" or "video"
 client[Symbol.dispose]();
 ```
 
+### エラーハンドリング
+
+```ts
+import { UnifiedLiveError, NotFoundError, RateLimitError } from "@unified-live/core";
+
+try {
+  const content = await client.getContent("https://www.youtube.com/watch?v=invalid");
+} catch (err) {
+  if (err instanceof RateLimitError) {
+    console.log(`レート制限 — ${err.retryAfter}秒後にリトライ`);
+  } else if (err instanceof NotFoundError) {
+    console.log(`見つかりません: ${err.message}`);
+  } else if (err instanceof UnifiedLiveError) {
+    console.log(`SDKエラー [${err.code}]: ${err.message}`);
+  }
+}
+```
+
 ### チャンネルのライブ配信一覧
 
 ```ts

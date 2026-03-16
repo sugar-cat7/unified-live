@@ -22,6 +22,24 @@ console.log(content.title, content.type); // "live" or "video"
 client[Symbol.dispose]();
 ```
 
+### Error Handling
+
+```ts
+import { UnifiedLiveError, NotFoundError, RateLimitError } from "@unified-live/core";
+
+try {
+  const content = await client.getContent("https://www.youtube.com/watch?v=invalid");
+} catch (err) {
+  if (err instanceof RateLimitError) {
+    console.log(`Rate limited — retry after ${err.retryAfter}s`);
+  } else if (err instanceof NotFoundError) {
+    console.log(`Not found: ${err.message}`);
+  } else if (err instanceof UnifiedLiveError) {
+    console.log(`SDK error [${err.code}]: ${err.message}`);
+  }
+}
+```
+
 ### List Live Streams for a Channel
 
 ```ts

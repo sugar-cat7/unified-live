@@ -60,17 +60,16 @@ const matchExampleUrl = (url: string): ResolvedUrl | null => {
 
 ## Step 2: Plugin Configuration
 
-Define your `PluginDefinition` with all platform-specific settings:
+Define your `PluginDefinition` with all platform-specific settings. This will be assembled inside a factory function (see Step 4):
 
 ```ts
 import {
-  PlatformPlugin,
   TokenManager,
   createTokenBucketStrategy,
   type PluginDefinition,
 } from "@unified-live/core";
 
-const definition: PluginDefinition = {
+const createDefinition = (apiKey: string): PluginDefinition => ({
   name: "example",
   baseUrl: "https://api.example.tv/v1",
   rateLimitStrategy: createTokenBucketStrategy({
@@ -95,7 +94,7 @@ const definition: PluginDefinition = {
     authModel: "apiKey",
     rateLimitModel: "tokenBucket",
   },
-};
+});
 ```
 
 ## Step 3: Data Methods

@@ -44,14 +44,14 @@ const client = UnifiedClient.create({
 });
 
 // One interface — the SDK handles auth, rate limits, and data normalization
-const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
-const content = await client.getContent("https://twitcasting.tv/user/movie/789");
+const yt = await client.getContent("https://www.youtube.com/watch?v=abc123");
+const tw = await client.getContent("https://www.twitch.tv/videos/123456");
+const tc = await client.getContent("https://twitcasting.tv/user/movie/789");
 
 // All return the same Content type
-console.log(content.title); // string
-console.log(content.platform); // "youtube" | "twitch" | "twitcasting"
-console.log(content.type); // "live" | "video"
+console.log(yt.title); // string
+console.log(tw.platform); // "twitch"
+console.log(tc.type); // "live" | "video"
 ```
 
 ### What the SDK Handles for You

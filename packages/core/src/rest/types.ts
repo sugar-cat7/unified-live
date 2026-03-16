@@ -85,10 +85,9 @@ export type RetryConfig = {
  * Creates a rate limit header parser from header name mappings.
  * Eliminates duplication across plugins that use standard limit/remaining/reset headers.
  *
- * @internal
  * @param headerNames - mapping of header names for limit, remaining, and reset
  * @returns a parser function that extracts rate limit info from headers
- * @idempotency Safe — returns a pure function
+ * @category Plugin Development
  */
 export const createRateLimitHeaderParser = (headerNames: {
   limit: string;

@@ -396,6 +396,8 @@ const sleep = (ms: number): Promise<void> => {
 /**
  * Companion object for the RestManager type.
  * Provides type guard utility.
+ *
+ * @category Plugin Development
  */
 export const RestManager = {
   /**
@@ -425,10 +427,10 @@ export const RestManager = {
  * Parse a Retry-After header value into a bounded number of seconds.
  * Returns fallback if the header is missing, NaN, or out of bounds.
  *
- * @internal
  * @param header - raw Retry-After header value (may be null)
  * @param fallback - default seconds if header is missing or invalid
  * @returns seconds in range [0, 120], or fallback if header is missing/invalid
+ * @category Plugin Development
  */
 export const parseRetryAfter = (header: string | null, fallback = 1): number => {
   if (!header) return Math.min(Math.max(fallback, 0), 120);

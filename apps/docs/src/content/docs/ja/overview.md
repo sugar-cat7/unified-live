@@ -44,14 +44,14 @@ const client = UnifiedClient.create({
 });
 
 // 1つのインターフェース — SDKが認証、レート制限、データ正規化を処理
-const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
-const content = await client.getContent("https://twitcasting.tv/user/movie/789");
+const yt = await client.getContent("https://www.youtube.com/watch?v=abc123");
+const tw = await client.getContent("https://www.twitch.tv/videos/123456");
+const tc = await client.getContent("https://twitcasting.tv/user/movie/789");
 
 // すべて同じ Content 型で返される
-console.log(content.title); // string
-console.log(content.platform); // "youtube" | "twitch" | "twitcasting"
-console.log(content.type); // "live" | "video"
+console.log(yt.title); // string
+console.log(tw.platform); // "twitch"
+console.log(tc.type); // "live" | "video"
 ```
 
 ### SDK が処理すること

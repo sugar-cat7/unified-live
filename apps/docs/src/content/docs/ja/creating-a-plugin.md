@@ -60,17 +60,16 @@ const matchExampleUrl = (url: string): ResolvedUrl | null => {
 
 ## ステップ 2: プラグイン設定
 
-プラットフォーム固有の設定を `PluginDefinition` で定義:
+プラットフォーム固有の設定を `PluginDefinition` で定義します。これはファクトリ関数内で組み立てます（ステップ 4 参照）:
 
 ```ts
 import {
-  PlatformPlugin,
   TokenManager,
   createTokenBucketStrategy,
   type PluginDefinition,
 } from "@unified-live/core";
 
-const definition: PluginDefinition = {
+const createDefinition = (apiKey: string): PluginDefinition => ({
   name: "example",
   baseUrl: "https://api.example.tv/v1",
   rateLimitStrategy: createTokenBucketStrategy({
@@ -95,7 +94,7 @@ const definition: PluginDefinition = {
     authModel: "apiKey",
     rateLimitModel: "tokenBucket",
   },
-};
+});
 ```
 
 ## ステップ 3: データメソッド

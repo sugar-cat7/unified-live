@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AuthenticationError,
   classifyNetworkError,
+  ErrorCode,
   NetworkError,
   NotFoundError,
   ParseError,
@@ -118,6 +119,86 @@ describe("UnifiedLiveError base", () => {
       resourceId: "abc123",
     });
   });
+
+  it("toJSON returns structured representation", () => {
+    const cause = new Error("upstream failure");
+    const error = new UnifiedLiveError(
+      "test error",
+      "INTERNAL",
+      {
+        platform: "youtube",
+        method: "GET",
+        path: "/videos",
+        status: 500,
+      },
+      { cause },
+    );
+
+    const json = error.toJSON();
+    expect(json).toEqual({
+      name: "UnifiedLiveError",
+      message: "test error",
+      code: "INTERNAL",
+      context: {
+        platform: "youtube",
+        method: "GET",
+        path: "/videos",
+        status: 500,
+      },
+      cause: {
+        name: "Error",
+        message: "upstream failure",
+      },
+    });
+  });
+
+  it("toJSON omits cause when not present", () => {
+    const error = new UnifiedLiveError("test", "INTERNAL", { platform: "test" });
+    const json = error.toJSON();
+    expect(json.cause).toBeUndefined();
+  });
+
+  it("toJSON serializes nested cause chains", () => {
+    const root = new Error("root cause");
+    const mid = new Error("mid cause", { cause: root });
+    const error = new UnifiedLiveError("top", "INTERNAL", { platform: "test" }, { cause: mid });
+
+    const json = error.toJSON();
+    const cause = json.cause as Record<string, unknown>;
+    expect(cause.message).toBe("mid cause");
+    const nestedCause = cause.cause as Record<string, unknown>;
+    expect(nestedCause.message).toBe("root cause");
+    expect(nestedCause.cause).toBeUndefined();
+  });
+
+  it("is JSON-serializable", () => {
+    const error = new NotFoundError("youtube", "abc123");
+    const serialized = JSON.stringify(error);
+    const parsed = JSON.parse(serialized);
+    expect(parsed.code).toBe("NOT_FOUND");
+    expect(parsed.context.resourceId).toBe("abc123");
+  });
+
+  it.each([
+    { code: "RATE_LIMIT_EXCEEDED" as const, retryable: true },
+    { code: "QUOTA_EXHAUSTED" as const, retryable: true },
+    { code: "NETWORK_TIMEOUT" as const, retryable: true },
+    { code: "NETWORK_CONNECTION" as const, retryable: true },
+    { code: "NETWORK_DNS" as const, retryable: true },
+    { code: "NOT_FOUND" as const, retryable: false },
+    { code: "AUTHENTICATION_INVALID" as const, retryable: false },
+    { code: "AUTHENTICATION_EXPIRED" as const, retryable: false },
+    { code: "PARSE_JSON" as const, retryable: false },
+    { code: "PARSE_RESPONSE" as const, retryable: false },
+    { code: "VALIDATION_INVALID_URL" as const, retryable: false },
+    { code: "VALIDATION_INVALID_INPUT" as const, retryable: false },
+    { code: "PLATFORM_NOT_FOUND" as const, retryable: false },
+    { code: "NETWORK_ABORT" as const, retryable: false },
+    { code: "INTERNAL" as const, retryable: false },
+  ])("retryable is $retryable for code $code", ({ code, retryable }) => {
+    const error = new UnifiedLiveError("test", code, { platform: "test" });
+    expect(error.retryable).toBe(retryable);
+  });
 });
 
 describe("NotFoundError", () => {
@@ -173,6 +254,18 @@ describe("RateLimitError", () => {
     const error = new RateLimitError("twitch", { retryAfter: 10, cause });
     expect(error.cause).toBe(cause);
   });
+
+  it("toJSON includes retryAfter", () => {
+    const error = new RateLimitError("twitch", { retryAfter: 30 });
+    const json = error.toJSON();
+    expect(json.retryAfter).toBe(30);
+    expect(json.code).toBe("RATE_LIMIT_EXCEEDED");
+  });
+
+  it("retryable is true", () => {
+    const error = new RateLimitError("twitch");
+    expect(error.retryable).toBe(true);
+  });
 });
 
 describe("QuotaExhaustedError", () => {
@@ -189,6 +282,23 @@ describe("QuotaExhaustedError", () => {
     expect(error.details.resetsAt).toBe(resetsAt);
     expect(error.details.requestedCost).toBe(100);
     expect(error.message).toContain("9500/10000");
+  });
+
+  it("toJSON includes details with ISO date", () => {
+    const resetsAt = new Date("2024-01-02T08:00:00Z");
+    const error = new QuotaExhaustedError("youtube", {
+      consumed: 9500,
+      limit: 10000,
+      resetsAt,
+      requestedCost: 100,
+    });
+    const json = error.toJSON();
+    expect(json.details).toEqual({
+      consumed: 9500,
+      limit: 10000,
+      resetsAt: "2024-01-02T08:00:00.000Z",
+      requestedCost: 100,
+    });
   });
 
   it("preserves cause", () => {
@@ -316,5 +426,44 @@ describe("classifyNetworkError", () => {
     },
   ])("classifies $name as $expected", ({ error, expected }) => {
     expect(classifyNetworkError(error)).toBe(expected);
+  });
+});
+
+describe("ErrorCode category helpers", () => {
+  it.each([
+    ["NETWORK_TIMEOUT", true],
+    ["NETWORK_CONNECTION", true],
+    ["NETWORK_DNS", true],
+    ["NETWORK_ABORT", true],
+    ["NOT_FOUND", false],
+    ["INTERNAL", false],
+  ] as const)("isNetwork(%s) = %s", (code, expected) => {
+    expect(ErrorCode.isNetwork(code)).toBe(expected);
+  });
+
+  it.each([
+    ["AUTHENTICATION_INVALID", true],
+    ["AUTHENTICATION_EXPIRED", true],
+    ["NETWORK_TIMEOUT", false],
+  ] as const)("isAuth(%s) = %s", (code, expected) => {
+    expect(ErrorCode.isAuth(code)).toBe(expected);
+  });
+
+  it.each([
+    ["NOT_FOUND", true],
+    ["VALIDATION_INVALID_URL", true],
+    ["VALIDATION_INVALID_INPUT", true],
+    ["PLATFORM_NOT_FOUND", true],
+    ["RATE_LIMIT_EXCEEDED", false],
+  ] as const)("isClientError(%s) = %s", (code, expected) => {
+    expect(ErrorCode.isClientError(code)).toBe(expected);
+  });
+
+  it.each([
+    ["RATE_LIMIT_EXCEEDED", true],
+    ["QUOTA_EXHAUSTED", true],
+    ["NETWORK_TIMEOUT", false],
+  ] as const)("isRateLimit(%s) = %s", (code, expected) => {
+    expect(ErrorCode.isRateLimit(code)).toBe(expected);
   });
 });

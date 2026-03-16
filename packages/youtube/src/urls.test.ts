@@ -63,4 +63,12 @@ describe("matchYouTubeUrl", () => {
   ])("returns null for $name", ({ url }) => {
     expect(matchYouTubeUrl(url)).toBeNull();
   });
+
+  it("returns null for empty string", () => {
+    expect(matchYouTubeUrl("")).toBeNull();
+  });
+
+  it("returns null for whitespace", () => {
+    expect(matchYouTubeUrl("  ")).toBeNull();
+  });
 });

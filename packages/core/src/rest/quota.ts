@@ -14,19 +14,21 @@ export type QuotaBudgetConfig = {
  *
  * @returns the next midnight PT as a Date
  */
+/** Reusable formatter for Pacific time — Intl.DateTimeFormat construction is expensive. */
+const ptFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
 const nextResetTime = (): Date => {
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-  const parts = formatter.formatToParts(now);
+  const parts = ptFormatter.formatToParts(now);
   const get = (type: Intl.DateTimeFormatPartTypes) => {
     const part = parts.find((p) => p.type === type);
     return Number.parseInt(part?.value ?? "0", 10);
@@ -60,6 +62,12 @@ export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitS
   const defaultCost = config.defaultCost ?? 1;
   const platform = config.platform ?? "unknown";
 
+  for (const [key, cost] of Object.entries(config.costMap)) {
+    if (cost < 0) {
+      throw new Error(`Invalid cost map: "${key}" has negative cost ${cost}`);
+    }
+  }
+
   let consumed = 0;
   let resetsAt = nextResetTime();
   let resetTimer: ReturnType<typeof setTimeout> | undefined;
@@ -69,7 +77,11 @@ export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitS
     if (ms <= 0) {
       consumed = 0;
       resetsAt = nextResetTime();
-      scheduleReset();
+      // Use setTimeout(0) to break potential recursion on clock edge
+      resetTimer = setTimeout(() => scheduleReset(), 0);
+      if (resetTimer && "unref" in resetTimer) {
+        resetTimer.unref();
+      }
       return;
     }
     resetTimer = setTimeout(() => {
@@ -77,7 +89,7 @@ export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitS
       resetsAt = nextResetTime();
       scheduleReset();
     }, ms);
-    if (resetTimer && "unref" in resetTimer) {
+    if (typeof resetTimer === "object" && typeof resetTimer.unref === "function") {
       resetTimer.unref();
     }
   };

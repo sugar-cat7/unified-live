@@ -169,9 +169,17 @@ export const UnifiedClient = {
         if (!url) {
           throw new ValidationError("VALIDATION_INVALID_INPUT", "URL must be a non-empty string");
         }
+        try {
+          void new URL(url);
+        } catch {
+          throw new ValidationError("VALIDATION_INVALID_URL", `Invalid URL: "${url}"`);
+        }
         const resolved = matchUrl(url);
         if (!resolved) {
-          throw new PlatformNotFoundError(url);
+          throw new ValidationError(
+            "VALIDATION_INVALID_URL",
+            `No registered plugin matches URL: "${url}"`,
+          );
         }
         const plugin = getPlugin(resolved.platform);
         return plugin.getContent(resolved.id);
@@ -228,5 +236,29 @@ export const UnifiedClient = {
     };
 
     return client;
+  },
+
+  /**
+   * Type guard for UnifiedClient.
+   *
+   * @param value - the value to check
+   * @returns true if value implements UnifiedClient interface
+   * @postcondition returns true if value has all required UnifiedClient methods
+   */
+  is(value: unknown): value is UnifiedClient {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string | symbol, unknown>;
+    return (
+      typeof obj.register === "function" &&
+      typeof obj.getContent === "function" &&
+      typeof obj.getContentById === "function" &&
+      typeof obj.getLiveStreams === "function" &&
+      typeof obj.getVideos === "function" &&
+      typeof obj.getChannel === "function" &&
+      typeof obj.platform === "function" &&
+      typeof obj.match === "function" &&
+      typeof obj.platforms === "function" &&
+      typeof obj[Symbol.dispose] === "function"
+    );
   },
 } as const;

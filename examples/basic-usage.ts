@@ -10,7 +10,7 @@
  * - TwitCasting application credentials (client ID + secret)
  */
 
-import { Content, UnifiedClient } from "@unified-live/core";
+import { Content, ErrorCode, UnifiedClient, UnifiedLiveError } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 import { createTwitCastingPlugin } from "@unified-live/twitcasting";
@@ -30,7 +30,7 @@ const twitcasting = createTwitCastingPlugin({
   clientSecret: process.env.TWITCASTING_CLIENT_SECRET!,
 });
 
-// 2. Create unified client
+// 2. Create unified client (auto-disposes via `using`)
 using client = UnifiedClient.create({
   plugins: [youtube, twitch, twitcasting],
 });
@@ -39,6 +39,7 @@ using client = UnifiedClient.create({
 const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 console.log(`[${content.platform}] ${content.title}`);
 
+// 4. Use type guards to narrow content type
 if (Content.isVideo(content)) {
   console.log(`Duration: ${content.duration}s, Views: ${content.viewCount}`);
 }
@@ -47,16 +48,60 @@ if (Content.isLive(content)) {
   console.log(`Viewers: ${content.viewerCount}, Started: ${content.startedAt}`);
 }
 
-// 4. Fetch channel info
-const channel = await client.getChannel("https://www.twitch.tv/shroud");
+// 5. Fetch channel info
+const channel = await client.getChannel("twitch", "shroud");
 console.log(`Channel: ${channel.name} (${channel.platform})`);
 
-// 5. Paginate through videos
+// 6. Paginate through videos
 let cursor: string | undefined;
 do {
   const page = await client.getVideos("youtube", "UCuAXFkgsw1L7xaCfnd5JJOw", cursor);
+
   for (const video of page.items) {
     console.log(`  ${video.title} (${video.duration}s)`);
   }
+
   cursor = page.cursor;
 } while (cursor);
+
+// 7. Error handling with structured errors and category helpers
+try {
+  await client.getContent("https://www.youtube.com/watch?v=nonexistent");
+} catch (error) {
+  if (error instanceof UnifiedLiveError) {
+    // Structured error with code, context, and retryability
+    console.error(`Error [${error.code}]: ${error.message}`);
+    console.error(`Platform: ${error.platform}`);
+    console.error(`Retryable: ${error.retryable}`);
+
+    // ErrorCode category helpers for monitoring/alerting
+    if (ErrorCode.isNetwork(error.code)) {
+      console.error("Network issue — check connectivity");
+    } else if (ErrorCode.isRateLimit(error.code)) {
+      console.error("Rate limited — back off and retry");
+    } else if (ErrorCode.isClientError(error.code)) {
+      console.error("Client error — check your input");
+    }
+
+    // JSON-serializable for structured logging (supports nested cause chains)
+    console.error(JSON.stringify(error));
+  }
+}
+
+// 8. Request cancellation with AbortSignal
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 5000);
+
+try {
+  const plugin = client.platform("youtube");
+  await plugin.rest.request({
+    method: "GET",
+    path: "/videos",
+    query: { id: "dQw4w9WgXcQ", part: "snippet" },
+    signal: controller.signal,
+  });
+} catch (error) {
+  if (error instanceof UnifiedLiveError && error.code === "NETWORK_ABORT") {
+    console.log("Request was cancelled");
+  }
+}

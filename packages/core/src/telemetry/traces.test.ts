@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { trace } from "@opentelemetry/api";
+import { describe, expect, it, vi } from "vitest";
 import { getTracer, SpanAttributes } from "./traces.js";
 
 describe("getTracer", () => {
@@ -7,6 +8,13 @@ describe("getTracer", () => {
     expect(tracer).toBeDefined();
     expect(typeof tracer.startActiveSpan).toBe("function");
     expect(typeof tracer.startSpan).toBe("function");
+  });
+
+  it("passes tracer name and version to trace.getTracer", () => {
+    const spy = vi.spyOn(trace, "getTracer");
+    getTracer();
+    expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));
+    spy.mockRestore();
   });
 
   it("returns a tracer on repeated calls", () => {
@@ -36,14 +44,17 @@ describe("SpanAttributes", () => {
     ["RATE_LIMIT_LIMIT", "unified_live.rate_limit.limit"],
     ["QUOTA_CONSUMED", "unified_live.quota.consumed"],
     ["QUOTA_DAILY_REMAINING", "unified_live.quota.daily_remaining"],
-    ["ERROR_CODE", "error.code"],
+    ["SERVER_ADDRESS", "server.address"],
+    ["SERVER_PORT", "server.port"],
+    ["ERROR_CODE", "unified_live.error.code"],
     ["ERROR_TYPE", "error.type"],
-    ["ERROR_HAS_CAUSE", "error.has_cause"],
+    ["ERROR_HAS_CAUSE", "unified_live.error.has_cause"],
+    ["RETRY_COUNT", "unified_live.retry.count"],
   ] as const)("has %s = %s", (key, expected) => {
     expect(SpanAttributes[key]).toBe(expected);
   });
 
-  it("has exactly 11 attribute keys", () => {
-    expect(Object.keys(SpanAttributes)).toHaveLength(11);
+  it("has exactly 14 attribute keys", () => {
+    expect(Object.keys(SpanAttributes)).toHaveLength(14);
   });
 });

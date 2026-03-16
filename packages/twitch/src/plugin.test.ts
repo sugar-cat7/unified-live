@@ -1,3 +1,4 @@
+import { ValidationError } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTwitchPlugin } from "./plugin";
 
@@ -56,6 +57,12 @@ describe("createTwitchPlugin", () => {
     expect(() =>
       createTwitchPlugin({ clientId: "id", clientSecret: "", fetch: createMockFetch([]) }),
     ).toThrow("clientId and clientSecret are required");
+  });
+
+  it("throws ValidationError for whitespace-only credentials", () => {
+    expect(() =>
+      createTwitchPlugin({ clientId: "  ", clientSecret: "secret", fetch: createMockFetch([]) }),
+    ).toThrow(ValidationError);
   });
 
   it("creates a plugin with correct name", () => {

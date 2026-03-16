@@ -63,11 +63,7 @@ const matchExampleUrl = (url: string): ResolvedUrl | null => {
 Define your `PluginDefinition` with all platform-specific settings. This will be assembled inside a factory function (see Step 4):
 
 ```ts
-import {
-  TokenManager,
-  createTokenBucketStrategy,
-  type PluginDefinition,
-} from "@unified-live/core";
+import { TokenManager, createTokenBucketStrategy, type PluginDefinition } from "@unified-live/core";
 
 const createDefinition = (apiKey: string): PluginDefinition => ({
   name: "example",

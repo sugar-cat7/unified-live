@@ -63,11 +63,7 @@ const matchExampleUrl = (url: string): ResolvedUrl | null => {
 プラットフォーム固有の設定を `PluginDefinition` で定義します。これはファクトリ関数内で組み立てます（ステップ 4 参照）:
 
 ```ts
-import {
-  TokenManager,
-  createTokenBucketStrategy,
-  type PluginDefinition,
-} from "@unified-live/core";
+import { TokenManager, createTokenBucketStrategy, type PluginDefinition } from "@unified-live/core";
 
 const createDefinition = (apiKey: string): PluginDefinition => ({
   name: "example",

@@ -1,4 +1,3 @@
-import { SpanStatusCode } from "@opentelemetry/api";
 import type { TracerProvider } from "@opentelemetry/api";
 import {
   AuthenticationError,
@@ -10,13 +9,15 @@ import {
   ValidationError,
 } from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import { getTracer, SpanAttributes } from "./telemetry/traces";
-import { BatchResult } from "./types";
+import { getLogger } from "./telemetry/logger";
+import { getTracer, SpanAttributes, withSpan } from "./telemetry/traces";
+import { BatchResult, Page } from "./types";
 import type {
   Channel,
+  Clip,
+  ClipOptions,
   Content,
   LiveStream,
-  Page,
   ResolvedUrl,
   SearchOptions,
   Video,
@@ -138,6 +139,53 @@ export type UnifiedClient = {
    * @throws ValidationError if no query, status, or channelId provided, or platform doesn't support search
    */
   search(platform: string, options: SearchOptions): Promise<Page<Content>>;
+
+  /**
+   * List clips for a channel on a platform.
+   *
+   * @param platform - platform name
+   * @param channelId - channel identifier
+   * @param options - optional clip query options (date range, limit, cursor)
+   * @returns paginated list of clips
+   * @precondition platform is registered and supports clips
+   * @throws PlatformNotFoundError if platform is not registered
+   * @throws ValidationError if platform doesn't support clips
+   */
+  getClips(platform: string, channelId: string, options?: ClipOptions): Promise<Page<Clip>>;
+
+  /**
+   * Batch retrieve clips by platform and IDs.
+   *
+   * @param platform - platform name
+   * @param ids - clip identifiers
+   * @returns batch result with values and per-item errors
+   * @precondition platform is registered and supports clips
+   * @throws PlatformNotFoundError if platform is not registered
+   * @throws ValidationError if platform doesn't support clip retrieval by IDs
+   */
+  getClipsByIds(platform: string, ids: string[]): Promise<BatchResult<Clip>>;
+
+  /**
+   * Fetch live streams from all specified platforms in parallel.
+   *
+   * @param channelIds - mapping of platform name to channel ID arrays
+   * @returns mapping of platform name to batch result of live streams; failed platforms get empty BatchResult
+   * @postcondition all platforms are represented in the result, even on failure
+   * @idempotency Safe — read-only aggregation
+   */
+  getAllLiveStreams(
+    channelIds: Record<string, string[]>,
+  ): Promise<Record<string, BatchResult<LiveStream[]>>>;
+
+  /**
+   * Search across all registered plugins that support search.
+   *
+   * @param options - search options (query, status, channelId, order, limit, cursor)
+   * @returns mapping of platform name to paginated search results; failed platforms get empty Page
+   * @postcondition all searchable platforms are represented in the result, even on failure
+   * @idempotency Safe — read-only aggregation
+   */
+  searchAll(options: SearchOptions): Promise<Record<string, Page<Content>>>;
 
   /**
    * Access a specific platform plugin.
@@ -271,23 +319,10 @@ export const UnifiedClient = {
       attrs: Record<string, string | number>,
       fn: () => Promise<T>,
     ): Promise<T> => {
-      return tracer.startActiveSpan(`unified-live.client ${operationName}`, async (span) => {
-        span.setAttribute(SpanAttributes.OPERATION, operationName);
-        for (const [k, v] of Object.entries(attrs)) span.setAttribute(k, v);
-        try {
-          const result = await fn();
-          span.end();
-          return result;
-        } catch (error) {
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error instanceof Error ? error.message : String(error),
-          });
-          span.recordException(error instanceof Error ? error : new Error(String(error)));
-          span.end();
-          throw error;
-        }
-      });
+      return withSpan(tracer, `unified-live.client ${operationName}`, {
+        [SpanAttributes.OPERATION]: operationName,
+        ...attrs,
+      }, fn);
     };
 
     const client: UnifiedClient = {
@@ -409,6 +444,94 @@ export const UnifiedClient = {
         });
       },
 
+      async getClips(
+        platform: string,
+        channelId: string,
+        options?: ClipOptions,
+      ): Promise<Page<Clip>> {
+        return withClientSpan("getClips", { [SpanAttributes.PLATFORM]: platform }, () => {
+          const plugin = getPlugin(platform);
+          if (!plugin.getClips) {
+            throw new ValidationError(
+              "VALIDATION_INVALID_INPUT",
+              `Platform '${platform}' does not support clips`,
+            );
+          }
+          return plugin.getClips(channelId, options);
+        });
+      },
+
+      async getClipsByIds(platform: string, ids: string[]): Promise<BatchResult<Clip>> {
+        if (ids.length === 0) return BatchResult.empty();
+        return withClientSpan(
+          "getClipsByIds",
+          {
+            [SpanAttributes.PLATFORM]: platform,
+            [SpanAttributes.BATCH_SIZE]: ids.length,
+          },
+          () => {
+            const plugin = getPlugin(platform);
+            if (!plugin.getClipsByIds) {
+              throw new ValidationError(
+                "VALIDATION_INVALID_INPUT",
+                `Platform '${platform}' does not support clip retrieval by IDs`,
+              );
+            }
+            const uniqueIds = [...new Set(ids)];
+            return plugin.getClipsByIds(uniqueIds);
+          },
+        );
+      },
+
+      async getAllLiveStreams(
+        channelIds: Record<string, string[]>,
+      ): Promise<Record<string, BatchResult<LiveStream[]>>> {
+        return withClientSpan("getAllLiveStreams", {}, async () => {
+          const entries = Object.entries(channelIds);
+          const settled = await Promise.allSettled(
+            entries.map(async ([platform, ids]) => ({
+              platform,
+              result: await client.getLiveStreamsBatch(platform, ids),
+            })),
+          );
+          const out: Record<string, BatchResult<LiveStream[]>> = {};
+          for (const [i, s] of settled.entries()) {
+            if (s.status === "fulfilled") {
+              out[s.value.platform] = s.value.result;
+            } else {
+              out[entries[i]![0]] = BatchResult.empty();
+            }
+          }
+          return out;
+        });
+      },
+
+      async searchAll(searchOptions: SearchOptions): Promise<Record<string, Page<Content>>> {
+        return withClientSpan("searchAll", {}, async () => {
+          const searchablePlugins = [...plugins.entries()].filter(
+            ([, p]) => p.capabilities.supportsSearch && p.search,
+          );
+          const settled = await Promise.allSettled(
+            searchablePlugins.map(async ([name, p]) => ({
+              name,
+              result: await p.search!(searchOptions),
+            })),
+          );
+          const logger = getLogger("unified-live.client");
+          const out: Record<string, Page<Content>> = {};
+          for (const [i, s] of settled.entries()) {
+            if (s.status === "fulfilled") {
+              out[s.value.name] = s.value.result;
+            } else {
+              const name = searchablePlugins[i]![0];
+              logger.log("warn", `searchAll failed for platform ${name}`, { error: s.reason });
+              out[name] = Page.empty();
+            }
+          }
+          return out;
+        });
+      },
+
       platform(name: string): PlatformPlugin {
         return getPlugin(name);
       },
@@ -457,6 +580,10 @@ export const UnifiedClient = {
       typeof obj.getContents === "function" &&
       typeof obj.getLiveStreamsBatch === "function" &&
       typeof obj.search === "function" &&
+      typeof obj.getClips === "function" &&
+      typeof obj.getClipsByIds === "function" &&
+      typeof obj.getAllLiveStreams === "function" &&
+      typeof obj.searchAll === "function" &&
       typeof obj.platform === "function" &&
       typeof obj.match === "function" &&
       typeof obj.platforms === "function" &&

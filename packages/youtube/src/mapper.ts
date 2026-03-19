@@ -1,4 +1,4 @@
-import type { Channel, Content, LiveStream, Video } from "@unified-live/core";
+import type { Channel, Content, LiveStream, ScheduledStream, Video } from "@unified-live/core";
 import { ParseError } from "@unified-live/core";
 import type { components } from "./generated/youtube-api";
 
@@ -28,10 +28,10 @@ const pickThumbnail = (
  * Convert a YouTube Video resource to a unified Content type.
  *
  * @param item - YouTube video resource from the API
- * @returns unified Content (LiveStream if live, Video otherwise)
+ * @returns unified Content (LiveStream if live, ScheduledStream if upcoming, Video otherwise)
  * @throws ParseError if required fields (id, snippet, contentDetails, statistics) are missing
  * @precondition item was fetched with part=snippet,contentDetails,statistics,liveStreamingDetails
- * @postcondition returns LiveStream if currently live, Video otherwise
+ * @postcondition returns LiveStream if currently live, ScheduledStream if upcoming, Video otherwise
  */
 export const toContent = (item: YTVideoResource): Content => {
   const { id, snippet, contentDetails, statistics, liveStreamingDetails } = item;
@@ -72,6 +72,7 @@ export const toContent = (item: YTVideoResource): Content => {
   };
 
   const isLive = snippet.liveBroadcastContent === "live";
+  const isUpcoming = snippet.liveBroadcastContent === "upcoming";
 
   if (isLive && liveStreamingDetails?.actualStartTime) {
     return {
@@ -87,6 +88,23 @@ export const toContent = (item: YTVideoResource): Content => {
       startedAt: new Date(liveStreamingDetails.actualStartTime),
       raw: item,
     } satisfies LiveStream;
+  }
+
+  if (isUpcoming) {
+    return {
+      id,
+      platform: "youtube",
+      title: snippet.title ?? "",
+      url: `https://www.youtube.com/watch?v=${id}`,
+      thumbnail,
+      channel,
+      sessionId: id,
+      type: "scheduled",
+      scheduledStartAt: liveStreamingDetails?.scheduledStartTime
+        ? new Date(liveStreamingDetails.scheduledStartTime)
+        : new Date(publishedAt),
+      raw: item,
+    } satisfies ScheduledStream;
   }
 
   return {

@@ -1,3 +1,4 @@
+import type { ScheduledStream } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
 import type { YTChannelResource, YTVideoResource } from "./mapper";
 import { parseDuration, toChannel, toContent } from "./mapper";
@@ -38,6 +39,18 @@ const liveVideoResource: YTVideoResource = {
   },
 };
 
+const upcomingVideoResource: YTVideoResource = {
+  ...baseVideoResource,
+  id: "upcoming123",
+  snippet: {
+    ...baseVideoResource.snippet,
+    liveBroadcastContent: "upcoming",
+  },
+  liveStreamingDetails: {
+    scheduledStartTime: "2024-06-01T18:00:00Z",
+  },
+};
+
 describe("toContent", () => {
   it("maps a regular video", () => {
     const content = toContent(baseVideoResource);
@@ -68,6 +81,19 @@ describe("toContent", () => {
       expect(content.viewerCount).toBe(1500);
       expect(content.startedAt).toEqual(new Date("2024-01-01T12:00:00Z"));
     }
+  });
+
+  it("maps upcoming broadcast to ScheduledStream", () => {
+    const result = toContent(upcomingVideoResource);
+    expect(result.type).toBe("scheduled");
+    expect((result as ScheduledStream).scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
+  });
+
+  it("maps upcoming without scheduledStartTime using publishedAt", () => {
+    const item: YTVideoResource = { ...upcomingVideoResource, liveStreamingDetails: {} };
+    const result = toContent(item);
+    expect(result.type).toBe("scheduled");
+    expect((result as ScheduledStream).scheduledStartAt).toEqual(new Date("2024-01-01T00:00:00Z"));
   });
 
   it("preserves raw data", () => {

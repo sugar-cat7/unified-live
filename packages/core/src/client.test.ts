@@ -9,6 +9,9 @@ const mockCapabilities = {
   supportsArchiveResolution: false,
   authModel: "apiKey" as const,
   rateLimitModel: "tokenBucket" as const,
+  supportsBatchContent: false,
+  supportsBatchChannels: false,
+  supportsSearch: false,
 };
 
 const createMockPlugin = (name: string): PlatformPlugin => {

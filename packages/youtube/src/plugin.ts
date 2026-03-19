@@ -56,6 +56,9 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
         supportsArchiveResolution: true,
         authModel: "apiKey",
         rateLimitModel: "quota",
+        supportsBatchContent: false,
+        supportsBatchChannels: false,
+        supportsSearch: false,
       },
       transformRequest: (req) => ({
         ...req,

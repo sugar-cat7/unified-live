@@ -3,7 +3,16 @@ import { ValidationError } from "./errors";
 import { createRestManager, type RestManager } from "./rest/manager";
 import type { RateLimitStrategy } from "./rest/strategy";
 import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
-import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
+import type {
+  BatchResult,
+  Channel,
+  Content,
+  LiveStream,
+  Page,
+  ResolvedUrl,
+  SearchOptions,
+  Video,
+} from "./types";
 
 /** @category Plugins */
 export type PluginCapabilities = {
@@ -15,6 +24,12 @@ export type PluginCapabilities = {
   authModel: "apiKey" | "oauth2" | "basic";
   /** Rate limiting model */
   rateLimitModel: "quota" | "tokenBucket";
+  /** Whether the plugin supports batch content retrieval */
+  supportsBatchContent: boolean;
+  /** Whether the plugin supports batch channel retrieval */
+  supportsBatchChannels: boolean;
+  /** Whether the plugin supports search */
+  supportsSearch: boolean;
 };
 
 /**
@@ -88,6 +103,15 @@ export type PluginMethods = {
 
   /** Resolve archive for a live stream (optional). */
   resolveArchive?: (rest: RestManager, live: LiveStream) => Promise<Video | null>;
+
+  /** Batch-retrieve content by IDs (optional). */
+  getContents?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Content>>;
+
+  /** Batch-retrieve channels by IDs (optional). */
+  getChannels?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Channel>>;
+
+  /** Search for content (optional). */
+  search?: (rest: RestManager, options: SearchOptions) => Promise<Page<Content>>;
 };
 
 /**
@@ -128,6 +152,15 @@ export type PlatformPlugin = {
 
   /** Resolve the archive video for a live stream (platform-specific). */
   resolveArchive?(live: LiveStream): Promise<Video | null>;
+
+  /** Batch-retrieve content by IDs (platform-specific). */
+  getContents?(ids: string[]): Promise<BatchResult<Content>>;
+
+  /** Batch-retrieve channels by IDs (platform-specific). */
+  getChannels?(ids: string[]): Promise<BatchResult<Channel>>;
+
+  /** Search for content (platform-specific). */
+  search?(options: SearchOptions): Promise<Page<Content>>;
 
   /** Release resources (timers, connections). */
   [Symbol.dispose](): void;
@@ -207,6 +240,9 @@ export const PlatformPlugin = {
         supportsArchiveResolution: !!methods.resolveArchive,
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
+        supportsBatchContent: !!methods.getContents,
+        supportsBatchChannels: !!methods.getChannels,
+        supportsSearch: !!methods.search,
       },
       match: definition.matchUrl,
       getContent: (id) => methods.getContent(rest, id),
@@ -216,6 +252,15 @@ export const PlatformPlugin = {
         methods.getVideos(rest, channelId, cursor, pageSize),
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
+        : undefined,
+      getContents: methods.getContents
+        ? (ids) => methods.getContents!(rest, ids)
+        : undefined,
+      getChannels: methods.getChannels
+        ? (ids) => methods.getChannels!(rest, ids)
+        : undefined,
+      search: methods.search
+        ? (options) => methods.search!(rest, options)
         : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };

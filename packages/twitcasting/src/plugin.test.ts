@@ -25,6 +25,9 @@ describe("createTwitCastingPlugin", () => {
       supportsArchiveResolution: true,
       authModel: "basic",
       rateLimitModel: "tokenBucket",
+      supportsBatchContent: false,
+      supportsBatchChannels: false,
+      supportsSearch: false,
     });
     plugin[Symbol.dispose]();
   });

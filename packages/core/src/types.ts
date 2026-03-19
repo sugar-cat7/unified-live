@@ -159,6 +159,9 @@ export const channelSchema = z.object({
   name: z.string(),
   url: z.url(),
   thumbnail: thumbnailSchema.optional(),
+  description: z.string().optional(),
+  subscriberCount: z.int().check(z.nonnegative()).optional(),
+  publishedAt: z.date().optional(),
 });
 
 /**
@@ -287,9 +290,11 @@ export const searchOptionsSchema = z.object({
   query: z.string().optional(),
   status: z.enum(["live", "upcoming", "ended"]).optional(),
   channelId: z.string().check(z.minLength(1)).optional(),
-  order: z.enum(["relevance", "date"]).optional(),
+  order: z.enum(["relevance", "date", "rating", "title", "videoCount", "viewCount"]).optional(),
   limit: z.int().check(z.positive(), z.lte(100)).optional(),
   cursor: z.string().optional(),
+  safeSearch: z.enum(["moderate", "none", "strict"]).optional(),
+  languageCode: z.string().optional(),
 });
 
 /**

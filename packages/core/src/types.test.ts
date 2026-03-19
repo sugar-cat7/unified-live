@@ -656,3 +656,48 @@ describe("searchOptionsSchema", () => {
     expect(result.success).toBe(valid);
   });
 });
+
+describe("channelSchema extensions", () => {
+  const validChannel = {
+    id: "UC123",
+    platform: "youtube",
+    name: "Test",
+    url: "https://youtube.com/channel/UC123",
+  };
+  it("accepts channel with new optional fields", () => {
+    const result = channelSchema.safeParse({
+      ...validChannel,
+      description: "A great channel",
+      subscriberCount: 100000,
+      publishedAt: new Date("2020-01-01"),
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.description).toBe("A great channel");
+      expect(result.data.subscriberCount).toBe(100000);
+    }
+  });
+  it("still accepts channel without new fields", () => {
+    expect(channelSchema.safeParse(validChannel).success).toBe(true);
+  });
+  it("rejects negative subscriberCount", () => {
+    expect(channelSchema.safeParse({ ...validChannel, subscriberCount: -1 }).success).toBe(false);
+  });
+});
+
+describe("searchOptionsSchema extensions", () => {
+  it.each(["relevance", "date", "rating", "title", "videoCount", "viewCount"])(
+    "accepts order=%s",
+    (o) => {
+      expect(searchOptionsSchema.safeParse({ query: "test", order: o }).success).toBe(true);
+    },
+  );
+  it.each(["moderate", "none", "strict"])("accepts safeSearch=%s", (s) => {
+    expect(searchOptionsSchema.safeParse({ query: "test", safeSearch: s }).success).toBe(true);
+  });
+  it("accepts languageCode", () => {
+    expect(searchOptionsSchema.safeParse({ query: "test", languageCode: "ja" }).success).toBe(
+      true,
+    );
+  });
+});

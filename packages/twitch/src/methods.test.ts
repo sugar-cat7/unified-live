@@ -406,9 +406,7 @@ describe("twitchSearch", () => {
     const result = await twitchSearch(rest, { channelId: "u1", status: "live" });
     expect(result.items).toHaveLength(1);
     expect(result.items[0]!.type).toBe("live");
-    expect(rest.request).toHaveBeenCalledWith(
-      expect.objectContaining({ path: "/streams" }),
-    );
+    expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ path: "/streams" }));
   });
 
   it("fetches archives by channelId + ended", async () => {
@@ -416,9 +414,7 @@ describe("twitchSearch", () => {
     const result = await twitchSearch(rest, { channelId: "u1", status: "ended" });
     expect(result.items).toHaveLength(1);
     expect(result.items[0]!.type).toBe("video");
-    expect(rest.request).toHaveBeenCalledWith(
-      expect.objectContaining({ path: "/videos" }),
-    );
+    expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ path: "/videos" }));
   });
 
   it("fetches live streams by channelId without status", async () => {

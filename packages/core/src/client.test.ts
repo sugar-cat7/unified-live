@@ -452,7 +452,9 @@ describe("UnifiedClient getLiveStreamsBatch", () => {
 
   it("throws PlatformNotFoundError for unknown platform", async () => {
     const client = UnifiedClient.create();
-    await expect(client.getLiveStreamsBatch("unknown", ["ch1"])).rejects.toThrow(PlatformNotFoundError);
+    await expect(client.getLiveStreamsBatch("unknown", ["ch1"])).rejects.toThrow(
+      PlatformNotFoundError,
+    );
     client[Symbol.dispose]();
   });
 });

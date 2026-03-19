@@ -113,7 +113,10 @@ export type PluginMethods = {
   getChannels?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Channel>>;
 
   /** Batch-retrieve live streams by channel IDs (optional). */
-  getLiveStreamsBatch?: (rest: RestManager, channelIds: string[]) => Promise<BatchResult<LiveStream[]>>;
+  getLiveStreamsBatch?: (
+    rest: RestManager,
+    channelIds: string[],
+  ) => Promise<BatchResult<LiveStream[]>>;
 
   /** Search for content (optional). */
   search?: (rest: RestManager, options: SearchOptions) => Promise<Page<Content>>;
@@ -262,18 +265,12 @@ export const PlatformPlugin = {
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
-      getContents: methods.getContents
-        ? (ids) => methods.getContents!(rest, ids)
-        : undefined,
-      getChannels: methods.getChannels
-        ? (ids) => methods.getChannels!(rest, ids)
-        : undefined,
+      getContents: methods.getContents ? (ids) => methods.getContents!(rest, ids) : undefined,
+      getChannels: methods.getChannels ? (ids) => methods.getChannels!(rest, ids) : undefined,
       getLiveStreamsBatch: methods.getLiveStreamsBatch
         ? (channelIds) => methods.getLiveStreamsBatch!(rest, channelIds)
         : undefined,
-      search: methods.search
-        ? (options) => methods.search!(rest, options)
-        : undefined,
+      search: methods.search ? (options) => methods.search!(rest, options) : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 

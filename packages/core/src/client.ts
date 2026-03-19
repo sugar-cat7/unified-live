@@ -335,7 +335,10 @@ export const UnifiedClient = {
         return batchFallback((id) => plugin.getChannel(id), uniqueIds, platform);
       },
 
-      async getLiveStreamsBatch(platform: string, channelIds: string[]): Promise<BatchResult<LiveStream[]>> {
+      async getLiveStreamsBatch(
+        platform: string,
+        channelIds: string[],
+      ): Promise<BatchResult<LiveStream[]>> {
         if (channelIds.length === 0) return BatchResult.empty();
         const plugin = getPlugin(platform);
         const uniqueIds = [...new Set(channelIds)];

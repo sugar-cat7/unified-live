@@ -172,6 +172,46 @@ describe("videoSchema", () => {
     const result = videoSchema.safeParse(input);
     expect(result.success).toBe(valid);
   });
+
+  it("accepts optional startedAt and endedAt", () => {
+    const result = videoSchema.safeParse({
+      ...baseVideo,
+      startedAt: new Date("2024-01-01T00:00:00Z"),
+      endedAt: new Date("2024-01-01T01:00:00Z"),
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.startedAt).toEqual(new Date("2024-01-01T00:00:00Z"));
+      expect(result.data.endedAt).toEqual(new Date("2024-01-01T01:00:00Z"));
+    }
+  });
+
+  it("accepts video without startedAt/endedAt", () => {
+    const result = videoSchema.safeParse(baseVideo);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.startedAt).toBeUndefined();
+      expect(result.data.endedAt).toBeUndefined();
+    }
+  });
+});
+
+describe("contentBaseSchema languageCode", () => {
+  it("accepts content with languageCode", () => {
+    const result = liveStreamSchema.safeParse({ ...baseLiveStream, languageCode: "ja" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.languageCode).toBe("ja");
+    }
+  });
+
+  it("accepts content without languageCode", () => {
+    const result = liveStreamSchema.safeParse(baseLiveStream);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.languageCode).toBeUndefined();
+    }
+  });
 });
 
 describe("scheduledStreamSchema", () => {

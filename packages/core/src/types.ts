@@ -35,6 +35,7 @@ const contentBaseSchema = z.object({
   channel: channelRefSchema,
   sessionId: z.string().optional(),
   raw: z.unknown(),
+  languageCode: z.string().optional(),
 });
 
 /**
@@ -69,6 +70,8 @@ export const videoSchema = contentBaseSchema.extend({
   duration: z.number().check(z.nonnegative()),
   viewCount: z.int().check(z.nonnegative()),
   publishedAt: z.date(),
+  startedAt: z.date().optional(),
+  endedAt: z.date().optional(),
 });
 
 /**

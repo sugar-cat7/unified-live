@@ -84,7 +84,9 @@ SDK が投げるエラー階層。
 | シンボル         | 説明                           |
 | ---------------- | ------------------------------ |
 | `getTracer`      | OpenTelemetry トレーサーの取得 |
+| `getMeter`       | OpenTelemetry メーターの取得   |
 | `SpanAttributes` | SDK が使用するスパン属性キー   |
+| `MetricNames`    | SDK が使用するメトリクス名     |
 
 ## よく使うパターン
 

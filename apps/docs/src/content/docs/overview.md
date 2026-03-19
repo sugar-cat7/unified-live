@@ -64,7 +64,7 @@ console.log(tc.type); // "live" | "video"
 | **Retries**            | Exponential backoff for 429/5xx, token refresh on 401                                                                                  |
 | **Data Normalization** | All platforms map to unified `Content`, `Channel`, `LiveStream`, `Video` types                                                         |
 | **URL Resolution**     | Auto-detects platform from URL, supports multiple URL formats per platform                                                             |
-| **Observability**      | OpenTelemetry spans for every API call (zero overhead when OTel is not configured)                                                     |
+| **Observability**      | OpenTelemetry spans and metrics for every API call (zero overhead when OTel is not configured)                                         |
 
 ### Feature Matrix
 
@@ -76,7 +76,7 @@ console.log(tc.type); // "live" | "video"
 | List videos (pagination) |   ✅    |   ✅   |     ✅      |
 | Get channel info         |   ✅    |   ✅   |     ✅      |
 | Archive resolution       |   ✅    |   ✅   |     ✅      |
-| OpenTelemetry tracing    |   ✅    |   ✅   |     ✅      |
+| OpenTelemetry traces & metrics |   ✅    |   ✅   |     ✅      |
 
 ## Official API Documentation
 

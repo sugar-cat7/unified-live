@@ -10,7 +10,7 @@ import {
 } from "../errors";
 import { getMeter, MetricNames } from "../telemetry/metrics";
 import { getTracer, SpanAttributes } from "../telemetry/traces";
-import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
+import { context, propagation, SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import type { RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } from "./types";
 
@@ -190,6 +190,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
 
           for (let attempt = 0; attempt <= maxRetries; attempt++) {
             const headers = await manager.createHeaders(req);
+            propagation.inject(context.active(), headers);
 
             const init: RequestInit = {
               method: req.method,
@@ -228,7 +229,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 span.addEvent("retry", {
                   "unified_live.retry.attempt": attempt + 1,
                   "unified_live.retry.reason": "rate_limit",
-                  "http.response.status_code": response.status,
+                  [SpanAttributes.HTTP_STATUS]: response.status,
                 });
                 continue;
               }
@@ -245,7 +246,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 span.addEvent("retry", {
                   "unified_live.retry.attempt": attempt + 1,
                   "unified_live.retry.reason": "auth_refresh",
-                  "http.response.status_code": 401,
+                  [SpanAttributes.HTTP_STATUS]: response.status,
                 });
                 continue;
               }
@@ -280,7 +281,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 await sleep(baseDelay * 2 ** attempt * jitter);
                 span.addEvent("retry", {
                   "unified_live.retry.attempt": attempt + 1,
-                  "http.response.status_code": response.status,
+                  [SpanAttributes.HTTP_STATUS]: response.status,
                 });
                 continue;
               }

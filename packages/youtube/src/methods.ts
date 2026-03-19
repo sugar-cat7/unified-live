@@ -327,6 +327,8 @@ export const youtubeSearch = async (
   };
 
   if (options.query) query.q = options.query;
+  if (options.channelId) query.channelId = options.channelId;
+  if (options.order) query.order = options.order;
   if (options.limit) query.maxResults = String(options.limit);
   if (options.cursor) query.pageToken = options.cursor;
 

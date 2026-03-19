@@ -442,6 +442,36 @@ describe("youtubeSearch", () => {
     expect(result.items).toEqual([]);
     expect(result.hasMore).toBe(false);
   });
+
+  it("passes channelId to YouTube search API", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [] },
+    });
+    await youtubeSearch(rest, { channelId: "UC123", status: "live" });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ channelId: "UC123", eventType: "live" }),
+      }),
+    );
+  });
+
+  it("passes order to YouTube search API", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [] },
+    });
+    await youtubeSearch(rest, { query: "test", order: "date" });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ q: "test", order: "date" }),
+      }),
+    );
+  });
 });
 
 describe("youtubeResolveArchive", () => {

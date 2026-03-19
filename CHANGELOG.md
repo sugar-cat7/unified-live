@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `description` field on all Content types (LiveStream, Video, ScheduledStream)
+- `tags` field on all Content types (string array)
+- `endedAt` optional field on LiveStream for stream end time tracking
+- `SearchOptions.channelId` for per-channel search
+- `SearchOptions.order` for result ordering (`"relevance"` | `"date"`)
+- `UnifiedClient.getLiveStreamsBatch()` — batch live stream check across multiple channels
+- `PluginMethods.getLiveStreamsBatch?` — optional batch method for plugins
+- `PluginCapabilities.supportsBatchLiveStreams`
+- Twitch: native `getLiveStreamsBatch` (max 100 channel IDs per request via repeated user_id params)
+- YouTube/Twitch/TwitCasting: `channelId` support in search
 - `ScheduledStream` type — third member of `Content` discriminated union for upcoming/scheduled broadcasts
 - `Content.isScheduled()` type guard
 - `BatchResult<T>` type for batch operations with partial failure support
@@ -37,6 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `contentBaseSchema` now requires `description` (string) and `tags` (string[])
+- `liveStreamSchema` now has optional `endedAt` (Date)
+- `searchOptionsSchema` includes `channelId` and `order`
+- `RestRequest.query` now accepts `string | string[]` values (string arrays produce repeated query params)
+- Search validation: now accepts `channelId` as alternative to `query`/`status`
 - `Content` discriminated union now includes `"scheduled"` variant (was `"live" | "video"`)
 - `PluginCapabilities` has three new required fields: `supportsBatchContent`, `supportsBatchChannels`, `supportsSearch`
 - **BREAKING:** Twitch mapper renames: `streamToLive` → `toLive`, `videoToVideo` → `toVideo`, `userToChannel` → `toChannel`, `parseTwitchDuration` → `parseDuration`

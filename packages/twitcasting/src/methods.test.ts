@@ -18,6 +18,7 @@ const mockUser = {
   profile: "Hello",
   level: 5,
   is_live: false,
+  created: 1609459200,
 };
 
 const mockLiveMovie = {
@@ -75,10 +76,11 @@ describe("twitcastingGetContent", () => {
 
 describe("twitcastingGetChannel", () => {
   it("returns channel for a valid user", async () => {
-    const rest = createMockRest({ user: mockUser });
+    const rest = createMockRest({ user: mockUser, supporter_count: 42, supporting_count: 10 });
     const result = await twitcastingGetChannel(rest, "testuser");
     expect(result.id).toBe("u1");
     expect(result.platform).toBe("twitcasting");
+    expect(result.subscriberCount).toBe(42);
     expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ path: "/users/testuser" }));
   });
 

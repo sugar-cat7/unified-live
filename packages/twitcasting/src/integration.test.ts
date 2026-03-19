@@ -10,6 +10,7 @@ const mockUser = {
   profile: "Hello",
   level: 5,
   is_live: false,
+  created: 1609459200,
 };
 
 const createMockFetch = (

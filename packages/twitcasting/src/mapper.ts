@@ -29,6 +29,7 @@ export type TCUser = {
   profile: string;
   level: number;
   is_live: boolean;
+  created: number;
 };
 
 /**
@@ -110,6 +111,7 @@ export const toVideo = (movie: TCMovie, user: TCUser): Video => {
     duration: movie.duration,
     viewCount: movie.total_view_count,
     publishedAt: new Date(movie.created * 1000),
+    startedAt: new Date(movie.created * 1000),
     raw: movie,
   } satisfies Video;
 };
@@ -151,5 +153,7 @@ export const toChannel = (user: TCUser): Channel => {
       width: 300,
       height: 300,
     },
+    description: user.profile,
+    publishedAt: new Date(user.created * 1000),
   } satisfies Channel;
 };

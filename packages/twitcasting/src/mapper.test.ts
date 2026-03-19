@@ -10,6 +10,7 @@ const mockUser: TCUser = {
   profile: "Hello!",
   level: 10,
   is_live: false,
+  created: 1609459200, // 2021-01-01T00:00:00Z
 };
 
 const mockLiveMovie: TCMovie = {
@@ -136,6 +137,11 @@ describe("toVideo", () => {
     expect(result.publishedAt).toEqual(new Date(1741334400 * 1000));
   });
 
+  it("maps created to startedAt", () => {
+    const result = toVideo(mockArchiveMovie, mockUser);
+    expect(result.startedAt).toEqual(new Date(1741334400 * 1000));
+  });
+
   it.each([
     { desc: "missing movie.id", movie: { id: "" }, user: {} },
     { desc: "missing user.id", movie: {}, user: { id: "" } },
@@ -167,6 +173,16 @@ describe("toChannel", () => {
     expect(result.name).toBe("TestUser");
     expect(result.url).toBe("https://twitcasting.tv/testuser");
     expect(result.thumbnail?.url).toBe("https://img.twitcasting.tv/user.png");
+  });
+
+  it("maps profile to description", () => {
+    const result = toChannel(mockUser);
+    expect(result.description).toBe("Hello!");
+  });
+
+  it("maps created to publishedAt", () => {
+    const result = toChannel(mockUser);
+    expect(result.publishedAt).toEqual(new Date(1609459200 * 1000));
   });
 
   it.each([

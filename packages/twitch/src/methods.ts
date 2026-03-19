@@ -182,6 +182,7 @@ export const twitchResolveArchive = async (
 };
 
 const TWITCH_MAX_IDS_PER_REQUEST = 100;
+const TWITCH_MAX_USER_IDS_PER_REQUEST = 100;
 
 /**
  * Batch-fetch Twitch videos by IDs and map to unified Content.
@@ -228,6 +229,48 @@ export const twitchGetContents = async (
 };
 
 /**
+ * Batch-fetch live streams for multiple Twitch channels in a single API call.
+ *
+ * @param rest - REST manager for API requests
+ * @param channelIds - array of Twitch user IDs
+ * @returns BatchResult with LiveStream[] per channel (empty array if not live); errors map is empty (API-level errors throw)
+ * @precondition each channelId is a valid Twitch user ID
+ * @postcondition values contains LiveStream[] for every requested channelId (empty if offline)
+ * @idempotency Safe — read-only API calls
+ */
+export const twitchGetLiveStreamsBatch = async (
+  rest: RestManager,
+  channelIds: string[],
+): Promise<BatchResult<LiveStream[]>> => {
+  const values = new Map<string, LiveStream[]>();
+  const errors = new Map<string, UnifiedLiveError>();
+
+  // Initialize all channels as empty (no live streams)
+  for (const id of channelIds) {
+    values.set(id, []);
+  }
+
+  for (let i = 0; i < channelIds.length; i += TWITCH_MAX_USER_IDS_PER_REQUEST) {
+    const chunk = channelIds.slice(i, i + TWITCH_MAX_USER_IDS_PER_REQUEST);
+    const res = await rest.request<TwitchResponse<TwitchStream>>({
+      method: "GET",
+      path: "/streams",
+      query: { user_id: chunk, type: "live" },
+      bucketId: "streams",
+    });
+
+    // Group live streams by user_id
+    for (const stream of res.data.data) {
+      const existing = values.get(stream.user_id) ?? [];
+      existing.push(toLive(stream));
+      values.set(stream.user_id, existing);
+    }
+  }
+
+  return { values, errors };
+};
+
+/**
  * Search Twitch for live channels matching the given options.
  *
  * @param rest - REST manager for API requests
@@ -242,13 +285,36 @@ export const twitchSearch = async (
   options: SearchOptions,
 ): Promise<Page<Content>> => {
   // Twitch schedule requires broadcaster_id — no general upcoming search
-  // Twitch has no general ended/archive search endpoint
-  if (options.status === "upcoming" || options.status === "ended") {
-    return Page.empty<Content>();
+  if (options.status === "upcoming") return Page.empty<Content>();
+
+  // channelId-based search: use direct endpoints (no /search/channels needed)
+  if (options.channelId && !options.query) {
+    if (options.status === "ended") {
+      const res = await rest.request<TwitchResponse<TwitchVideo>>({
+        method: "GET",
+        path: "/videos",
+        query: { user_id: options.channelId, type: "archive", first: String(options.limit ?? 20) },
+        bucketId: "videos",
+      });
+      return { items: res.data.data.map(toVideo), hasMore: false };
+    }
+    // Default or status=live: fetch live streams for this channel
+    const res = await rest.request<TwitchResponse<TwitchStream>>({
+      method: "GET",
+      path: "/streams",
+      query: { user_id: options.channelId, type: "live" },
+      bucketId: "streams",
+    });
+    return { items: res.data.data.map(toLive), hasMore: false };
   }
+
+  // status=ended without channelId: no general ended search
+  if (options.status === "ended") return Page.empty<Content>();
 
   // Twitch /search/channels only returns meaningful Content when filtered to live channels.
   // Without live_only, results are channels (not streams/videos) which don't map to Content.
+  if (!options.query) return Page.empty<Content>();
+
   const query: Record<string, string> = {
     live_only: "true",
   };

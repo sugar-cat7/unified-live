@@ -5,6 +5,7 @@ import {
   twitchGetContents,
   twitchGetChannel,
   twitchGetLiveStreams,
+  twitchGetLiveStreamsBatch,
   twitchGetVideos,
   twitchResolveArchive,
   twitchSearch,
@@ -267,6 +268,57 @@ describe("twitchGetContents", () => {
   });
 });
 
+describe("twitchGetLiveStreamsBatch", () => {
+  it("fetches live streams for multiple channels", async () => {
+    const rest = createMockRest({ data: [sampleStream] });
+    const result = await twitchGetLiveStreamsBatch(rest, [sampleStream.user_id, "other_user"]);
+    expect(result.values.get(sampleStream.user_id)).toHaveLength(1);
+    expect(result.values.get("other_user")).toEqual([]);
+    expect(result.errors.size).toBe(0);
+  });
+
+  it("returns empty arrays for channels with no live streams", async () => {
+    const rest = createMockRest({ data: [] });
+    const result = await twitchGetLiveStreamsBatch(rest, ["ch1", "ch2"]);
+    expect(result.values.get("ch1")).toEqual([]);
+    expect(result.values.get("ch2")).toEqual([]);
+  });
+
+  it("passes user_id as array for repeated params", async () => {
+    const rest = createMockRest({ data: [] });
+    await twitchGetLiveStreamsBatch(rest, ["u1", "u2"]);
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ user_id: ["u1", "u2"] }),
+      }),
+    );
+  });
+
+  it("chunks for >100 channel IDs", async () => {
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof import("vitest").vi.fn>).mockImplementation(async () => {
+      callCount++;
+      return {
+        status: 200,
+        headers: new Headers(),
+        data: { data: [] },
+      };
+    });
+    const ids = Array.from({ length: 150 }, (_, i) => `u${i}`);
+    const result = await twitchGetLiveStreamsBatch(rest, ids);
+    expect(callCount).toBe(2);
+    expect(result.values.size).toBe(150);
+  });
+
+  it("returns empty maps for empty channelIds array", async () => {
+    const rest = createMockRest({ data: [] });
+    const result = await twitchGetLiveStreamsBatch(rest, []);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+  });
+});
+
 const sampleSearchChannel = {
   id: "ch1",
   broadcaster_login: "livecaster",
@@ -315,7 +367,7 @@ describe("twitchSearch", () => {
     expect(rest.request).not.toHaveBeenCalled();
   });
 
-  it("returns empty for ended status", async () => {
+  it("returns empty for ended status without channelId", async () => {
     const rest = createMockRest({ data: [] });
     const result = await twitchSearch(rest, { query: "test", status: "ended" });
     expect(result.items).toEqual([]);
@@ -347,5 +399,61 @@ describe("twitchSearch", () => {
     const result = await twitchSearch(rest, { query: "nothing" });
     expect(result.items).toEqual([]);
     expect(result.hasMore).toBe(false);
+  });
+
+  it("fetches live streams by channelId", async () => {
+    const rest = createMockRest({ data: [sampleStream] });
+    const result = await twitchSearch(rest, { channelId: "u1", status: "live" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.type).toBe("live");
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({ path: "/streams" }),
+    );
+  });
+
+  it("fetches archives by channelId + ended", async () => {
+    const rest = createMockRest({ data: [sampleVideo] });
+    const result = await twitchSearch(rest, { channelId: "u1", status: "ended" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.type).toBe("video");
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({ path: "/videos" }),
+    );
+  });
+
+  it("fetches live streams by channelId without status", async () => {
+    const rest = createMockRest({ data: [sampleStream] });
+    const result = await twitchSearch(rest, { channelId: "u1" });
+    expect(result.items).toHaveLength(1);
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/streams",
+        query: expect.objectContaining({ user_id: "u1", type: "live" }),
+      }),
+    );
+  });
+
+  it("returns empty for channelId + upcoming", async () => {
+    const rest = createMockRest({ data: [] });
+    const result = await twitchSearch(rest, { channelId: "u1", status: "upcoming" });
+    expect(result.items).toEqual([]);
+    expect(rest.request).not.toHaveBeenCalled();
+  });
+
+  it("uses /search/channels when both channelId and query are provided", async () => {
+    const rest = createMockRest({ data: [sampleSearchChannel], pagination: {} });
+    const result = await twitchSearch(rest, { channelId: "u1", query: "test" });
+    expect(result.items).toHaveLength(1);
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({ path: "/search/channels" }),
+    );
+  });
+
+  it("returns empty when no query and no channelId", async () => {
+    const rest = createMockRest({ data: [] });
+    const result = await twitchSearch(rest, {});
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+    expect(rest.request).not.toHaveBeenCalled();
   });
 });

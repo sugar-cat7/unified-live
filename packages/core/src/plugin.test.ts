@@ -193,6 +193,24 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.getChannels).toBeUndefined();
   });
 
+  it("wires getLiveStreamsBatch when provided", async () => {
+    const mockResult = { values: new Map(), errors: new Map() };
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      getLiveStreamsBatch: vi.fn(async () => mockResult),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.getLiveStreamsBatch).toBeDefined();
+    const result = await plugin.getLiveStreamsBatch!(["ch1"]);
+    expect(methods.getLiveStreamsBatch).toHaveBeenCalled();
+    expect(result).toBe(mockResult);
+  });
+
+  it("getLiveStreamsBatch is undefined when not provided", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+    expect(plugin.getLiveStreamsBatch).toBeUndefined();
+  });
+
   it("wires search when provided", async () => {
     const mockPage = { items: [], hasMore: false };
     const methods: PluginMethods = {
@@ -212,22 +230,21 @@ describe("PlatformPlugin.create", () => {
   });
 
   it("capabilities include batch and search flags", () => {
-    plugin = PlatformPlugin.create(
-      createMinimalDefinition({
-        capabilities: {
-          supportsLiveStreams: true,
-          supportsArchiveResolution: false,
-          authModel: "apiKey",
-          rateLimitModel: "tokenBucket",
-          supportsBatchContent: true,
-          supportsBatchChannels: false,
-          supportsSearch: true,
-        },
-      }),
-      createMockMethods(),
-    );
+    plugin = PlatformPlugin.create(createMinimalDefinition({
+      capabilities: {
+        supportsLiveStreams: true,
+        supportsArchiveResolution: false,
+        authModel: "apiKey",
+        rateLimitModel: "tokenBucket",
+        supportsBatchContent: true,
+        supportsBatchChannels: false,
+        supportsBatchLiveStreams: false,
+        supportsSearch: true,
+      },
+    }), createMockMethods());
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
     expect(plugin.capabilities.supportsBatchChannels).toBe(false);
+    expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);
   });
 
@@ -240,6 +257,7 @@ describe("PlatformPlugin.create", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
     expect(plugin.capabilities.supportsBatchChannels).toBe(false);
+    expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);
   });
 
@@ -413,6 +431,7 @@ describe("PlatformPlugin.is", () => {
         rateLimitModel: "tokenBucket",
         supportsBatchContent: false,
         supportsBatchChannels: false,
+        supportsBatchLiveStreams: false,
         supportsSearch: false,
       },
       match: () => null,

@@ -122,15 +122,27 @@ export type UnifiedClient = {
   getChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>>;
 
   /**
-   * Search content on a platform. At least one of query/status required.
+   * Batch retrieve live streams by platform and channel IDs.
    *
    * @param platform - platform name
-   * @param options - search options (query, status, limit, cursor)
+   * @param channelIds - channel identifiers
+   * @returns batch result with values (LiveStream[] per channel) and per-item errors
+   * @precondition platform is registered
+   * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getLiveStreamsBatch(platform: string, channelIds: string[]): Promise<BatchResult<LiveStream[]>>;
+
+  /**
+   * Search content on a platform. At least one of query/status/channelId required.
+   *
+   * @param platform - platform name
+   * @param options - search options (query, status, channelId, order, limit, cursor)
    * @returns paginated search results
    * @precondition platform is registered and supports search
-   * @precondition at least one of options.query or options.status is provided
+   * @precondition at least one of options.query, options.status, or options.channelId is provided
    * @throws PlatformNotFoundError if platform is not registered
-   * @throws ValidationError if no query or status provided, or platform doesn't support search
+   * @throws ValidationError if no query, status, or channelId provided, or platform doesn't support search
    */
   search(platform: string, options: SearchOptions): Promise<Page<Content>>;
 
@@ -323,12 +335,22 @@ export const UnifiedClient = {
         return batchFallback((id) => plugin.getChannel(id), uniqueIds, platform);
       },
 
+      async getLiveStreamsBatch(platform: string, channelIds: string[]): Promise<BatchResult<LiveStream[]>> {
+        if (channelIds.length === 0) return BatchResult.empty();
+        const plugin = getPlugin(platform);
+        const uniqueIds = [...new Set(channelIds)];
+        if (plugin.getLiveStreamsBatch) {
+          return plugin.getLiveStreamsBatch(uniqueIds);
+        }
+        return batchFallback((id) => plugin.getLiveStreams(id), uniqueIds, platform);
+      },
+
       async search(platform: string, searchOptions: SearchOptions): Promise<Page<Content>> {
         const plugin = getPlugin(platform);
-        if (!searchOptions.query && !searchOptions.status) {
+        if (!searchOptions.query && !searchOptions.status && !searchOptions.channelId) {
           throw new ValidationError(
             "VALIDATION_INVALID_INPUT",
-            "search requires at least one of 'query' or 'status'",
+            "search requires at least one of 'query', 'status', or 'channelId'",
           );
         }
         if (!plugin.search) {
@@ -387,6 +409,7 @@ export const UnifiedClient = {
       typeof obj.getChannel === "function" &&
       typeof obj.getContents === "function" &&
       typeof obj.getChannels === "function" &&
+      typeof obj.getLiveStreamsBatch === "function" &&
       typeof obj.search === "function" &&
       typeof obj.platform === "function" &&
       typeof obj.match === "function" &&

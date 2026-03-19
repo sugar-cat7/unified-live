@@ -27,6 +27,7 @@ const mockCapabilities = {
   rateLimitModel: "tokenBucket" as const,
   supportsBatchContent: false,
   supportsBatchChannels: false,
+  supportsBatchLiveStreams: false,
   supportsSearch: false,
 };
 
@@ -406,6 +407,56 @@ describe("UnifiedClient batch operations", () => {
   });
 });
 
+describe("UnifiedClient getLiveStreamsBatch", () => {
+  it("returns empty for empty channelIds", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+    const result = await client.getLiveStreamsBatch("test", []);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+    client[Symbol.dispose]();
+  });
+
+  it("uses fallback when plugin lacks native batch", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+    const result = await client.getLiveStreamsBatch("test", ["ch1", "ch2"]);
+    expect(plugin.getLiveStreams).toHaveBeenCalledTimes(2);
+    expect(result.values.size).toBe(2);
+    // Each value should be an array (LiveStream[])
+    for (const streams of result.values.values()) {
+      expect(Array.isArray(streams)).toBe(true);
+    }
+    client[Symbol.dispose]();
+  });
+
+  it("deduplicates channel IDs", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+    await client.getLiveStreamsBatch("test", ["ch1", "ch1", "ch1"]);
+    expect(plugin.getLiveStreams).toHaveBeenCalledTimes(1);
+    client[Symbol.dispose]();
+  });
+
+  it("delegates to native batch when available", async () => {
+    const plugin = createMockPlugin("test");
+    const nativeResult = { values: new Map([["ch1", []]]), errors: new Map() };
+    plugin.getLiveStreamsBatch = vi.fn(async () => nativeResult);
+    const client = UnifiedClient.create({ plugins: [plugin] });
+    const result = await client.getLiveStreamsBatch("test", ["ch1"]);
+    expect(plugin.getLiveStreamsBatch).toHaveBeenCalledWith(["ch1"]);
+    expect(plugin.getLiveStreams).not.toHaveBeenCalled();
+    expect(result).toBe(nativeResult);
+    client[Symbol.dispose]();
+  });
+
+  it("throws PlatformNotFoundError for unknown platform", async () => {
+    const client = UnifiedClient.create();
+    await expect(client.getLiveStreamsBatch("unknown", ["ch1"])).rejects.toThrow(PlatformNotFoundError);
+    client[Symbol.dispose]();
+  });
+});
+
 describe("UnifiedClient search", () => {
   it("search delegates to plugin", async () => {
     const plugin = createMockPlugin("test");
@@ -446,13 +497,26 @@ describe("UnifiedClient search", () => {
     client[Symbol.dispose]();
   });
 
-  it("search throws ValidationError when no query or status", async () => {
+  it("search throws ValidationError when no query, status, or channelId", async () => {
     const plugin = createMockPlugin("test");
     plugin.search = vi.fn(async () => ({ items: [], hasMore: false }));
     const client = UnifiedClient.create({ plugins: [plugin] });
 
     await expect(client.search("test", {})).rejects.toThrow(ValidationError);
-    await expect(client.search("test", {})).rejects.toThrow("at least one of");
+    await expect(client.search("test", {})).rejects.toThrow(
+      "search requires at least one of 'query', 'status', or 'channelId'",
+    );
+
+    client[Symbol.dispose]();
+  });
+
+  it("search accepts channelId without query or status", async () => {
+    const plugin = createMockPlugin("test");
+    plugin.search = vi.fn(async () => ({ items: [], hasMore: false }));
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await client.search("test", { channelId: "ch1" });
+    expect(plugin.search).toHaveBeenCalledWith({ channelId: "ch1" });
 
     client[Symbol.dispose]();
   });

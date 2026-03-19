@@ -28,6 +28,8 @@ export type PluginCapabilities = {
   supportsBatchContent: boolean;
   /** Whether the plugin supports batch channel retrieval */
   supportsBatchChannels: boolean;
+  /** Whether the plugin supports batch live stream retrieval */
+  supportsBatchLiveStreams: boolean;
   /** Whether the plugin supports search */
   supportsSearch: boolean;
 };
@@ -110,6 +112,9 @@ export type PluginMethods = {
   /** Batch-retrieve channels by IDs (optional). */
   getChannels?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Channel>>;
 
+  /** Batch-retrieve live streams by channel IDs (optional). */
+  getLiveStreamsBatch?: (rest: RestManager, channelIds: string[]) => Promise<BatchResult<LiveStream[]>>;
+
   /** Search for content (optional). */
   search?: (rest: RestManager, options: SearchOptions) => Promise<Page<Content>>;
 };
@@ -158,6 +163,9 @@ export type PlatformPlugin = {
 
   /** Batch-retrieve channels by IDs (platform-specific). */
   getChannels?(ids: string[]): Promise<BatchResult<Channel>>;
+
+  /** Batch-retrieve live streams by channel IDs (platform-specific). */
+  getLiveStreamsBatch?(channelIds: string[]): Promise<BatchResult<LiveStream[]>>;
 
   /** Search for content (platform-specific). */
   search?(options: SearchOptions): Promise<Page<Content>>;
@@ -242,6 +250,7 @@ export const PlatformPlugin = {
         rateLimitModel: "tokenBucket",
         supportsBatchContent: !!methods.getContents,
         supportsBatchChannels: !!methods.getChannels,
+        supportsBatchLiveStreams: !!methods.getLiveStreamsBatch,
         supportsSearch: !!methods.search,
       },
       match: definition.matchUrl,
@@ -253,9 +262,18 @@ export const PlatformPlugin = {
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
-      getContents: methods.getContents ? (ids) => methods.getContents!(rest, ids) : undefined,
-      getChannels: methods.getChannels ? (ids) => methods.getChannels!(rest, ids) : undefined,
-      search: methods.search ? (options) => methods.search!(rest, options) : undefined,
+      getContents: methods.getContents
+        ? (ids) => methods.getContents!(rest, ids)
+        : undefined,
+      getChannels: methods.getChannels
+        ? (ids) => methods.getChannels!(rest, ids)
+        : undefined,
+      getLiveStreamsBatch: methods.getLiveStreamsBatch
+        ? (channelIds) => methods.getLiveStreamsBatch!(rest, channelIds)
+        : undefined,
+      search: methods.search
+        ? (options) => methods.search!(rest, options)
+        : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 

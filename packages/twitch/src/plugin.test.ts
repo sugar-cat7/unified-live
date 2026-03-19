@@ -17,6 +17,7 @@ describe("createTwitchPlugin", () => {
       rateLimitModel: "tokenBucket",
       supportsBatchContent: true,
       supportsBatchChannels: false,
+      supportsBatchLiveStreams: false,
       supportsSearch: true,
     });
     plugin[Symbol.dispose]();

@@ -75,6 +75,7 @@ describe("createYouTubePlugin", () => {
       rateLimitModel: "quota",
       supportsBatchContent: true,
       supportsBatchChannels: false,
+      supportsBatchLiveStreams: false,
       supportsSearch: true,
     });
   });

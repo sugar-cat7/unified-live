@@ -69,6 +69,7 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
         rateLimitModel: "tokenBucket",
         supportsBatchContent: false,
         supportsBatchChannels: false,
+        supportsBatchLiveStreams: false,
         supportsSearch: true,
       },
       headers: { "X-Api-Version": "2.0" },

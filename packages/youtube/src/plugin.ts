@@ -60,6 +60,7 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
         rateLimitModel: "quota",
         supportsBatchContent: true,
         supportsBatchChannels: false,
+        supportsBatchLiveStreams: false,
         supportsSearch: true,
       },
       transformRequest: (req) => ({

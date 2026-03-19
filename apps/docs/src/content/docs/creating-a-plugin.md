@@ -211,6 +211,8 @@ const definition: PluginDefinition = {
 For **OAuth2**, implement a custom `TokenManager`:
 
 ```ts
+import { AuthenticationError, type TokenManager } from "@unified-live/core";
+
 const createOAuth2TokenManager = (config: {
   clientId: string;
   clientSecret: string;
@@ -230,7 +232,7 @@ const createOAuth2TokenManager = (config: {
             client_secret: config.clientSecret,
           }).toString(),
         });
-        if (!res.ok) throw new Error(`Token endpoint returned ${res.status}`);
+        if (!res.ok) throw new AuthenticationError("example", { message: `Token endpoint returned ${res.status}` });
         const data = await res.json();
         token = data.access_token;
         expiresAt = Date.now() + data.expires_in * 1000 * 0.9; // refresh at 90%

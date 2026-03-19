@@ -103,7 +103,7 @@ export type ErrorContext = {
  * @precondition code is a valid ErrorCode
  * @precondition context.platform is a non-empty string
  * @postcondition instanceof UnifiedLiveError === true for all SDK errors
- * @idempotent constructing with the same arguments yields equivalent errors
+ * @idempotency constructing with the same arguments yields equivalent errors
  * @category Errors
  */
 export class UnifiedLiveError extends Error {
@@ -402,7 +402,7 @@ export class PlatformNotFoundError extends UnifiedLiveError {
  * @returns the classified network error code
  * @precondition error is a caught fetch exception
  * @postcondition returns one of NETWORK_ABORT, NETWORK_TIMEOUT, NETWORK_DNS, NETWORK_CONNECTION
- * @idempotent same error always produces same code
+ * @idempotency same error always produces same code
  * @category Errors
  */
 export const classifyNetworkError = (error: Error): NetworkCode => {

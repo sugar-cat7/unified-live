@@ -264,9 +264,7 @@ export const twitchSearch = async (
     bucketId: "search",
   });
 
-  const items: Content[] = res.data.data
-    .filter((ch) => ch.is_live)
-    .map(toSearchLive);
+  const items: Content[] = res.data.data.filter((ch) => ch.is_live).map(toSearchLive);
 
   return {
     items,

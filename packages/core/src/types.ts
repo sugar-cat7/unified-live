@@ -328,7 +328,9 @@ export const ScheduledStream = {
   is: (value: unknown): value is ScheduledStream => {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string, unknown>;
-    return obj.type === "scheduled" && typeof obj.id === "string" && typeof obj.platform === "string";
+    return (
+      obj.type === "scheduled" && typeof obj.id === "string" && typeof obj.platform === "string"
+    );
   },
 } as const;
 

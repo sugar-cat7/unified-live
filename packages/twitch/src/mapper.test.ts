@@ -1,6 +1,12 @@
 import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
-import type { TwitchScheduleSegment, TwitchSearchChannel, TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
+import type {
+  TwitchScheduleSegment,
+  TwitchSearchChannel,
+  TwitchStream,
+  TwitchUser,
+  TwitchVideo,
+} from "./mapper";
 import { parseDuration, toLive, toChannel, toScheduled, toSearchLive, toVideo } from "./mapper";
 
 const mockStream: TwitchStream = {
@@ -194,9 +200,9 @@ describe("toSearchLive", () => {
     { desc: "missing id", override: { id: "" } },
     { desc: "missing broadcaster_login", override: { broadcaster_login: "" } },
   ])("throws ParseError when $desc", ({ override }) => {
-    expect(() => toSearchLive({ ...mockSearchChannel, ...override } as TwitchSearchChannel)).toThrow(
-      ParseError,
-    );
+    expect(() =>
+      toSearchLive({ ...mockSearchChannel, ...override } as TwitchSearchChannel),
+    ).toThrow(ParseError);
   });
 });
 

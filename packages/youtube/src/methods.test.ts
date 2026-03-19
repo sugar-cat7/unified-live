@@ -395,15 +395,17 @@ describe("youtubeGetContents", () => {
   it("chunks for >50 IDs", async () => {
     const rest = createMockRest();
     let callCount = 0;
-    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async (req: { query: { id: string } }) => {
-      callCount++;
-      const ids = req.query.id.split(",");
-      return {
-        status: 200,
-        headers: new Headers(),
-        data: { items: ids.map((id: string) => createSampleVideoItem(id)) },
-      };
-    });
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(
+      async (req: { query: { id: string } }) => {
+        callCount++;
+        const ids = req.query.id.split(",");
+        return {
+          status: 200,
+          headers: new Headers(),
+          data: { items: ids.map((id: string) => createSampleVideoItem(id)) },
+        };
+      },
+    );
     const ids = Array.from({ length: 60 }, (_, i) => `v${i}`);
     const result = await youtubeGetContents(rest, ids);
     expect(callCount).toBe(2);

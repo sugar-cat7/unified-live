@@ -212,17 +212,20 @@ describe("PlatformPlugin.create", () => {
   });
 
   it("capabilities include batch and search flags", () => {
-    plugin = PlatformPlugin.create(createMinimalDefinition({
-      capabilities: {
-        supportsLiveStreams: true,
-        supportsArchiveResolution: false,
-        authModel: "apiKey",
-        rateLimitModel: "tokenBucket",
-        supportsBatchContent: true,
-        supportsBatchChannels: false,
-        supportsSearch: true,
-      },
-    }), createMockMethods());
+    plugin = PlatformPlugin.create(
+      createMinimalDefinition({
+        capabilities: {
+          supportsLiveStreams: true,
+          supportsArchiveResolution: false,
+          authModel: "apiKey",
+          rateLimitModel: "tokenBucket",
+          supportsBatchContent: true,
+          supportsBatchChannels: false,
+          supportsSearch: true,
+        },
+      }),
+      createMockMethods(),
+    );
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
     expect(plugin.capabilities.supportsBatchChannels).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);

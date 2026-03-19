@@ -8,7 +8,15 @@ import {
 } from "./errors";
 import type { PlatformPlugin } from "./plugin";
 import { BatchResult } from "./types";
-import type { Channel, Content, LiveStream, Page, ResolvedUrl, SearchOptions, Video } from "./types";
+import type {
+  Channel,
+  Content,
+  LiveStream,
+  Page,
+  ResolvedUrl,
+  SearchOptions,
+  Video,
+} from "./types";
 
 /** @category Client */
 export type UnifiedClientOptions = {
@@ -229,11 +237,9 @@ export const UnifiedClient = {
               id,
               result.reason instanceof UnifiedLiveError
                 ? result.reason
-                : new UnifiedLiveError(
-                    result.reason?.message ?? "Unknown error",
-                    "INTERNAL",
-                    { platform },
-                  ),
+                : new UnifiedLiveError(result.reason?.message ?? "Unknown error", "INTERNAL", {
+                    platform,
+                  }),
             );
           }
         }

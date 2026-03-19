@@ -29,7 +29,12 @@ const mockCapabilities = {
 };
 
 const createMockPlugin = (name: string): PlatformPlugin => {
-  const pluginContent: Content = { ...mockContent, platform: name, url: `https://${name}.com/watch?v=test-id`, channel: { ...mockContent.channel, url: `https://${name}.com/channel/ch1` } };
+  const pluginContent: Content = {
+    ...mockContent,
+    platform: name,
+    url: `https://${name}.com/watch?v=test-id`,
+    channel: { ...mockContent.channel, url: `https://${name}.com/channel/ch1` },
+  };
 
   const mockChannel: Channel = {
     id: "ch1",
@@ -364,9 +369,7 @@ describe("UnifiedClient batch operations", () => {
 
   it("getContents fallback rethrows request-level errors", async () => {
     const plugin = createMockPlugin("test");
-    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new RateLimitError("test"),
-    );
+    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(new RateLimitError("test"));
     const client = UnifiedClient.create({ plugins: [plugin] });
 
     await expect(client.getContents("test", ["id1"])).rejects.toThrow(RateLimitError);

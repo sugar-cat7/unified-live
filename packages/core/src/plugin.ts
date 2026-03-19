@@ -253,15 +253,9 @@ export const PlatformPlugin = {
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
-      getContents: methods.getContents
-        ? (ids) => methods.getContents!(rest, ids)
-        : undefined,
-      getChannels: methods.getChannels
-        ? (ids) => methods.getChannels!(rest, ids)
-        : undefined,
-      search: methods.search
-        ? (options) => methods.search!(rest, options)
-        : undefined,
+      getContents: methods.getContents ? (ids) => methods.getContents!(rest, ids) : undefined,
+      getChannels: methods.getChannels ? (ids) => methods.getChannels!(rest, ids) : undefined,
+      search: methods.search ? (options) => methods.search!(rest, options) : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 

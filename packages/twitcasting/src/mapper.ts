@@ -68,7 +68,6 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
     type: "live",
     viewerCount: movie.current_view_count,
     startedAt: new Date(movie.created * 1000),
-    endedAt: undefined,
     raw: movie,
   } satisfies LiveStream;
 };

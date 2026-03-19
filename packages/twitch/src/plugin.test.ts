@@ -16,7 +16,6 @@ describe("createTwitchPlugin", () => {
       authModel: "oauth2",
       rateLimitModel: "tokenBucket",
       supportsBatchContent: true,
-      supportsBatchChannels: false,
       supportsBatchLiveStreams: true,
       supportsSearch: true,
     });

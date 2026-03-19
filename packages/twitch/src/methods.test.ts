@@ -229,13 +229,13 @@ describe("twitchGetContents", () => {
     expect(result.errors.get("v2")).toBeInstanceOf(NotFoundError);
   });
 
-  it("passes comma-separated IDs in query", async () => {
+  it("passes array of IDs in query", async () => {
     const rest = createMockRest({ data: [createSampleVideo("v1"), createSampleVideo("v2")] });
     await twitchGetContents(rest, ["v1", "v2"]);
     expect(rest.request).toHaveBeenCalledWith(
       expect.objectContaining({
         path: "/videos",
-        query: { id: "v1,v2" },
+        query: { id: ["v1", "v2"] },
       }),
     );
   });
@@ -244,9 +244,9 @@ describe("twitchGetContents", () => {
     let callCount = 0;
     const rest = createMockRest({});
     (rest.request as ReturnType<typeof import("vitest").vi.fn>).mockImplementation(
-      async (req: { query: { id: string } }) => {
+      async (req: { query: { id: string[] } }) => {
         callCount++;
-        const ids = req.query.id.split(",");
+        const ids = req.query.id;
         return {
           status: 200,
           headers: new Headers(),

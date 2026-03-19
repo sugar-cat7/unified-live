@@ -1,13 +1,12 @@
 import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
 import type {
-  TwitchScheduleSegment,
   TwitchSearchChannel,
   TwitchStream,
   TwitchUser,
   TwitchVideo,
 } from "./mapper";
-import { parseDuration, toLive, toChannel, toScheduled, toSearchLive, toVideo } from "./mapper";
+import { parseDuration, toLive, toChannel, toSearchLive, toVideo } from "./mapper";
 
 const mockStream: TwitchStream = {
   id: "stream123",
@@ -134,45 +133,6 @@ describe("toChannel", () => {
     { desc: "missing user.login", override: { login: "" } },
   ])("throws ParseError when $desc", ({ override }) => {
     expect(() => toChannel({ ...mockUser, ...override } as TwitchUser)).toThrow(ParseError);
-  });
-});
-
-describe("toScheduled", () => {
-  it("maps schedule segment to ScheduledStream", () => {
-    const segment: TwitchScheduleSegment = {
-      id: "seg1",
-      start_time: "2024-06-01T18:00:00Z",
-      end_time: null,
-      title: "Upcoming Stream",
-      canceled_until: null,
-      category: null,
-    };
-    const user: TwitchUser = {
-      id: "u1",
-      login: "streamer",
-      display_name: "Streamer",
-      profile_image_url: "https://img.tv/pic.jpg",
-    };
-    const result = toScheduled(segment, user);
-    expect(result.type).toBe("scheduled");
-    expect(result.description).toBe("");
-    expect(result.tags).toEqual([]);
-    expect(result.scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
-    expect(result.channel.id).toBe("u1");
-    expect(result.url).toBe("https://www.twitch.tv/streamer");
-  });
-
-  it("preserves raw segment data", () => {
-    const segment: TwitchScheduleSegment = {
-      id: "seg2",
-      start_time: "2024-06-02T12:00:00Z",
-      end_time: "2024-06-02T14:00:00Z",
-      title: "Scheduled Event",
-      canceled_until: null,
-      category: { id: "cat1", name: "Just Chatting" },
-    };
-    const result = toScheduled(segment, mockUser);
-    expect(result.raw).toBe(segment);
   });
 });
 

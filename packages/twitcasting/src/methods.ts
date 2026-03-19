@@ -64,7 +64,7 @@ export const twitcastingGetContent = async (rest: RestManager, id: string): Prom
 export const twitcastingGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const res = await rest.request<TCUserResponse>({
     method: "GET",
-    path: `/users/${id}`,
+    path: `/users/${encodeURIComponent(id)}`,
     bucketId: "users",
   });
 
@@ -88,9 +88,10 @@ export const twitcastingGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
 ): Promise<LiveStream[]> => {
+  const encodedId = encodeURIComponent(channelId);
   const res = await rest.request<TCUserResponse>({
     method: "GET",
-    path: `/users/${channelId}`,
+    path: `/users/${encodedId}`,
     bucketId: "users",
   });
 
@@ -101,7 +102,7 @@ export const twitcastingGetLiveStreams = async (
   // Fetch the current live movie
   const movieRes = await rest.request<{ movie: TCMovie }>({
     method: "GET",
-    path: `/users/${channelId}/current_live`,
+    path: `/users/${encodedId}/current_live`,
     bucketId: "movies",
   });
 
@@ -134,17 +135,18 @@ export const twitcastingGetVideos = async (
     query.slice_id = cursor;
   }
 
+  const encodedId = encodeURIComponent(channelId);
   // We need user info for mapping, fetch in parallel
   const [moviesRes, userRes] = await Promise.all([
     rest.request<TCMoviesResponse>({
       method: "GET",
-      path: `/users/${channelId}/movies`,
+      path: `/users/${encodedId}/movies`,
       query,
       bucketId: "movies",
     }),
     rest.request<TCUserResponse>({
       method: "GET",
-      path: `/users/${channelId}`,
+      path: `/users/${encodedId}`,
       bucketId: "users",
     }),
   ]);
@@ -216,31 +218,29 @@ export const twitcastingSearch = async (
 
   // channelId-based search: fetch movies for this user directly
   if (options.channelId) {
+    const encodedId = encodeURIComponent(options.channelId);
+    const userRes = await rest.request<{ user: TCUser }>({
+      method: "GET",
+      path: `/users/${encodedId}`,
+      bucketId: "users",
+    });
+
     if (options.status === "live") {
-      const userRes = await rest.request<{ user: TCUser }>({
-        method: "GET",
-        path: `/users/${options.channelId}`,
-        bucketId: "users",
-      });
       if (!userRes.data.user.is_live) return Page.empty<Content>();
       const movieRes = await rest.request<{ movie: TCMovie }>({
         method: "GET",
-        path: `/users/${options.channelId}/current_live`,
+        path: `/users/${encodedId}/current_live`,
         bucketId: "movies",
       });
       return movieRes.data.movie
         ? { items: [toLive(movieRes.data.movie, userRes.data.user)], hasMore: false }
         : Page.empty<Content>();
     }
+
     // Default or ended: fetch recent movies
-    const userRes = await rest.request<{ user: TCUser }>({
-      method: "GET",
-      path: `/users/${options.channelId}`,
-      bucketId: "users",
-    });
     const moviesRes = await rest.request<TCMoviesResponse>({
       method: "GET",
-      path: `/users/${options.channelId}/movies`,
+      path: `/users/${encodedId}/movies`,
       query: { limit: String(options.limit ?? 5) },
       bucketId: "movies",
     });
@@ -271,11 +271,12 @@ export const twitcastingSearch = async (
   const users = res.data.users ?? [];
 
   const fetchUserContent = async (user: TCUser): Promise<Content[]> => {
+    const encodedUserId = encodeURIComponent(user.id);
     if (options.status === "live") {
       if (!user.is_live) return [];
       const movieRes = await rest.request<{ movie: TCMovie }>({
         method: "GET",
-        path: `/users/${user.id}/current_live`,
+        path: `/users/${encodedUserId}/current_live`,
         bucketId: "movies",
       });
       return movieRes.data.movie ? [toLive(movieRes.data.movie, user)] : [];
@@ -283,15 +284,25 @@ export const twitcastingSearch = async (
     // status === "ended" or no status — fetch recent movies
     const moviesRes = await rest.request<TCMoviesResponse>({
       method: "GET",
-      path: `/users/${user.id}/movies`,
+      path: `/users/${encodedUserId}/movies`,
       query: { limit: "5" },
       bucketId: "movies",
     });
     return (moviesRes.data.movies ?? []).map((movie) => toContent(movie, user));
   };
 
-  const results = await Promise.all(users.map(fetchUserContent));
-  const items = results.flat();
+  const CONCURRENCY = 5;
+  const items: Content[] = [];
+  for (let i = 0; i < users.length; i += CONCURRENCY) {
+    const chunk = users.slice(i, i + CONCURRENCY);
+    const settled = await Promise.allSettled(chunk.map(fetchUserContent));
+    for (const result of settled) {
+      if (result.status === "fulfilled") {
+        items.push(...result.value);
+      }
+      // Skip failed users silently — search is best-effort
+    }
+  }
 
   return { items, hasMore: false };
 };

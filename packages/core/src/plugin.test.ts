@@ -175,24 +175,6 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.getContents).toBeUndefined();
   });
 
-  it("wires getChannels when provided", async () => {
-    const mockBatchResult = { values: new Map(), errors: new Map() };
-    const methods: PluginMethods = {
-      ...createMockMethods(),
-      getChannels: vi.fn(async () => mockBatchResult),
-    };
-    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-    expect(plugin.getChannels).toBeDefined();
-    const result = await plugin.getChannels!(["ch1", "ch2"]);
-    expect(methods.getChannels).toHaveBeenCalled();
-    expect(result).toBe(mockBatchResult);
-  });
-
-  it("getChannels is undefined when not provided", () => {
-    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
-    expect(plugin.getChannels).toBeUndefined();
-  });
-
   it("wires getLiveStreamsBatch when provided", async () => {
     const mockResult = { values: new Map(), errors: new Map() };
     const methods: PluginMethods = {
@@ -238,7 +220,6 @@ describe("PlatformPlugin.create", () => {
           authModel: "apiKey",
           rateLimitModel: "tokenBucket",
           supportsBatchContent: true,
-          supportsBatchChannels: false,
           supportsBatchLiveStreams: false,
           supportsSearch: true,
         },
@@ -246,7 +227,6 @@ describe("PlatformPlugin.create", () => {
       createMockMethods(),
     );
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
-    expect(plugin.capabilities.supportsBatchChannels).toBe(false);
     expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);
   });
@@ -259,7 +239,6 @@ describe("PlatformPlugin.create", () => {
     };
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
-    expect(plugin.capabilities.supportsBatchChannels).toBe(false);
     expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);
   });
@@ -433,7 +412,6 @@ describe("PlatformPlugin.is", () => {
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
         supportsBatchContent: false,
-        supportsBatchChannels: false,
         supportsBatchLiveStreams: false,
         supportsSearch: false,
       },

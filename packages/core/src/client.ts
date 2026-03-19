@@ -40,9 +40,9 @@ export type UnifiedClient = {
    * Retrieve content by URL. Automatically routes to the correct plugin.
    *
    * @param url - content URL to resolve and fetch
-   * @returns the resolved content (LiveStream or Video)
+   * @returns the resolved content (LiveStream, ScheduledStream, or Video)
    * @precondition url matches a registered plugin
-   * @postcondition returns Content (LiveStream or Video)
+   * @postcondition returns Content (LiveStream, ScheduledStream, or Video)
    * @throws PlatformNotFoundError if no plugin matches the URL
    */
   getContent(url: string): Promise<Content>;
@@ -52,9 +52,9 @@ export type UnifiedClient = {
    *
    * @param platform - platform name
    * @param id - content identifier
-   * @returns the resolved content (LiveStream or Video)
+   * @returns the resolved content (LiveStream, ScheduledStream, or Video)
    * @precondition platform is registered
-   * @postcondition returns Content (LiveStream or Video)
+   * @postcondition returns Content (LiveStream, ScheduledStream, or Video)
    * @throws PlatformNotFoundError if platform is not registered
    */
   getContentById(platform: string, id: string): Promise<Content>;
@@ -109,18 +109,6 @@ export type UnifiedClient = {
    * @throws PlatformNotFoundError if platform is not registered
    */
   getContents(platform: string, ids: string[]): Promise<BatchResult<Content>>;
-
-  /**
-   * Batch retrieve channels by platform and IDs.
-   *
-   * @param platform - platform name
-   * @param ids - channel identifiers
-   * @returns batch result with values and per-item errors
-   * @precondition platform is registered
-   * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
-   * @throws PlatformNotFoundError if platform is not registered
-   */
-  getChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>>;
 
   /**
    * Batch retrieve live streams by platform and channel IDs.
@@ -253,6 +241,7 @@ export const UnifiedClient = {
                 ? result.reason
                 : new UnifiedLiveError(result.reason?.message ?? "Unknown error", "INTERNAL", {
                     platform,
+                    resourceId: id,
                   }),
             );
           }
@@ -325,16 +314,6 @@ export const UnifiedClient = {
           return plugin.getContents(uniqueIds);
         }
         return batchFallback((id) => plugin.getContent(id), uniqueIds, platform);
-      },
-
-      async getChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>> {
-        if (ids.length === 0) return BatchResult.empty();
-        const plugin = getPlugin(platform);
-        const uniqueIds = [...new Set(ids)];
-        if (plugin.getChannels) {
-          return plugin.getChannels(uniqueIds);
-        }
-        return batchFallback((id) => plugin.getChannel(id), uniqueIds, platform);
       },
 
       async getLiveStreamsBatch(
@@ -413,7 +392,6 @@ export const UnifiedClient = {
       typeof obj.getVideos === "function" &&
       typeof obj.getChannel === "function" &&
       typeof obj.getContents === "function" &&
-      typeof obj.getChannels === "function" &&
       typeof obj.getLiveStreamsBatch === "function" &&
       typeof obj.search === "function" &&
       typeof obj.platform === "function" &&

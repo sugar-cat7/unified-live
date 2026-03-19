@@ -24,12 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BatchResult<T>` type for batch operations with partial failure support
 - `SearchOptions` type and `searchOptionsSchema` for unified search
 - `UnifiedClient.getContents()` — batch content retrieval with plugin native support or core fallback
-- `UnifiedClient.getChannels()` — batch channel retrieval
 - `UnifiedClient.search()` — unified search across platforms
-- `PluginMethods.getContents?` / `getChannels?` / `search?` — optional batch and search for plugins
-- `PluginCapabilities.supportsBatchContent` / `supportsBatchChannels` / `supportsSearch`
+- `PluginMethods.getContents?` / `search?` — optional batch and search for plugins
+- `PluginCapabilities.supportsBatchContent` / `supportsSearch`
 - YouTube: native batch `getContents` (max 50 IDs per request), `search` (wraps `search.list`), upcoming → ScheduledStream mapper
-- Twitch: native batch `getContents` (max 100 IDs per request), `search`, `toScheduled` mapper for schedule segments
+- Twitch: native batch `getContents` (max 100 IDs per request), `search`
 - TwitCasting: `search` (batch uses core fallback)
 - YouTube API types auto-generated from Google Discovery Document
 - Weekly GitHub Actions workflow to keep YouTube types in sync
@@ -47,13 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `contentBaseSchema` now requires `description` (string) and `tags` (string[])
+- **BREAKING:** `contentBaseSchema` now requires `description` (string) and `tags` (string[])
 - `liveStreamSchema` now has optional `endedAt` (Date)
 - `searchOptionsSchema` includes `channelId` and `order`
 - `RestRequest.query` now accepts `string | string[]` values (string arrays produce repeated query params)
 - Search validation: now accepts `channelId` as alternative to `query`/`status`
-- `Content` discriminated union now includes `"scheduled"` variant (was `"live" | "video"`)
-- `PluginCapabilities` has three new required fields: `supportsBatchContent`, `supportsBatchChannels`, `supportsSearch`
+- **BREAKING:** `Content` discriminated union now includes `"scheduled"` variant (was `"live" | "video"`)
+- **BREAKING:** `PluginCapabilities` has new required fields: `supportsBatchContent`, `supportsSearch`
 - **BREAKING:** Twitch mapper renames: `streamToLive` → `toLive`, `videoToVideo` → `toVideo`, `userToChannel` → `toChannel`, `parseTwitchDuration` → `parseDuration`
 - **BREAKING:** TwitCasting mapper renames: `movieToContent` → `toContent`, `movieToLive` → `toLive`, `movieToVideo` → `toVideo`, `userToChannel` → `toChannel`
 - **BREAKING:** `Page<T>` now requires `hasMore: boolean` field

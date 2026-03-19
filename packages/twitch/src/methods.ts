@@ -181,8 +181,7 @@ export const twitchResolveArchive = async (
   return match ? toVideo(match) : null;
 };
 
-const TWITCH_MAX_IDS_PER_REQUEST = 100;
-const TWITCH_MAX_USER_IDS_PER_REQUEST = 100;
+const TWITCH_CHUNK_SIZE = 100;
 
 /**
  * Batch-fetch Twitch videos by IDs and map to unified Content.
@@ -201,12 +200,12 @@ export const twitchGetContents = async (
   const values = new Map<string, Content>();
   const errors = new Map<string, UnifiedLiveError>();
 
-  for (let i = 0; i < ids.length; i += TWITCH_MAX_IDS_PER_REQUEST) {
-    const chunk = ids.slice(i, i + TWITCH_MAX_IDS_PER_REQUEST);
+  for (let i = 0; i < ids.length; i += TWITCH_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + TWITCH_CHUNK_SIZE);
     const res = await rest.request<TwitchResponse<TwitchVideo>>({
       method: "GET",
       path: "/videos",
-      query: { id: chunk.join(",") },
+      query: { id: chunk },
       bucketId: "videos",
     });
 
@@ -250,8 +249,8 @@ export const twitchGetLiveStreamsBatch = async (
     values.set(id, []);
   }
 
-  for (let i = 0; i < channelIds.length; i += TWITCH_MAX_USER_IDS_PER_REQUEST) {
-    const chunk = channelIds.slice(i, i + TWITCH_MAX_USER_IDS_PER_REQUEST);
+  for (let i = 0; i < channelIds.length; i += TWITCH_CHUNK_SIZE) {
+    const chunk = channelIds.slice(i, i + TWITCH_CHUNK_SIZE);
     const res = await rest.request<TwitchResponse<TwitchStream>>({
       method: "GET",
       path: "/streams",

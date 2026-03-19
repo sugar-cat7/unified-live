@@ -26,7 +26,6 @@ const mockCapabilities = {
   authModel: "apiKey" as const,
   rateLimitModel: "tokenBucket" as const,
   supportsBatchContent: false,
-  supportsBatchChannels: false,
   supportsBatchLiveStreams: false,
   supportsSearch: false,
 };

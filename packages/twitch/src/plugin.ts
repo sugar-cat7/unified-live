@@ -71,7 +71,6 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
         authModel: "oauth2",
         rateLimitModel: "tokenBucket",
         supportsBatchContent: true,
-        supportsBatchChannels: false,
         supportsBatchLiveStreams: true,
         supportsSearch: true,
       },

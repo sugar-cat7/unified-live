@@ -26,8 +26,6 @@ export type PluginCapabilities = {
   rateLimitModel: "quota" | "tokenBucket";
   /** Whether the plugin supports batch content retrieval */
   supportsBatchContent: boolean;
-  /** Whether the plugin supports batch channel retrieval */
-  supportsBatchChannels: boolean;
   /** Whether the plugin supports batch live stream retrieval */
   supportsBatchLiveStreams: boolean;
   /** Whether the plugin supports search */
@@ -109,9 +107,6 @@ export type PluginMethods = {
   /** Batch-retrieve content by IDs (optional). */
   getContents?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Content>>;
 
-  /** Batch-retrieve channels by IDs (optional). */
-  getChannels?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Channel>>;
-
   /** Batch-retrieve live streams by channel IDs (optional). */
   getLiveStreamsBatch?: (
     rest: RestManager,
@@ -163,9 +158,6 @@ export type PlatformPlugin = {
 
   /** Batch-retrieve content by IDs (platform-specific). */
   getContents?(ids: string[]): Promise<BatchResult<Content>>;
-
-  /** Batch-retrieve channels by IDs (platform-specific). */
-  getChannels?(ids: string[]): Promise<BatchResult<Channel>>;
 
   /** Batch-retrieve live streams by channel IDs (platform-specific). */
   getLiveStreamsBatch?(channelIds: string[]): Promise<BatchResult<LiveStream[]>>;
@@ -252,7 +244,6 @@ export const PlatformPlugin = {
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
         supportsBatchContent: !!methods.getContents,
-        supportsBatchChannels: !!methods.getChannels,
         supportsBatchLiveStreams: !!methods.getLiveStreamsBatch,
         supportsSearch: !!methods.search,
       },
@@ -266,7 +257,6 @@ export const PlatformPlugin = {
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
       getContents: methods.getContents ? (ids) => methods.getContents!(rest, ids) : undefined,
-      getChannels: methods.getChannels ? (ids) => methods.getChannels!(rest, ids) : undefined,
       getLiveStreamsBatch: methods.getLiveStreamsBatch
         ? (channelIds) => methods.getLiveStreamsBatch!(rest, channelIds)
         : undefined,

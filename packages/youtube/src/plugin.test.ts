@@ -74,7 +74,6 @@ describe("createYouTubePlugin", () => {
       authModel: "apiKey",
       rateLimitModel: "quota",
       supportsBatchContent: true,
-      supportsBatchChannels: false,
       supportsBatchLiveStreams: false,
       supportsSearch: true,
     });

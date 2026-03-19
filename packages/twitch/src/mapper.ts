@@ -1,5 +1,5 @@
 import { ParseError } from "@unified-live/core";
-import type { Channel, LiveStream, ScheduledStream, Video } from "@unified-live/core";
+import type { Channel, LiveStream, Video } from "@unified-live/core";
 
 /** Subset of Twitch Helix Stream resource fields actually used. */
 export type TwitchStream = {
@@ -38,16 +38,6 @@ export type TwitchUser = {
   login: string;
   display_name: string;
   profile_image_url: string;
-};
-
-/** Subset of Twitch Helix Schedule Segment resource fields actually used. */
-export type TwitchScheduleSegment = {
-  id: string;
-  start_time: string;
-  end_time: string | null;
-  title: string;
-  canceled_until: string | null;
-  category: { id: string; name: string } | null;
 };
 
 /** Subset of Twitch Helix Search Channel resource fields actually used. */
@@ -94,7 +84,6 @@ export const toLive = (stream: TwitchStream): LiveStream => {
     type: "live",
     viewerCount: stream.viewer_count,
     startedAt: new Date(stream.started_at),
-    endedAt: undefined,
     raw: stream,
   } satisfies LiveStream;
 };
@@ -163,35 +152,6 @@ export const toChannel = (user: TwitchUser): Channel => {
 };
 
 /**
- * Convert a Twitch Schedule Segment and User to a unified ScheduledStream.
- *
- * @param segment - Twitch schedule segment resource from Helix API
- * @param user - Twitch user resource for the broadcaster
- * @returns unified ScheduledStream
- * @precondition segment.id and segment.start_time are present
- * @postcondition returns ScheduledStream with scheduledStartAt from segment.start_time
- */
-export const toScheduled = (segment: TwitchScheduleSegment, user: TwitchUser): ScheduledStream => {
-  return {
-    id: segment.id,
-    platform: "twitch",
-    title: segment.title,
-    description: "",
-    tags: [],
-    url: `https://www.twitch.tv/${user.login}`,
-    thumbnail: { url: user.profile_image_url, width: 300, height: 300 },
-    channel: {
-      id: user.id,
-      name: user.display_name,
-      url: `https://www.twitch.tv/${user.login}`,
-    },
-    type: "scheduled",
-    scheduledStartAt: new Date(segment.start_time),
-    raw: segment,
-  } satisfies ScheduledStream;
-};
-
-/**
  * Convert a Twitch Search Channel result to a unified LiveStream.
  *
  * @param ch - Twitch search channel resource from Helix API
@@ -224,7 +184,6 @@ export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
     type: "live",
     viewerCount: 0,
     startedAt: new Date(ch.started_at),
-    endedAt: undefined,
     raw: ch,
   } satisfies LiveStream;
 };

@@ -26,7 +26,6 @@ describe("createTwitCastingPlugin", () => {
       authModel: "basic",
       rateLimitModel: "tokenBucket",
       supportsBatchContent: false,
-      supportsBatchChannels: false,
       supportsBatchLiveStreams: false,
       supportsSearch: true,
     });

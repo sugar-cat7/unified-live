@@ -59,7 +59,6 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
         authModel: "apiKey",
         rateLimitModel: "quota",
         supportsBatchContent: true,
-        supportsBatchChannels: false,
         supportsBatchLiveStreams: false,
         supportsSearch: true,
       },

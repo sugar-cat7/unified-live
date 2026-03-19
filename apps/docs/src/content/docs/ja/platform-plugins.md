@@ -46,12 +46,12 @@ const youtube = createYouTubePlugin({
 
 YouTube はコストベースの日次クォータを使用します（デフォルト: 10,000 ユニット）。操作ごとにコストが異なります:
 
-| 操作                                            | コスト       |
-| ----------------------------------------------- | ------------ |
-| `getContent`（videos.list）                     | 1 ユニット   |
-| `getChannel`（channels.list）                   | 1 ユニット   |
+| 操作                                                            | コスト       |
+| --------------------------------------------------------------- | ------------ |
+| `getContent`（videos.list）                                     | 1 ユニット   |
+| `getChannel`（channels.list）                                   | 1 ユニット   |
 | `getVideos`（channels.list + playlistItems.list + videos.list） | 3 ユニット   |
-| `getLiveStreams`（search.list + videos.list）   | 101 ユニット |
+| `getLiveStreams`（search.list + videos.list）                   | 101 ユニット |
 
 SDK はクォータ消費をローカルで追跡し、上限に達すると `QuotaExhaustedError` をスローします。
 

@@ -171,6 +171,11 @@ describe("scheduledStreamSchema", () => {
       input: { ...baseScheduledStream, scheduledStartAt: undefined },
       valid: false,
     },
+    {
+      name: "string scheduledStartAt rejected (no coercion)",
+      input: { ...baseScheduledStream, scheduledStartAt: "2024-06-01T18:00:00Z" },
+      valid: false,
+    },
   ])("$name", ({ input, valid }) => {
     const result = scheduledStreamSchema.safeParse(input);
     expect(result.success).toBe(valid);

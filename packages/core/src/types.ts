@@ -415,6 +415,6 @@ export const BroadcastSession = {
  */
 export const Content = {
   isLive: (content: Content): content is LiveStream => content.type === "live",
-  isVideo: (content: Content): content is Video => content.type === "video",
   isScheduled: (content: Content): content is ScheduledStream => content.type === "scheduled",
+  isVideo: (content: Content): content is Video => content.type === "video",
 } as const;

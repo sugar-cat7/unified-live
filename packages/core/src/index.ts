@@ -48,6 +48,7 @@ export { Err, Ok, unwrap, wrap } from "./result";
 
 // --- Telemetry ---
 export { getTracer, SpanAttributes } from "./telemetry/traces";
+export { getMeter, MetricNames } from "./telemetry/metrics";
 
 // --- Types ---
 export type { ResolvedUrl, SearchOptions } from "./types";

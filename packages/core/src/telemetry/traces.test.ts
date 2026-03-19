@@ -1,4 +1,14 @@
 import { trace } from "@opentelemetry/api";
+import {
+  ATTR_ERROR_TYPE,
+  ATTR_HTTP_REQUEST_METHOD,
+  ATTR_HTTP_RESPONSE_STATUS_CODE,
+  ATTR_SERVER_ADDRESS,
+  ATTR_SERVER_PORT,
+  ATTR_URL_FULL,
+  ATTR_URL_PATH,
+  ATTR_URL_SCHEME,
+} from "@opentelemetry/semantic-conventions";
 import { describe, expect, it, vi } from "vitest";
 import { getTracer, SpanAttributes } from "./traces.js";
 
@@ -32,6 +42,20 @@ describe("getTracer", () => {
     });
     expect(result).toBe(42);
   });
+
+  it("accepts a custom TracerProvider", () => {
+    const mockTracer = {
+      startSpan: vi.fn(),
+      startActiveSpan: vi.fn(),
+    };
+    const mockProvider = {
+      getTracer: vi.fn().mockReturnValue(mockTracer),
+    };
+
+    const tracer = getTracer(mockProvider);
+    expect(tracer).toBe(mockTracer);
+    expect(mockProvider.getTracer).toHaveBeenCalledWith("unified-live", expect.any(String));
+  });
 });
 
 describe("SpanAttributes", () => {
@@ -44,15 +68,34 @@ describe("SpanAttributes", () => {
     ["RATE_LIMIT_LIMIT", "unified_live.rate_limit.limit"],
     ["SERVER_ADDRESS", "server.address"],
     ["SERVER_PORT", "server.port"],
+    ["URL_FULL", "url.full"],
+    ["URL_SCHEME", "url.scheme"],
     ["ERROR_CODE", "unified_live.error.code"],
     ["ERROR_TYPE", "error.type"],
     ["ERROR_HAS_CAUSE", "unified_live.error.has_cause"],
     ["RETRY_COUNT", "unified_live.retry.count"],
+    ["OPERATION", "unified_live.operation"],
+    ["BATCH_SIZE", "unified_live.batch.size"],
   ] as const)("has %s = %s", (key, expected) => {
     expect(SpanAttributes[key]).toBe(expected);
   });
 
-  it("has exactly 12 attribute keys", () => {
-    expect(Object.keys(SpanAttributes)).toHaveLength(12);
+  it("has exactly 16 attribute keys", () => {
+    expect(Object.keys(SpanAttributes)).toHaveLength(16);
+  });
+});
+
+describe("SpanAttributes semconv alignment", () => {
+  it.each([
+    [SpanAttributes.HTTP_METHOD, ATTR_HTTP_REQUEST_METHOD],
+    [SpanAttributes.URL_PATH, ATTR_URL_PATH],
+    [SpanAttributes.HTTP_STATUS, ATTR_HTTP_RESPONSE_STATUS_CODE],
+    [SpanAttributes.SERVER_ADDRESS, ATTR_SERVER_ADDRESS],
+    [SpanAttributes.SERVER_PORT, ATTR_SERVER_PORT],
+    [SpanAttributes.URL_FULL, ATTR_URL_FULL],
+    [SpanAttributes.URL_SCHEME, ATTR_URL_SCHEME],
+    [SpanAttributes.ERROR_TYPE, ATTR_ERROR_TYPE],
+  ])("SpanAttributes value %s matches semconv constant %s", (ours, semconv) => {
+    expect(ours).toBe(semconv);
   });
 });

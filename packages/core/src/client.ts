@@ -1,3 +1,5 @@
+import { SpanStatusCode } from "@opentelemetry/api";
+import type { TracerProvider } from "@opentelemetry/api";
 import {
   AuthenticationError,
   NetworkError,
@@ -8,6 +10,7 @@ import {
   ValidationError,
 } from "./errors";
 import type { PlatformPlugin } from "./plugin";
+import { getTracer, SpanAttributes } from "./telemetry/traces";
 import { BatchResult } from "./types";
 import type {
   Channel,
@@ -22,6 +25,7 @@ import type {
 /** @category Client */
 export type UnifiedClientOptions = {
   plugins?: PlatformPlugin[];
+  tracerProvider?: TracerProvider;
 };
 
 /** @category Client */
@@ -192,6 +196,7 @@ export const UnifiedClient = {
    */
   create(options?: UnifiedClientOptions): UnifiedClient {
     const plugins = new Map<string, PlatformPlugin>();
+    const tracer = getTracer(options?.tracerProvider);
 
     if (options?.plugins) {
       for (const plugin of options.plugins) {
@@ -261,6 +266,33 @@ export const UnifiedClient = {
       return null;
     };
 
+    const withClientSpan = async <T>(
+      operationName: string,
+      attrs: Record<string, string | number>,
+      fn: () => Promise<T>,
+    ): Promise<T> => {
+      return tracer.startActiveSpan(
+        `unified-live.client ${operationName}`,
+        async (span) => {
+          span.setAttribute(SpanAttributes.OPERATION, operationName);
+          for (const [k, v] of Object.entries(attrs)) span.setAttribute(k, v);
+          try {
+            const result = await fn();
+            span.end();
+            return result;
+          } catch (error) {
+            span.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: error instanceof Error ? error.message : String(error),
+            });
+            span.recordException(error instanceof Error ? error : new Error(String(error)));
+            span.end();
+            throw error;
+          }
+        },
+      );
+    };
+
     const client: UnifiedClient = {
       register(plugin: PlatformPlugin): void {
         plugins.set(plugin.name, plugin);
@@ -277,18 +309,28 @@ export const UnifiedClient = {
             `No registered plugin matches URL: "${url}"`,
           );
         }
-        const plugin = getPlugin(resolved.platform);
-        return plugin.getContent(resolved.id);
+        return withClientSpan(
+          "getContent",
+          { [SpanAttributes.PLATFORM]: resolved.platform },
+          () => {
+            const plugin = getPlugin(resolved.platform);
+            return plugin.getContent(resolved.id);
+          },
+        );
       },
 
       async getContentById(platform: string, id: string): Promise<Content> {
-        const plugin = getPlugin(platform);
-        return plugin.getContent(id);
+        return withClientSpan("getContentById", { [SpanAttributes.PLATFORM]: platform }, () => {
+          const plugin = getPlugin(platform);
+          return plugin.getContent(id);
+        });
       },
 
       async getLiveStreams(platform: string, channelId: string): Promise<LiveStream[]> {
-        const plugin = getPlugin(platform);
-        return plugin.getLiveStreams(channelId);
+        return withClientSpan("getLiveStreams", { [SpanAttributes.PLATFORM]: platform }, () => {
+          const plugin = getPlugin(platform);
+          return plugin.getLiveStreams(channelId);
+        });
       },
 
       async getVideos(
@@ -297,23 +339,36 @@ export const UnifiedClient = {
         cursor?: string,
         pageSize?: number,
       ): Promise<Page<Video>> {
-        const plugin = getPlugin(platform);
-        return plugin.getVideos(channelId, cursor, pageSize);
+        return withClientSpan("getVideos", { [SpanAttributes.PLATFORM]: platform }, () => {
+          const plugin = getPlugin(platform);
+          return plugin.getVideos(channelId, cursor, pageSize);
+        });
       },
 
       async getChannel(platform: string, id: string): Promise<Channel> {
-        const plugin = getPlugin(platform);
-        return plugin.getChannel(id);
+        return withClientSpan("getChannel", { [SpanAttributes.PLATFORM]: platform }, () => {
+          const plugin = getPlugin(platform);
+          return plugin.getChannel(id);
+        });
       },
 
       async getContents(platform: string, ids: string[]): Promise<BatchResult<Content>> {
         if (ids.length === 0) return BatchResult.empty();
-        const plugin = getPlugin(platform);
-        const uniqueIds = [...new Set(ids)];
-        if (plugin.getContents) {
-          return plugin.getContents(uniqueIds);
-        }
-        return batchFallback((id) => plugin.getContent(id), uniqueIds, platform);
+        return withClientSpan(
+          "getContents",
+          {
+            [SpanAttributes.PLATFORM]: platform,
+            [SpanAttributes.BATCH_SIZE]: ids.length,
+          },
+          () => {
+            const plugin = getPlugin(platform);
+            const uniqueIds = [...new Set(ids)];
+            if (plugin.getContents) {
+              return plugin.getContents(uniqueIds);
+            }
+            return batchFallback((id) => plugin.getContent(id), uniqueIds, platform);
+          },
+        );
       },
 
       async getLiveStreamsBatch(
@@ -321,29 +376,40 @@ export const UnifiedClient = {
         channelIds: string[],
       ): Promise<BatchResult<LiveStream[]>> {
         if (channelIds.length === 0) return BatchResult.empty();
-        const plugin = getPlugin(platform);
-        const uniqueIds = [...new Set(channelIds)];
-        if (plugin.getLiveStreamsBatch) {
-          return plugin.getLiveStreamsBatch(uniqueIds);
-        }
-        return batchFallback((id) => plugin.getLiveStreams(id), uniqueIds, platform);
+        return withClientSpan(
+          "getLiveStreamsBatch",
+          {
+            [SpanAttributes.PLATFORM]: platform,
+            [SpanAttributes.BATCH_SIZE]: channelIds.length,
+          },
+          () => {
+            const plugin = getPlugin(platform);
+            const uniqueIds = [...new Set(channelIds)];
+            if (plugin.getLiveStreamsBatch) {
+              return plugin.getLiveStreamsBatch(uniqueIds);
+            }
+            return batchFallback((id) => plugin.getLiveStreams(id), uniqueIds, platform);
+          },
+        );
       },
 
       async search(platform: string, searchOptions: SearchOptions): Promise<Page<Content>> {
-        const plugin = getPlugin(platform);
-        if (!searchOptions.query && !searchOptions.status && !searchOptions.channelId) {
-          throw new ValidationError(
-            "VALIDATION_INVALID_INPUT",
-            "search requires at least one of 'query', 'status', or 'channelId'",
-          );
-        }
-        if (!plugin.search) {
-          throw new ValidationError(
-            "VALIDATION_INVALID_INPUT",
-            `Platform '${platform}' does not support search`,
-          );
-        }
-        return plugin.search(searchOptions);
+        return withClientSpan("search", { [SpanAttributes.PLATFORM]: platform }, () => {
+          const plugin = getPlugin(platform);
+          if (!searchOptions.query && !searchOptions.status && !searchOptions.channelId) {
+            throw new ValidationError(
+              "VALIDATION_INVALID_INPUT",
+              "search requires at least one of 'query', 'status', or 'channelId'",
+            );
+          }
+          if (!plugin.search) {
+            throw new ValidationError(
+              "VALIDATION_INVALID_INPUT",
+              `Platform '${platform}' does not support search`,
+            );
+          }
+          return plugin.search(searchOptions);
+        });
       },
 
       platform(name: string): PlatformPlugin {

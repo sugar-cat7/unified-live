@@ -1,3 +1,4 @@
+import type { MeterProvider, TracerProvider } from "@opentelemetry/api";
 import type { TokenManager } from "../auth/types";
 import type { RateLimitStrategy } from "./strategy";
 
@@ -66,6 +67,8 @@ export type RestManagerOptions = {
   tokenManager?: TokenManager;
   fetch?: typeof globalThis.fetch;
   retry?: RetryConfig;
+  tracerProvider?: TracerProvider;
+  meterProvider?: MeterProvider;
 };
 
 /**

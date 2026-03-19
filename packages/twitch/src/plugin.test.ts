@@ -18,7 +18,7 @@ describe("createTwitchPlugin", () => {
       supportsBatchContent: true,
       supportsBatchLiveStreams: true,
       supportsSearch: true,
-      supportsClips: false,
+      supportsClips: true,
     });
     plugin[Symbol.dispose]();
   });
@@ -108,6 +108,8 @@ describe("createTwitchPlugin", () => {
       login: "testuser",
       display_name: "TestUser",
       profile_image_url: "https://img.tv/user.png",
+      description: "A test user",
+      created_at: "2020-01-01T00:00:00Z",
     };
 
     const plugin = createTwitchPlugin({
@@ -135,6 +137,7 @@ describe("createTwitchPlugin", () => {
       started_at: "2026-03-08T10:00:00Z",
       thumbnail_url: "https://img.tv/live-{width}x{height}.jpg",
       type: "live",
+      language: "en",
     };
 
     const plugin = createTwitchPlugin({

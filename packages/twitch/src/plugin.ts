@@ -7,6 +7,8 @@ import {
 import { createClientCredentialsTokenManager } from "./auth";
 import {
   twitchGetChannel,
+  twitchGetClips,
+  twitchGetClipsByIds,
   twitchGetContent,
   twitchGetContents,
   twitchGetLiveStreams,
@@ -73,7 +75,7 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
         supportsBatchContent: true,
         supportsBatchLiveStreams: true,
         supportsSearch: true,
-        supportsClips: false,
+        supportsClips: true,
       },
       headers: { "Client-Id": config.clientId },
       parseRateLimitHeaders: parseTwitchRateLimitHeaders,
@@ -88,6 +90,8 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
       getVideos: twitchGetVideos,
       resolveArchive: twitchResolveArchive,
       search: twitchSearch,
+      getClips: twitchGetClips,
+      getClipsByIds: twitchGetClipsByIds,
     },
   );
 };

@@ -1,6 +1,8 @@
 import {
   type BatchResult,
   type Channel,
+  type Clip,
+  type ClipOptions,
   type Content,
   type LiveStream,
   NotFoundError,
@@ -11,8 +13,10 @@ import {
   type Video,
 } from "@unified-live/core";
 import {
+  toClip,
   toLive,
   toSearchLive,
+  type TwitchClip,
   type TwitchSearchChannel,
   type TwitchStream,
   type TwitchUser,
@@ -20,6 +24,13 @@ import {
   toChannel,
   toVideo,
 } from "./mapper";
+
+/** Twitch-specific video query options. */
+export type TwitchVideoOptions = {
+  period?: "all" | "day" | "week" | "month";
+  sort?: "time" | "trending" | "views";
+  videoType?: "archive" | "highlight" | "upload";
+};
 
 const NUMERIC_ID = /^\d+$/;
 
@@ -119,23 +130,31 @@ export const twitchGetLiveStreams = async (
  * @param channelId - Twitch user ID
  * @param cursor - optional pagination cursor
  * @param pageSize - number of items per page (default 20)
+ * @param options - optional Twitch-specific video query options (period, sort, videoType)
  * @returns paginated list of Video objects
  * @precondition channelId is a valid Twitch user ID
- * @postcondition returns archive-type videos with cursor for next page
+ * @postcondition returns videos with cursor for next page; defaults to archive type when no videoType specified
  */
 export const twitchGetVideos = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize = 20,
+  options?: TwitchVideoOptions,
 ): Promise<Page<Video>> => {
   const query: Record<string, string> = {
     user_id: channelId,
-    type: "archive",
+    type: options?.videoType ?? "archive",
     first: String(pageSize),
   };
   if (cursor) {
     query.after = cursor;
+  }
+  if (options?.period) {
+    query.period = options.period;
+  }
+  if (options?.sort) {
+    query.sort = options.sort;
   }
 
   const res = await rest.request<TwitchResponse<TwitchVideo>>({
@@ -336,4 +355,83 @@ export const twitchSearch = async (
     cursor: res.data.pagination?.cursor,
     hasMore: res.data.pagination?.cursor !== undefined,
   };
+};
+
+/**
+ * Fetch paginated clips for a Twitch channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param channelId - Twitch broadcaster ID
+ * @param options - optional clip query options (date range, pagination, featured filter)
+ * @returns paginated list of Clip objects
+ * @precondition channelId is a valid Twitch broadcaster ID
+ * @postcondition returns clips with cursor for next page
+ * @idempotency Safe — read-only API calls
+ */
+export const twitchGetClips = async (
+  rest: RestManager,
+  channelId: string,
+  options?: ClipOptions,
+): Promise<Page<Clip>> => {
+  const query: Record<string, string> = { broadcaster_id: channelId };
+  if (options?.startedAt) query.started_at = options.startedAt.toISOString();
+  if (options?.endedAt) query.ended_at = options.endedAt.toISOString();
+  if (options?.limit) query.first = String(options.limit);
+  if (options?.cursor) query.after = options.cursor;
+  if (options?.isFeatured !== undefined) query.is_featured = String(options.isFeatured);
+
+  const res = await rest.request<TwitchResponse<TwitchClip>>({
+    method: "GET",
+    path: "/clips",
+    query,
+    bucketId: "clips",
+  });
+
+  return {
+    items: res.data.data.map(toClip),
+    cursor: res.data.pagination?.cursor,
+    hasMore: res.data.pagination?.cursor !== undefined,
+  };
+};
+
+/**
+ * Batch-fetch Twitch clips by IDs and map to unified Clip.
+ *
+ * @param rest - REST manager for API requests
+ * @param ids - array of Twitch clip IDs
+ * @returns BatchResult with values for found clips and NotFoundError for missing IDs
+ * @precondition each id is a valid Twitch clip ID
+ * @postcondition values contains Clip for each found clip; errors contains NotFoundError for each missing ID
+ * @idempotency Safe — read-only API calls
+ */
+export const twitchGetClipsByIds = async (
+  rest: RestManager,
+  ids: string[],
+): Promise<BatchResult<Clip>> => {
+  const values = new Map<string, Clip>();
+  const errors = new Map<string, UnifiedLiveError>();
+
+  for (let i = 0; i < ids.length; i += TWITCH_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + TWITCH_CHUNK_SIZE);
+    const res = await rest.request<TwitchResponse<TwitchClip>>({
+      method: "GET",
+      path: "/clips",
+      query: { id: chunk },
+      bucketId: "clips",
+    });
+
+    const returnedIds = new Set<string>();
+    for (const item of res.data.data) {
+      values.set(item.id, toClip(item));
+      returnedIds.add(item.id);
+    }
+
+    for (const id of chunk) {
+      if (!returnedIds.has(id)) {
+        errors.set(id, new NotFoundError("twitch", id));
+      }
+    }
+  }
+
+  return { values, errors };
 };

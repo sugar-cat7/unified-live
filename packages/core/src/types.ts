@@ -1,5 +1,7 @@
 import { z } from "zod/v4";
 
+import type { UnifiedLiveError } from "./errors";
+
 /**
  * Image thumbnail with validated URL and positive integer dimensions.
  *
@@ -210,6 +212,57 @@ export const Page = {
     hasMore: false,
   }),
 } as const;
+
+/**
+ * Result of a batch operation. Contains successful results and per-item errors.
+ * Request-level errors (rate limit, auth) are thrown, not stored here.
+ *
+ * Exception to Zod-first convention: Map with generic parameter is not representable in Zod.
+ *
+ * @category Types
+ */
+export type BatchResult<T> = {
+  readonly values: ReadonlyMap<string, T>;
+  readonly errors: ReadonlyMap<string, UnifiedLiveError>;
+};
+
+/**
+ * Companion object for the BatchResult type.
+ * Provides factory utilities.
+ *
+ * @example
+ * ```ts
+ * const empty = BatchResult.empty<Content>();
+ * ```
+ * @category Types
+ */
+export const BatchResult = {
+  /**
+   * Create an empty BatchResult with no values or errors.
+   *
+   * @returns an empty BatchResult
+   * @idempotency Safe — pure function
+   */
+  empty: <T>(): BatchResult<T> => ({
+    values: new Map(),
+    errors: new Map(),
+  }),
+} as const;
+
+export const searchOptionsSchema = z.object({
+  query: z.string().optional(),
+  status: z.enum(["live", "upcoming", "ended"]).optional(),
+  limit: z.int().check(z.positive(), z.lte(100)).optional(),
+  cursor: z.string().optional(),
+});
+
+/**
+ * Options for search operations across platforms.
+ * All fields are optional — an empty object returns unfiltered results.
+ *
+ * @category Types
+ */
+export type SearchOptions = z.infer<typeof searchOptionsSchema>;
 
 /**
  * Zod schema for a resolved platform URL.

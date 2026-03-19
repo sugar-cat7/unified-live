@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BatchResult,
   BroadcastSession,
   broadcastSessionSchema,
   Channel,
@@ -13,6 +14,7 @@ import {
   resolvedUrlSchema,
   ScheduledStream,
   scheduledStreamSchema,
+  searchOptionsSchema,
   thumbnailSchema,
   Video,
   videoSchema,
@@ -447,5 +449,37 @@ describe("Page.empty", () => {
     expect(page.hasMore).toBe(false);
     expect(page.cursor).toBeUndefined();
     expect(page.total).toBeUndefined();
+  });
+});
+
+describe("BatchResult.empty", () => {
+  it("creates empty BatchResult", () => {
+    const result = BatchResult.empty<Content>();
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+  });
+});
+
+describe("searchOptionsSchema", () => {
+  it.each([
+    { name: "query only", input: { query: "vspo" }, valid: true },
+    { name: "status only", input: { status: "live" }, valid: true },
+    { name: "query + status", input: { query: "vspo", status: "upcoming" }, valid: true },
+    { name: "with limit", input: { query: "vspo", limit: 50 }, valid: true },
+    { name: "with cursor", input: { query: "vspo", cursor: "abc" }, valid: true },
+    {
+      name: "full options",
+      input: { query: "test", status: "ended", limit: 10, cursor: "c1" },
+      valid: true,
+    },
+    { name: "invalid status", input: { query: "test", status: "invalid" }, valid: false },
+    { name: "zero limit", input: { query: "test", limit: 0 }, valid: false },
+    { name: "negative limit", input: { query: "test", limit: -1 }, valid: false },
+    { name: "limit over 100", input: { query: "test", limit: 101 }, valid: false },
+    { name: "float limit", input: { query: "test", limit: 1.5 }, valid: false },
+    { name: "empty object", input: {}, valid: true },
+  ])("$name", ({ input, valid }) => {
+    const result = searchOptionsSchema.safeParse(input);
+    expect(result.success).toBe(valid);
   });
 });

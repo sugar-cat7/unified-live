@@ -50,8 +50,9 @@ export { Err, Ok, unwrap, wrap } from "./result";
 export { getTracer, SpanAttributes } from "./telemetry/traces";
 
 // --- Types ---
-export type { ResolvedUrl } from "./types";
+export type { ResolvedUrl, SearchOptions } from "./types";
 export {
+  BatchResult,
   Channel,
   channelRefSchema,
   channelSchema,
@@ -63,6 +64,7 @@ export {
   resolvedUrlSchema,
   ScheduledStream,
   scheduledStreamSchema,
+  searchOptionsSchema,
   thumbnailSchema,
   Video,
   videoSchema,

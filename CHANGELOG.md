@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `description` field on all Content types (LiveStream, Video, ScheduledStream)
+- `tags` field on all Content types (string array)
+- `endedAt` optional field on LiveStream for stream end time tracking
+- `SearchOptions.channelId` for per-channel search
+- `SearchOptions.order` for result ordering (`"relevance"` | `"date"`)
+- `UnifiedClient.getLiveStreamsBatch()` — batch live stream check across multiple channels
+- `PluginMethods.getLiveStreamsBatch?` — optional batch method for plugins
+- `PluginCapabilities.supportsBatchLiveStreams`
+- Twitch: native `getLiveStreamsBatch` (max 100 channel IDs per request via repeated user_id params)
+- YouTube/Twitch/TwitCasting: `channelId` support in search
+- `ScheduledStream` type — third member of `Content` discriminated union for upcoming/scheduled broadcasts
+- `Content.isScheduled()` type guard
+- `BatchResult<T>` type for batch operations with partial failure support
+- `SearchOptions` type and `searchOptionsSchema` for unified search
+- `UnifiedClient.getContents()` — batch content retrieval with plugin native support or core fallback
+- `UnifiedClient.search()` — unified search across platforms
+- `PluginMethods.getContents?` / `search?` — optional batch and search for plugins
+- `PluginCapabilities.supportsBatchContent` / `supportsSearch`
+- YouTube: native batch `getContents` (max 50 IDs per request), `search` (wraps `search.list`), upcoming → ScheduledStream mapper
+- Twitch: native batch `getContents` (max 100 IDs per request), `search`
+- TwitCasting: `search` (batch uses core fallback)
 - YouTube API types auto-generated from Google Discovery Document
 - Weekly GitHub Actions workflow to keep YouTube types in sync
 - `parseRetryAfter()` utility with NaN guard and upper bound (120s)
@@ -25,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING:** `contentBaseSchema` now requires `description` (string) and `tags` (string[])
+- `liveStreamSchema` now has optional `endedAt` (Date)
+- `searchOptionsSchema` includes `channelId` and `order`
+- `RestRequest.query` now accepts `string | string[]` values (string arrays produce repeated query params)
+- Search validation: now accepts `channelId` as alternative to `query`/`status`
+- **BREAKING:** `Content` discriminated union now includes `"scheduled"` variant (was `"live" | "video"`)
+- **BREAKING:** `PluginCapabilities` has new required fields: `supportsBatchContent`, `supportsSearch`
 - **BREAKING:** Twitch mapper renames: `streamToLive` → `toLive`, `videoToVideo` → `toVideo`, `userToChannel` → `toChannel`, `parseTwitchDuration` → `parseDuration`
 - **BREAKING:** TwitCasting mapper renames: `movieToContent` → `toContent`, `movieToLive` → `toLive`, `movieToVideo` → `toVideo`, `userToChannel` → `toChannel`
 - **BREAKING:** `Page<T>` now requires `hasMore: boolean` field

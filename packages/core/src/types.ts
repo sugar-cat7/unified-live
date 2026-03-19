@@ -1,5 +1,7 @@
 import { z } from "zod/v4";
 
+import type { UnifiedLiveError } from "./errors";
+
 /**
  * Image thumbnail with validated URL and positive integer dimensions.
  *
@@ -26,6 +28,8 @@ const contentBaseSchema = z.object({
   id: z.string().check(z.minLength(1)),
   platform: z.string().check(z.minLength(1)),
   title: z.string(),
+  description: z.string(),
+  tags: z.array(z.string()),
   url: z.url(),
   thumbnail: thumbnailSchema,
   channel: channelRefSchema,
@@ -43,6 +47,7 @@ export const liveStreamSchema = contentBaseSchema.extend({
   type: z.literal("live"),
   viewerCount: z.int().check(z.nonnegative()),
   startedAt: z.date(),
+  endedAt: z.date().optional(),
 });
 
 /**
@@ -75,15 +80,38 @@ export const videoSchema = contentBaseSchema.extend({
 export type Video = z.infer<typeof videoSchema>;
 
 /**
+ * Zod schema for a scheduled (upcoming) live stream.
+ * Validates the scheduled start time.
+ *
+ * @category Types
+ */
+export const scheduledStreamSchema = contentBaseSchema.extend({
+  type: z.literal("scheduled"),
+  scheduledStartAt: z.date(),
+});
+
+/**
+ * A scheduled (upcoming) live stream on any supported platform.
+ * Discriminated by `type: "scheduled"`. Use `Content.isScheduled()` to narrow from Content.
+ *
+ * @category Types
+ */
+export type ScheduledStream = z.infer<typeof scheduledStreamSchema>;
+
+/**
  * Discriminated union schema for content. Discriminates on `type` field.
  *
  * @category Types
  */
-export const contentSchema = z.discriminatedUnion("type", [liveStreamSchema, videoSchema]);
+export const contentSchema = z.discriminatedUnion("type", [
+  liveStreamSchema,
+  videoSchema,
+  scheduledStreamSchema,
+]);
 
 /**
- * A piece of content (live stream or video) on any supported platform.
- * Use `Content.isLive()` / `Content.isVideo()` to narrow.
+ * A piece of content (live stream, video, or scheduled stream) on any supported platform.
+ * Use `Content.isLive()` / `Content.isVideo()` / `Content.isScheduled()` to narrow.
  *
  * @category Types
  */
@@ -189,6 +217,60 @@ export const Page = {
 } as const;
 
 /**
+ * Result of a batch operation. Contains successful results and per-item errors.
+ * Request-level errors (rate limit, auth) are thrown, not stored here.
+ *
+ * Exception to Zod-first convention: Map with generic parameter is not representable in Zod.
+ *
+ * @category Types
+ */
+export type BatchResult<T> = {
+  readonly values: ReadonlyMap<string, T>;
+  readonly errors: ReadonlyMap<string, UnifiedLiveError>;
+};
+
+/**
+ * Companion object for the BatchResult type.
+ * Provides factory utilities.
+ *
+ * @example
+ * ```ts
+ * const empty = BatchResult.empty<Content>();
+ * ```
+ * @category Types
+ */
+export const BatchResult = {
+  /**
+   * Create an empty BatchResult with no values or errors.
+   *
+   * @returns an empty BatchResult
+   * @idempotency Safe — pure function
+   */
+  empty: <T>(): BatchResult<T> => ({
+    values: new Map(),
+    errors: new Map(),
+  }),
+} as const;
+
+export const searchOptionsSchema = z.object({
+  query: z.string().optional(),
+  status: z.enum(["live", "upcoming", "ended"]).optional(),
+  channelId: z.string().check(z.minLength(1)).optional(),
+  order: z.enum(["relevance", "date"]).optional(),
+  limit: z.int().check(z.positive(), z.lte(100)).optional(),
+  cursor: z.string().optional(),
+});
+
+/**
+ * Options for search operations across platforms.
+ * All fields are optional at the schema level, but `UnifiedClient.search()`
+ * requires at least one of `query`, `status`, or `channelId` to be provided.
+ *
+ * @category Types
+ */
+export type SearchOptions = z.infer<typeof searchOptionsSchema>;
+
+/**
  * Zod schema for a resolved platform URL.
  *
  * @category Types
@@ -228,6 +310,32 @@ export const LiveStream = {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string, unknown>;
     return obj.type === "live" && typeof obj.id === "string" && typeof obj.platform === "string";
+  },
+} as const;
+
+/**
+ * Companion object for the ScheduledStream type.
+ * Provides lightweight structural type guard.
+ *
+ * @example
+ * ```ts
+ * if (ScheduledStream.is(value)) { ... }
+ * ```
+ * @category Types
+ */
+export const ScheduledStream = {
+  /**
+   * Structural type guard for ScheduledStream.
+   *
+   * @param value - the value to check
+   * @returns true if value has the ScheduledStream shape (type === "scheduled")
+   */
+  is: (value: unknown): value is ScheduledStream => {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return (
+      obj.type === "scheduled" && typeof obj.id === "string" && typeof obj.platform === "string"
+    );
   },
 } as const;
 
@@ -309,10 +417,11 @@ export const BroadcastSession = {
  * Type guard namespace for Content discriminated union.
  *
  * @precondition content must be a valid Content value
- * @postcondition narrows to LiveStream or Video
+ * @postcondition narrows to LiveStream, Video, or ScheduledStream
  * @category Types
  */
 export const Content = {
   isLive: (content: Content): content is LiveStream => content.type === "live",
+  isScheduled: (content: Content): content is ScheduledStream => content.type === "scheduled",
   isVideo: (content: Content): content is Video => content.type === "video",
 } as const;

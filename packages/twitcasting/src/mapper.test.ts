@@ -56,11 +56,20 @@ describe("toLive", () => {
     expect(result.id).toBe("movie123");
     expect(result.platform).toBe("twitcasting");
     expect(result.title).toBe("Live Stream!");
+    expect(result.description).toBe("");
+    expect(result.tags).toEqual([]);
     expect(result.viewerCount).toBe(500);
+    expect(result.endedAt).toBeUndefined();
     expect(result.sessionId).toBe("movie123");
     expect(result.channel.id).toBe("user456");
     expect(result.channel.name).toBe("TestUser");
     expect(result.url).toBe("https://twitcasting.tv/testuser/movie/movie123");
+  });
+
+  it("uses subtitle as description when present", () => {
+    const withSubtitle = { ...mockLiveMovie, subtitle: "A subtitle" };
+    const result = toLive(withSubtitle, mockUser);
+    expect(result.description).toBe("A subtitle");
   });
 
   it("preserves raw data", () => {
@@ -92,9 +101,17 @@ describe("toVideo", () => {
     expect(result.id).toBe("movie789");
     expect(result.platform).toBe("twitcasting");
     expect(result.title).toBe("Past Broadcast");
+    expect(result.description).toBe("");
+    expect(result.tags).toEqual([]);
     expect(result.duration).toBe(3600);
     expect(result.viewCount).toBe(5000);
     expect(result.sessionId).toBe("movie789");
+  });
+
+  it("uses subtitle as description when present", () => {
+    const withSubtitle = { ...mockArchiveMovie, subtitle: "Archive subtitle" };
+    const result = toVideo(withSubtitle, mockUser);
+    expect(result.description).toBe("Archive subtitle");
   });
 
   it("preserves raw data", () => {

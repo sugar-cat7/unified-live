@@ -40,6 +40,18 @@ export type TwitchUser = {
   profile_image_url: string;
 };
 
+/** Subset of Twitch Helix Search Channel resource fields actually used. */
+export type TwitchSearchChannel = {
+  id: string;
+  broadcaster_login: string;
+  display_name: string;
+  game_name: string;
+  title: string;
+  is_live: boolean;
+  started_at: string;
+  thumbnail_url: string;
+};
+
 /**
  * Convert a Twitch Stream to a unified LiveStream.
  *
@@ -59,6 +71,8 @@ export const toLive = (stream: TwitchStream): LiveStream => {
     id: stream.id,
     platform: "twitch",
     title: stream.title,
+    description: "",
+    tags: [],
     url: `https://www.twitch.tv/${stream.user_login}`,
     thumbnail: formatThumbnailUrl(stream.thumbnail_url),
     channel: {
@@ -93,6 +107,8 @@ export const toVideo = (video: TwitchVideo): Video => {
     id: video.id,
     platform: "twitch",
     title: video.title,
+    description: "",
+    tags: [],
     url: video.url,
     thumbnail: formatThumbnailUrl(video.thumbnail_url),
     channel: {
@@ -133,6 +149,43 @@ export const toChannel = (user: TwitchUser): Channel => {
       height: 300,
     },
   } satisfies Channel;
+};
+
+/**
+ * Convert a Twitch Search Channel result to a unified LiveStream.
+ *
+ * @param ch - Twitch search channel resource from Helix API
+ * @returns unified LiveStream
+ * @precondition ch.is_live is true and ch.started_at is a valid ISO date string
+ * @postcondition returns LiveStream with viewerCount 0 (search endpoint does not return viewer count)
+ */
+export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
+  if (!ch.id || !ch.broadcaster_login) {
+    throw new ParseError("twitch", "PARSE_RESPONSE", {
+      message: `Twitch search channel resource missing required fields (id, broadcaster_login)${ch.id ? ` for channel ${ch.id}` : ""}`,
+      path: "/search/channels",
+    });
+  }
+  // ch.id is the broadcaster ID (user_id), not the stream ID.
+  // Search endpoint does not return stream IDs, so we use broadcaster_login as a proxy ID.
+  return {
+    id: ch.broadcaster_login,
+    platform: "twitch",
+    title: ch.title,
+    description: "",
+    tags: [],
+    url: `https://www.twitch.tv/${ch.broadcaster_login}`,
+    thumbnail: { url: ch.thumbnail_url, width: 300, height: 300 },
+    channel: {
+      id: ch.id,
+      name: ch.display_name,
+      url: `https://www.twitch.tv/${ch.broadcaster_login}`,
+    },
+    type: "live",
+    viewerCount: 0,
+    startedAt: new Date(ch.started_at),
+    raw: ch,
+  } satisfies LiveStream;
 };
 
 /**

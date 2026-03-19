@@ -157,6 +157,92 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.resolveArchive).toBeUndefined();
   });
 
+  it("wires getContents when provided", async () => {
+    const mockBatchResult = { values: new Map(), errors: new Map() };
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      getContents: vi.fn(async () => mockBatchResult),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.getContents).toBeDefined();
+    const result = await plugin.getContents!(["id1", "id2"]);
+    expect(methods.getContents).toHaveBeenCalled();
+    expect(result).toBe(mockBatchResult);
+  });
+
+  it("getContents is undefined when not provided", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+    expect(plugin.getContents).toBeUndefined();
+  });
+
+  it("wires getLiveStreamsBatch when provided", async () => {
+    const mockResult = { values: new Map(), errors: new Map() };
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      getLiveStreamsBatch: vi.fn(async () => mockResult),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.getLiveStreamsBatch).toBeDefined();
+    const result = await plugin.getLiveStreamsBatch!(["ch1"]);
+    expect(methods.getLiveStreamsBatch).toHaveBeenCalled();
+    expect(result).toBe(mockResult);
+  });
+
+  it("getLiveStreamsBatch is undefined when not provided", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+    expect(plugin.getLiveStreamsBatch).toBeUndefined();
+  });
+
+  it("wires search when provided", async () => {
+    const mockPage = { items: [], hasMore: false };
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      search: vi.fn(async () => mockPage),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.search).toBeDefined();
+    const result = await plugin.search!({ query: "test" });
+    expect(methods.search).toHaveBeenCalled();
+    expect(result).toBe(mockPage);
+  });
+
+  it("search is undefined when not provided", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+    expect(plugin.search).toBeUndefined();
+  });
+
+  it("capabilities include batch and search flags", () => {
+    plugin = PlatformPlugin.create(
+      createMinimalDefinition({
+        capabilities: {
+          supportsLiveStreams: true,
+          supportsArchiveResolution: false,
+          authModel: "apiKey",
+          rateLimitModel: "tokenBucket",
+          supportsBatchContent: true,
+          supportsBatchLiveStreams: false,
+          supportsSearch: true,
+        },
+      }),
+      createMockMethods(),
+    );
+    expect(plugin.capabilities.supportsBatchContent).toBe(true);
+    expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
+    expect(plugin.capabilities.supportsSearch).toBe(true);
+  });
+
+  it("default capabilities infer batch/search from methods", () => {
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      getContents: vi.fn(async () => ({ values: new Map(), errors: new Map() })),
+      search: vi.fn(async () => ({ items: [], hasMore: false })),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.capabilities.supportsBatchContent).toBe(true);
+    expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
+    expect(plugin.capabilities.supportsSearch).toBe(true);
+  });
+
   it("applies transformRequest to modify requests", async () => {
     const fetchFn = createMockFetch([{ status: 200, body: { ok: true } }]);
     const definition = createMinimalDefinition({
@@ -325,6 +411,9 @@ describe("PlatformPlugin.is", () => {
         supportsArchiveResolution: false,
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
+        supportsBatchContent: false,
+        supportsBatchLiveStreams: false,
+        supportsSearch: false,
       },
       match: () => null,
       getContent: async () => ({}),

@@ -3,8 +3,9 @@ import {
   type Content,
   type LiveStream,
   NotFoundError,
-  type Page,
+  Page,
   type RestManager,
+  type SearchOptions,
   type Video,
 } from "@unified-live/core";
 import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
@@ -21,6 +22,10 @@ type TCUserResponse = {
 type TCMoviesResponse = {
   total_count: number;
   movies: TCMovie[];
+};
+
+type TCSearchUsersResponse = {
+  users: TCUser[];
 };
 
 /**
@@ -59,7 +64,7 @@ export const twitcastingGetContent = async (rest: RestManager, id: string): Prom
 export const twitcastingGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const res = await rest.request<TCUserResponse>({
     method: "GET",
-    path: `/users/${id}`,
+    path: `/users/${encodeURIComponent(id)}`,
     bucketId: "users",
   });
 
@@ -83,9 +88,10 @@ export const twitcastingGetLiveStreams = async (
   rest: RestManager,
   channelId: string,
 ): Promise<LiveStream[]> => {
+  const encodedId = encodeURIComponent(channelId);
   const res = await rest.request<TCUserResponse>({
     method: "GET",
-    path: `/users/${channelId}`,
+    path: `/users/${encodedId}`,
     bucketId: "users",
   });
 
@@ -96,7 +102,7 @@ export const twitcastingGetLiveStreams = async (
   // Fetch the current live movie
   const movieRes = await rest.request<{ movie: TCMovie }>({
     method: "GET",
-    path: `/users/${channelId}/current_live`,
+    path: `/users/${encodedId}/current_live`,
     bucketId: "movies",
   });
 
@@ -129,17 +135,18 @@ export const twitcastingGetVideos = async (
     query.slice_id = cursor;
   }
 
+  const encodedId = encodeURIComponent(channelId);
   // We need user info for mapping, fetch in parallel
   const [moviesRes, userRes] = await Promise.all([
     rest.request<TCMoviesResponse>({
       method: "GET",
-      path: `/users/${channelId}/movies`,
+      path: `/users/${encodedId}/movies`,
       query,
       bucketId: "movies",
     }),
     rest.request<TCUserResponse>({
       method: "GET",
-      path: `/users/${channelId}`,
+      path: `/users/${encodedId}`,
       bucketId: "users",
     }),
   ]);
@@ -185,4 +192,117 @@ export const twitcastingResolveArchive = async (
   }
 
   return toVideo(res.data.movie, res.data.broadcaster);
+};
+
+/**
+ * Search TwitCasting for content matching the given options.
+ *
+ * Uses the `/search/users` endpoint to find users by keyword, then fetches
+ * their current live or recent movies depending on the requested status.
+ *
+ * @param rest - REST manager for API requests
+ * @param options - search options (query, status, limit)
+ * @returns paginated list of Content items
+ * @precondition options.query should be provided for meaningful results
+ * @postcondition returns Page with items mapped from TwitCasting resources
+ * @idempotency Safe — read-only API calls
+ */
+export const twitcastingSearch = async (
+  rest: RestManager,
+  options: SearchOptions,
+): Promise<Page<Content>> => {
+  // TwitCasting has no scheduled/upcoming data
+  if (options.status === "upcoming") {
+    return Page.empty<Content>();
+  }
+
+  // channelId-based search: fetch movies for this user directly
+  if (options.channelId) {
+    const encodedId = encodeURIComponent(options.channelId);
+    const userRes = await rest.request<{ user: TCUser }>({
+      method: "GET",
+      path: `/users/${encodedId}`,
+      bucketId: "users",
+    });
+
+    if (options.status === "live") {
+      if (!userRes.data.user.is_live) return Page.empty<Content>();
+      const movieRes = await rest.request<{ movie: TCMovie }>({
+        method: "GET",
+        path: `/users/${encodedId}/current_live`,
+        bucketId: "movies",
+      });
+      return movieRes.data.movie
+        ? { items: [toLive(movieRes.data.movie, userRes.data.user)], hasMore: false }
+        : Page.empty<Content>();
+    }
+
+    // Default or ended: fetch recent movies
+    const moviesRes = await rest.request<TCMoviesResponse>({
+      method: "GET",
+      path: `/users/${encodedId}/movies`,
+      query: { limit: String(options.limit ?? 5) },
+      bucketId: "movies",
+    });
+    return {
+      items: (moviesRes.data.movies ?? []).map((m) => toContent(m, userRes.data.user)),
+      hasMore: false,
+    };
+  }
+
+  // TwitCasting search requires a keyword
+  if (!options.query) {
+    return Page.empty<Content>();
+  }
+
+  const query: Record<string, string> = {
+    words: options.query,
+    lang: "ja",
+  };
+  if (options.limit) query.limit = String(options.limit);
+
+  const res = await rest.request<TCSearchUsersResponse>({
+    method: "GET",
+    path: "/search/users",
+    query,
+    bucketId: "search",
+  });
+
+  const users = res.data.users ?? [];
+
+  const fetchUserContent = async (user: TCUser): Promise<Content[]> => {
+    const encodedUserId = encodeURIComponent(user.id);
+    if (options.status === "live") {
+      if (!user.is_live) return [];
+      const movieRes = await rest.request<{ movie: TCMovie }>({
+        method: "GET",
+        path: `/users/${encodedUserId}/current_live`,
+        bucketId: "movies",
+      });
+      return movieRes.data.movie ? [toLive(movieRes.data.movie, user)] : [];
+    }
+    // status === "ended" or no status — fetch recent movies
+    const moviesRes = await rest.request<TCMoviesResponse>({
+      method: "GET",
+      path: `/users/${encodedUserId}/movies`,
+      query: { limit: "5" },
+      bucketId: "movies",
+    });
+    return (moviesRes.data.movies ?? []).map((movie) => toContent(movie, user));
+  };
+
+  const CONCURRENCY = 5;
+  const items: Content[] = [];
+  for (let i = 0; i < users.length; i += CONCURRENCY) {
+    const chunk = users.slice(i, i + CONCURRENCY);
+    const settled = await Promise.allSettled(chunk.map(fetchUserContent));
+    for (const result of settled) {
+      if (result.status === "fulfilled") {
+        items.push(...result.value);
+      }
+      // Skip failed users silently — search is best-effort
+    }
+  }
+
+  return { items, hasMore: false };
 };

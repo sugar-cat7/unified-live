@@ -11,7 +11,7 @@ import type { RateLimitStrategy } from "./strategy";
 export type RestRequest = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
-  query?: Record<string, string>;
+  query?: Record<string, string | string[]>;
   body?: unknown;
   /**
    * Body serialization format.

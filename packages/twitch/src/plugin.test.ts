@@ -15,6 +15,9 @@ describe("createTwitchPlugin", () => {
       supportsArchiveResolution: true,
       authModel: "oauth2",
       rateLimitModel: "tokenBucket",
+      supportsBatchContent: true,
+      supportsBatchLiveStreams: true,
+      supportsSearch: true,
     });
     plugin[Symbol.dispose]();
   });
@@ -234,6 +237,8 @@ describe("createTwitchPlugin", () => {
       id: "s1",
       platform: "twitch",
       title: "Live",
+      description: "",
+      tags: [] as string[],
       url: "https://www.twitch.tv/user",
       thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
       channel: { id: "u1", name: "User", url: "https://www.twitch.tv/user" },
@@ -262,6 +267,8 @@ describe("createTwitchPlugin", () => {
       id: "s1",
       platform: "twitch",
       title: "Live",
+      description: "",
+      tags: [] as string[],
       url: "https://www.twitch.tv/user",
       thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
       channel: { id: "u1", name: "User", url: "https://www.twitch.tv/user" },

@@ -1,6 +1,23 @@
-import { PlatformNotFoundError, ValidationError } from "./errors";
+import {
+  AuthenticationError,
+  NetworkError,
+  PlatformNotFoundError,
+  QuotaExhaustedError,
+  RateLimitError,
+  UnifiedLiveError,
+  ValidationError,
+} from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
+import { BatchResult } from "./types";
+import type {
+  Channel,
+  Content,
+  LiveStream,
+  Page,
+  ResolvedUrl,
+  SearchOptions,
+  Video,
+} from "./types";
 
 /** @category Client */
 export type UnifiedClientOptions = {
@@ -23,9 +40,9 @@ export type UnifiedClient = {
    * Retrieve content by URL. Automatically routes to the correct plugin.
    *
    * @param url - content URL to resolve and fetch
-   * @returns the resolved content (LiveStream or Video)
+   * @returns the resolved content (LiveStream, ScheduledStream, or Video)
    * @precondition url matches a registered plugin
-   * @postcondition returns Content (LiveStream or Video)
+   * @postcondition returns Content (LiveStream, ScheduledStream, or Video)
    * @throws PlatformNotFoundError if no plugin matches the URL
    */
   getContent(url: string): Promise<Content>;
@@ -35,9 +52,9 @@ export type UnifiedClient = {
    *
    * @param platform - platform name
    * @param id - content identifier
-   * @returns the resolved content (LiveStream or Video)
+   * @returns the resolved content (LiveStream, ScheduledStream, or Video)
    * @precondition platform is registered
-   * @postcondition returns Content (LiveStream or Video)
+   * @postcondition returns Content (LiveStream, ScheduledStream, or Video)
    * @throws PlatformNotFoundError if platform is not registered
    */
   getContentById(platform: string, id: string): Promise<Content>;
@@ -80,6 +97,43 @@ export type UnifiedClient = {
    * @throws PlatformNotFoundError if platform is not registered
    */
   getChannel(platform: string, id: string): Promise<Channel>;
+
+  /**
+   * Batch retrieve content by platform and IDs.
+   *
+   * @param platform - platform name
+   * @param ids - content identifiers
+   * @returns batch result with values and per-item errors
+   * @precondition platform is registered
+   * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getContents(platform: string, ids: string[]): Promise<BatchResult<Content>>;
+
+  /**
+   * Batch retrieve live streams by platform and channel IDs.
+   *
+   * @param platform - platform name
+   * @param channelIds - channel identifiers
+   * @returns batch result with values (LiveStream[] per channel) and per-item errors
+   * @precondition platform is registered
+   * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getLiveStreamsBatch(platform: string, channelIds: string[]): Promise<BatchResult<LiveStream[]>>;
+
+  /**
+   * Search content on a platform. At least one of query/status/channelId required.
+   *
+   * @param platform - platform name
+   * @param options - search options (query, status, channelId, order, limit, cursor)
+   * @returns paginated search results
+   * @precondition platform is registered and supports search
+   * @precondition at least one of options.query, options.status, or options.channelId is provided
+   * @throws PlatformNotFoundError if platform is not registered
+   * @throws ValidationError if no query, status, or channelId provided, or platform doesn't support search
+   */
+  search(platform: string, options: SearchOptions): Promise<Page<Content>>;
 
   /**
    * Access a specific platform plugin.
@@ -153,6 +207,50 @@ export const UnifiedClient = {
       return plugin;
     };
 
+    const isRequestLevelError = (error: unknown): boolean => {
+      if (error instanceof RateLimitError) return true;
+      if (error instanceof QuotaExhaustedError) return true;
+      if (error instanceof AuthenticationError) return true;
+      if (error instanceof NetworkError) return true;
+      return false;
+    };
+
+    const batchFallback = async <T>(
+      fn: (id: string) => Promise<T>,
+      ids: string[],
+      platform: string,
+    ): Promise<BatchResult<T>> => {
+      const CONCURRENCY = 10;
+      const values = new Map<string, T>();
+      const errors = new Map<string, UnifiedLiveError>();
+
+      for (let i = 0; i < ids.length; i += CONCURRENCY) {
+        const chunk = ids.slice(i, i + CONCURRENCY);
+        const settled = await Promise.allSettled(
+          chunk.map(async (id) => ({ id, value: await fn(id) })),
+        );
+        for (const [j, result] of settled.entries()) {
+          if (result.status === "fulfilled") {
+            values.set(result.value.id, result.value.value);
+          } else {
+            if (isRequestLevelError(result.reason)) throw result.reason;
+            const id = chunk[j] as string;
+            errors.set(
+              id,
+              result.reason instanceof UnifiedLiveError
+                ? result.reason
+                : new UnifiedLiveError(result.reason?.message ?? "Unknown error", "INTERNAL", {
+                    platform,
+                    resourceId: id,
+                  }),
+            );
+          }
+        }
+      }
+
+      return { values, errors };
+    };
+
     const matchUrl = (url: string): ResolvedUrl | null => {
       for (const plugin of plugins.values()) {
         const resolved = plugin.match(url);
@@ -208,6 +306,46 @@ export const UnifiedClient = {
         return plugin.getChannel(id);
       },
 
+      async getContents(platform: string, ids: string[]): Promise<BatchResult<Content>> {
+        if (ids.length === 0) return BatchResult.empty();
+        const plugin = getPlugin(platform);
+        const uniqueIds = [...new Set(ids)];
+        if (plugin.getContents) {
+          return plugin.getContents(uniqueIds);
+        }
+        return batchFallback((id) => plugin.getContent(id), uniqueIds, platform);
+      },
+
+      async getLiveStreamsBatch(
+        platform: string,
+        channelIds: string[],
+      ): Promise<BatchResult<LiveStream[]>> {
+        if (channelIds.length === 0) return BatchResult.empty();
+        const plugin = getPlugin(platform);
+        const uniqueIds = [...new Set(channelIds)];
+        if (plugin.getLiveStreamsBatch) {
+          return plugin.getLiveStreamsBatch(uniqueIds);
+        }
+        return batchFallback((id) => plugin.getLiveStreams(id), uniqueIds, platform);
+      },
+
+      async search(platform: string, searchOptions: SearchOptions): Promise<Page<Content>> {
+        const plugin = getPlugin(platform);
+        if (!searchOptions.query && !searchOptions.status && !searchOptions.channelId) {
+          throw new ValidationError(
+            "VALIDATION_INVALID_INPUT",
+            "search requires at least one of 'query', 'status', or 'channelId'",
+          );
+        }
+        if (!plugin.search) {
+          throw new ValidationError(
+            "VALIDATION_INVALID_INPUT",
+            `Platform '${platform}' does not support search`,
+          );
+        }
+        return plugin.search(searchOptions);
+      },
+
       platform(name: string): PlatformPlugin {
         return getPlugin(name);
       },
@@ -253,6 +391,9 @@ export const UnifiedClient = {
       typeof obj.getLiveStreams === "function" &&
       typeof obj.getVideos === "function" &&
       typeof obj.getChannel === "function" &&
+      typeof obj.getContents === "function" &&
+      typeof obj.getLiveStreamsBatch === "function" &&
+      typeof obj.search === "function" &&
       typeof obj.platform === "function" &&
       typeof obj.match === "function" &&
       typeof obj.platforms === "function" &&

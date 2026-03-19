@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BatchResult,
   BroadcastSession,
   broadcastSessionSchema,
   Channel,
@@ -11,6 +12,9 @@ import {
   liveStreamSchema,
   Page,
   resolvedUrlSchema,
+  ScheduledStream,
+  scheduledStreamSchema,
+  searchOptionsSchema,
   thumbnailSchema,
   Video,
   videoSchema,
@@ -32,6 +36,8 @@ const baseLiveStream = {
   id: "abc123",
   platform: "youtube",
   title: "Test Live",
+  description: "Test live stream description",
+  tags: ["tag1", "tag2"],
   url: "https://youtube.com/watch?v=abc123",
   thumbnail: validThumbnail,
   channel: validChannelRef,
@@ -45,6 +51,8 @@ const baseVideo = {
   id: "xyz789",
   platform: "youtube",
   title: "Test Video",
+  description: "Test video description",
+  tags: [],
   url: "https://youtube.com/watch?v=xyz789",
   thumbnail: validThumbnail,
   channel: validChannelRef,
@@ -52,6 +60,20 @@ const baseVideo = {
   duration: 3600,
   viewCount: 50000,
   publishedAt: new Date("2024-01-01T00:00:00Z"),
+  raw: {},
+};
+
+const baseScheduledStream = {
+  id: "sched123",
+  platform: "youtube",
+  title: "Upcoming Stream",
+  description: "",
+  tags: ["upcoming"],
+  url: "https://youtube.com/watch?v=sched123",
+  thumbnail: validThumbnail,
+  channel: validChannelRef,
+  type: "scheduled" as const,
+  scheduledStartAt: new Date("2024-06-01T18:00:00Z"),
   raw: {},
 };
 
@@ -117,6 +139,16 @@ describe("liveStreamSchema", () => {
       input: { ...baseLiveStream, startedAt: undefined },
       valid: false,
     },
+    {
+      name: "with endedAt",
+      input: { ...baseLiveStream, endedAt: new Date("2024-01-01T01:00:00Z") },
+      valid: true,
+    },
+    {
+      name: "without endedAt",
+      input: baseLiveStream,
+      valid: true,
+    },
   ])("$name", ({ input, valid }) => {
     const result = liveStreamSchema.safeParse(input);
     expect(result.success).toBe(valid);
@@ -142,6 +174,30 @@ describe("videoSchema", () => {
   });
 });
 
+describe("scheduledStreamSchema", () => {
+  it.each([
+    { name: "valid", input: baseScheduledStream, valid: true },
+    {
+      name: "with sessionId",
+      input: { ...baseScheduledStream, sessionId: "s1" },
+      valid: true,
+    },
+    {
+      name: "missing scheduledStartAt",
+      input: { ...baseScheduledStream, scheduledStartAt: undefined },
+      valid: false,
+    },
+    {
+      name: "string scheduledStartAt rejected (no coercion)",
+      input: { ...baseScheduledStream, scheduledStartAt: "2024-06-01T18:00:00Z" },
+      valid: false,
+    },
+  ])("$name", ({ input, valid }) => {
+    const result = scheduledStreamSchema.safeParse(input);
+    expect(result.success).toBe(valid);
+  });
+});
+
 describe("contentSchema (discriminated union)", () => {
   it("parses live stream", () => {
     const result = contentSchema.parse(baseLiveStream);
@@ -151,6 +207,11 @@ describe("contentSchema (discriminated union)", () => {
   it("parses video", () => {
     const result = contentSchema.parse(baseVideo);
     expect(result.type).toBe("video");
+  });
+
+  it("parses scheduled stream", () => {
+    const result = contentSchema.parse(baseScheduledStream);
+    expect(result.type).toBe("scheduled");
   });
 
   it("rejects invalid type", () => {
@@ -279,6 +340,25 @@ describe("Content type guards", () => {
     const content = contentSchema.parse(baseLiveStream);
     expect(Content.isVideo(content)).toBe(false);
   });
+
+  it("isScheduled narrows to ScheduledStream", () => {
+    const content = contentSchema.parse(baseScheduledStream);
+    if (Content.isScheduled(content)) {
+      expect(content.scheduledStartAt).toBeInstanceOf(Date);
+    } else {
+      expect.unreachable("Should be scheduled");
+    }
+  });
+
+  it("isScheduled returns false for live", () => {
+    const content = contentSchema.parse(baseLiveStream);
+    expect(Content.isScheduled(content)).toBe(false);
+  });
+
+  it("isScheduled returns false for video", () => {
+    const content = contentSchema.parse(baseVideo);
+    expect(Content.isScheduled(content)).toBe(false);
+  });
 });
 
 describe("LiveStream.is", () => {
@@ -318,6 +398,24 @@ describe("Channel.is", () => {
 
   it("returns false for invalid object", () => {
     expect(Channel.is({ id: "ch1" })).toBe(false);
+  });
+});
+
+describe("ScheduledStream.is", () => {
+  it("returns true for valid ScheduledStream", () => {
+    expect(ScheduledStream.is(baseScheduledStream)).toBe(true);
+  });
+
+  it("returns false for LiveStream", () => {
+    expect(ScheduledStream.is(baseLiveStream)).toBe(false);
+  });
+
+  it("returns false for Video", () => {
+    expect(ScheduledStream.is(baseVideo)).toBe(false);
+  });
+
+  it("returns false for non-object", () => {
+    expect(ScheduledStream.is("not an object")).toBe(false);
   });
 });
 
@@ -372,5 +470,43 @@ describe("Page.empty", () => {
     expect(page.hasMore).toBe(false);
     expect(page.cursor).toBeUndefined();
     expect(page.total).toBeUndefined();
+  });
+});
+
+describe("BatchResult.empty", () => {
+  it("creates empty BatchResult", () => {
+    const result = BatchResult.empty<Content>();
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+  });
+});
+
+describe("searchOptionsSchema", () => {
+  it.each([
+    { name: "query only", input: { query: "vspo" }, valid: true },
+    { name: "status only", input: { status: "live" }, valid: true },
+    { name: "query + status", input: { query: "vspo", status: "upcoming" }, valid: true },
+    { name: "with limit", input: { query: "vspo", limit: 50 }, valid: true },
+    { name: "with cursor", input: { query: "vspo", cursor: "abc" }, valid: true },
+    {
+      name: "full options",
+      input: { query: "test", status: "ended", limit: 10, cursor: "c1" },
+      valid: true,
+    },
+    { name: "invalid status", input: { query: "test", status: "invalid" }, valid: false },
+    { name: "zero limit", input: { query: "test", limit: 0 }, valid: false },
+    { name: "negative limit", input: { query: "test", limit: -1 }, valid: false },
+    { name: "limit over 100", input: { query: "test", limit: 101 }, valid: false },
+    { name: "float limit", input: { query: "test", limit: 1.5 }, valid: false },
+    { name: "empty object", input: {}, valid: true },
+    { name: "channelId only", input: { channelId: "UC123" }, valid: true },
+    { name: "channelId + status", input: { channelId: "UC123", status: "live" }, valid: true },
+    { name: "order relevance", input: { query: "test", order: "relevance" }, valid: true },
+    { name: "order date", input: { query: "test", order: "date" }, valid: true },
+    { name: "invalid order", input: { query: "test", order: "popular" }, valid: false },
+    { name: "empty channelId", input: { channelId: "" }, valid: false },
+  ])("$name", ({ input, valid }) => {
+    const result = searchOptionsSchema.safeParse(input);
+    expect(result.success).toBe(valid);
   });
 });

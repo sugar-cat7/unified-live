@@ -7,9 +7,11 @@ import {
 import {
   youtubeGetChannel,
   youtubeGetContent,
+  youtubeGetContents,
   youtubeGetLiveStreams,
   youtubeGetVideos,
   youtubeResolveArchive,
+  youtubeSearch,
 } from "./methods";
 import { createYouTubeQuotaStrategy } from "./quota";
 import { matchYouTubeUrl } from "./urls";
@@ -56,6 +58,9 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
         supportsArchiveResolution: true,
         authModel: "apiKey",
         rateLimitModel: "quota",
+        supportsBatchContent: true,
+        supportsBatchLiveStreams: false,
+        supportsSearch: true,
       },
       transformRequest: (req) => ({
         ...req,
@@ -99,10 +104,12 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
     },
     {
       getContent: youtubeGetContent,
+      getContents: youtubeGetContents,
       getChannel: youtubeGetChannel,
       getLiveStreams: youtubeGetLiveStreams,
       getVideos: youtubeGetVideos,
       resolveArchive: youtubeResolveArchive,
+      search: youtubeSearch,
     },
   );
 };

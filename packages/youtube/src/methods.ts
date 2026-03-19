@@ -1,10 +1,13 @@
 import {
+  type BatchResult,
   type Channel,
   type Content,
   type LiveStream,
   NotFoundError,
   type Page,
   type RestManager,
+  type SearchOptions,
+  UnifiedLiveError,
   type Video,
 } from "@unified-live/core";
 import {
@@ -251,4 +254,121 @@ export const youtubeResolveArchive = async (
 ): Promise<Video | null> => {
   const content = await youtubeGetContent(rest, live.id);
   return content.type === "video" ? content : null;
+};
+
+const YOUTUBE_MAX_IDS_PER_REQUEST = 50;
+
+/**
+ * Batch-fetch YouTube videos by IDs and map to unified Content.
+ *
+ * @param rest - REST manager for API requests
+ * @param ids - array of YouTube video IDs
+ * @returns BatchResult with values for found videos and NotFoundError for missing IDs
+ * @precondition each id is a valid YouTube video ID
+ * @postcondition values contains Content for each found video; errors contains NotFoundError for each missing ID
+ * @idempotency Safe — read-only API calls
+ */
+export const youtubeGetContents = async (
+  rest: RestManager,
+  ids: string[],
+): Promise<BatchResult<Content>> => {
+  const values = new Map<string, Content>();
+  const errors = new Map<string, UnifiedLiveError>();
+
+  for (let i = 0; i < ids.length; i += YOUTUBE_MAX_IDS_PER_REQUEST) {
+    const chunk = ids.slice(i, i + YOUTUBE_MAX_IDS_PER_REQUEST);
+    const res = await rest.request<YTListResponse<YTVideoResource>>({
+      method: "GET",
+      path: "/videos",
+      query: {
+        part: "snippet,contentDetails,statistics,liveStreamingDetails",
+        id: chunk.join(","),
+      },
+      bucketId: "videos:list",
+    });
+
+    const returnedIds = new Set<string>();
+    for (const item of res.data.items ?? []) {
+      if (item.id) {
+        values.set(item.id, toContent(item));
+        returnedIds.add(item.id);
+      }
+    }
+
+    for (const id of chunk) {
+      if (!returnedIds.has(id)) {
+        errors.set(id, new NotFoundError("youtube", id));
+      }
+    }
+  }
+
+  return { values, errors };
+};
+
+/**
+ * Search YouTube for videos matching the given options.
+ *
+ * @param rest - REST manager for API requests
+ * @param options - search options (query, status, limit, cursor)
+ * @returns paginated list of Content items
+ * @precondition options.query or options.status should be provided for meaningful results
+ * @postcondition returns Page with items mapped from YouTube video resources
+ * @idempotency Safe — read-only API calls
+ */
+export const youtubeSearch = async (
+  rest: RestManager,
+  options: SearchOptions,
+): Promise<Page<Content>> => {
+  const query: Record<string, string> = {
+    part: "id",
+    type: "video",
+  };
+
+  if (options.query) query.q = options.query;
+  if (options.limit) query.maxResults = String(options.limit);
+  if (options.cursor) query.pageToken = options.cursor;
+
+  if (options.status) {
+    const eventTypeMap = {
+      live: "live",
+      upcoming: "upcoming",
+      ended: "completed",
+    } as const;
+    query.eventType = eventTypeMap[options.status];
+  }
+
+  const searchRes = await rest.request<YTListResponse<Schemas["SearchResult"]>>({
+    method: "GET",
+    path: "/search",
+    query,
+    bucketId: "search:list",
+  });
+
+  if (!searchRes.data.items || searchRes.data.items.length === 0) {
+    return { items: [], hasMore: false };
+  }
+
+  const videoIds = searchRes.data.items
+    .map((item) => item.id?.videoId)
+    .filter(Boolean)
+    .join(",");
+
+  const videosRes = await rest.request<YTListResponse<YTVideoResource>>({
+    method: "GET",
+    path: "/videos",
+    query: {
+      part: "snippet,contentDetails,statistics,liveStreamingDetails",
+      id: videoIds,
+    },
+    bucketId: "videos:list",
+  });
+
+  const items = (videosRes.data.items ?? []).map(toContent);
+
+  return {
+    items,
+    cursor: searchRes.data.nextPageToken,
+    total: searchRes.data.pageInfo?.totalResults,
+    hasMore: searchRes.data.nextPageToken !== undefined,
+  };
 };

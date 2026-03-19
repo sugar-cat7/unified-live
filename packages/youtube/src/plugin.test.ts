@@ -73,9 +73,9 @@ describe("createYouTubePlugin", () => {
       supportsArchiveResolution: true,
       authModel: "apiKey",
       rateLimitModel: "quota",
-      supportsBatchContent: false,
+      supportsBatchContent: true,
       supportsBatchChannels: false,
-      supportsSearch: false,
+      supportsSearch: true,
     });
   });
 

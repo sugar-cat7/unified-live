@@ -3,9 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import {
   youtubeGetChannel,
   youtubeGetContent,
+  youtubeGetContents,
   youtubeGetLiveStreams,
   youtubeGetVideos,
   youtubeResolveArchive,
+  youtubeSearch,
 } from "./methods";
 import { createMockRest } from "./test-helpers";
 
@@ -354,6 +356,87 @@ describe("youtubeGetVideos", () => {
     });
 
     const result = await youtubeGetVideos(rest, "UCtest");
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+  });
+});
+
+const createSampleVideoItem = (id: string) => ({
+  ...sampleVideoItem,
+  id,
+});
+
+describe("youtubeGetContents", () => {
+  it("fetches multiple videos in one API call", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [createSampleVideoItem("v1"), createSampleVideoItem("v2")] },
+    });
+    const result = await youtubeGetContents(rest, ["v1", "v2"]);
+    expect(result.values.size).toBe(2);
+    expect(result.errors.size).toBe(0);
+  });
+
+  it("puts missing IDs in errors map", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [createSampleVideoItem("v1")] },
+    });
+    const result = await youtubeGetContents(rest, ["v1", "v2"]);
+    expect(result.values.size).toBe(1);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.get("v2")).toBeInstanceOf(NotFoundError);
+  });
+
+  it("chunks for >50 IDs", async () => {
+    const rest = createMockRest();
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async (req: { query: { id: string } }) => {
+      callCount++;
+      const ids = req.query.id.split(",");
+      return {
+        status: 200,
+        headers: new Headers(),
+        data: { items: ids.map((id: string) => createSampleVideoItem(id)) },
+      };
+    });
+    const ids = Array.from({ length: 60 }, (_, i) => `v${i}`);
+    const result = await youtubeGetContents(rest, ids);
+    expect(callCount).toBe(2);
+    expect(result.values.size).toBe(60);
+  });
+});
+
+describe("youtubeSearch", () => {
+  it("searches with query and status", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { items: [{ id: { videoId: "v1" } }] },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { items: [sampleLiveItem] },
+      });
+    const result = await youtubeSearch(rest, { query: "vspo", status: "live" });
+    expect(result.items.length).toBe(1);
+  });
+
+  it("returns empty when no results", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [] },
+    });
+    const result = await youtubeSearch(rest, { query: "nothing" });
     expect(result.items).toEqual([]);
     expect(result.hasMore).toBe(false);
   });

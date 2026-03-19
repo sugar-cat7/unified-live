@@ -133,9 +133,15 @@ export const youtubeGetLiveStreams = async (
     bucketId: "videos:list",
   });
 
-  return (videosRes.data.items ?? [])
-    .map(toContent)
-    .filter((c): c is LiveStream => c.type === "live");
+  const items = videosRes.data.items ?? [];
+  const liveStreams: LiveStream[] = [];
+  for (const item of items) {
+    const content = toContent(item);
+    if (content.type === "live") {
+      liveStreams.push(content);
+    }
+  }
+  return liveStreams;
 };
 
 /**
@@ -211,9 +217,14 @@ export const youtubeGetVideos = async (
     bucketId: "videos:list",
   });
 
-  const videos = (videosRes.data.items ?? [])
-    .map(toContent)
-    .filter((c): c is Video => c.type === "video");
+  const items = videosRes.data.items ?? [];
+  const videos: Video[] = [];
+  for (const item of items) {
+    const content = toContent(item);
+    if (content.type === "video") {
+      videos.push(content);
+    }
+  }
 
   return {
     items: videos,

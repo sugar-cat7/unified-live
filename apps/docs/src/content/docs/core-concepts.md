@@ -1,5 +1,6 @@
 ---
 title: Core Concepts
+description: "Content, Channel, URL resolution, and the unified type system"
 ---
 
 ## Content
@@ -73,15 +74,27 @@ console.log(channel.thumbnail); // Thumbnail (optional)
 The client can auto-detect the platform from a URL:
 
 ```ts
-// Resolves to the correct platform automatically
+// YouTube
 const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
-const content = await client.getContent("https://twitcasting.tv/user/movie/123");
+```
 
+```ts
+// Twitch
+const content = await client.getContent("https://www.twitch.tv/videos/123456");
+```
+
+```ts
+// TwitCasting
+const content = await client.getContent("https://twitcasting.tv/user/movie/123");
+```
+
+```ts
 // Check without fetching
 const resolved = client.match("https://www.youtube.com/watch?v=abc123");
 // { platform: "youtube", type: "content", id: "abc123" }
+```
 
+```ts
 const resolved = client.match("https://www.twitch.tv/username");
 // { platform: "twitch", type: "channel", id: "username" }
 ```

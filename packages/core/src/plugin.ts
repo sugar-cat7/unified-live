@@ -114,12 +114,6 @@ export type PlatformPlugin = {
    */
   match(url: string): ResolvedUrl | null;
 
-  /**
-   * Resolve a URL to a platform + type + id.
-   * Default implementation delegates to match().
-   */
-  resolveUrl(url: string): ResolvedUrl | null;
-
   /** Retrieve content (live stream or video) by ID. */
   getContent(id: string): Promise<Content>;
 
@@ -215,7 +209,6 @@ export const PlatformPlugin = {
         rateLimitModel: "tokenBucket",
       },
       match: definition.matchUrl,
-      resolveUrl: definition.matchUrl,
       getContent: (id) => methods.getContent(rest, id),
       getChannel: (id) => methods.getChannel(rest, id),
       getLiveStreams: (channelId) => methods.getLiveStreams(rest, channelId),
@@ -243,7 +236,6 @@ export const PlatformPlugin = {
     return (
       typeof obj.name === "string" &&
       typeof obj.match === "function" &&
-      typeof obj.resolveUrl === "function" &&
       typeof obj.getContent === "function" &&
       typeof obj.getChannel === "function" &&
       typeof obj.getLiveStreams === "function" &&

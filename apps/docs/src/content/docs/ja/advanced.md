@@ -1,5 +1,6 @@
 ---
 title: 応用
+description: "OpenTelemetryトレーシング、リソース管理、高度な設定"
 ---
 
 ## OpenTelemetry 連携
@@ -138,3 +139,8 @@ TWITCH_CLIENT_SECRET=def456
 TWITCASTING_CLIENT_ID=12345
 TWITCASTING_CLIENT_SECRET=secret
 ```
+
+## 次のステップ
+
+- [コード例](../examples/) — 実用的なコードレシピ
+- [プラグインの作成](../creating-a-plugin/) — カスタムプラットフォームプラグインの作成

@@ -1,5 +1,6 @@
 ---
 title: プラットフォームプラグイン
+description: "YouTube、Twitch、TwitCastingプラグインの設定"
 ---
 
 各プラットフォームは独立したパッケージとして提供されます。必要なプラットフォームだけをインストールできます。
@@ -129,19 +130,25 @@ SDK がアプリケーションレベルのアクセスとして Basic 認証（
 
 ## プラグインの登録
 
+**方法 A — 作成時に渡す:**
+
 ```ts
 import { UnifiedClient } from "@unified-live/core";
 
-// 方法 A: 作成後に登録
+const client = UnifiedClient.create({
+  plugins: [youtube, twitch, twitcasting],
+});
+```
+
+**方法 B — 作成後に登録:**
+
+```ts
+import { UnifiedClient } from "@unified-live/core";
+
 const client = UnifiedClient.create();
 client.register(youtube);
 client.register(twitch);
 client.register(twitcasting);
-
-// 方法 B: 作成時に渡す
-const client = UnifiedClient.create({
-  plugins: [youtube, twitch, twitcasting],
-});
 ```
 
 ## リソースの解放

@@ -1,3 +1,4 @@
+import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
 import type { TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
 import { parseDuration, toLive, toChannel, toVideo } from "./mapper";
@@ -57,6 +58,13 @@ describe("toLive", () => {
     const result = toLive(mockStream);
     expect(result.raw).toBe(mockStream);
   });
+
+  it.each([
+    { desc: "missing stream.id", override: { id: "" } },
+    { desc: "missing stream.user_id", override: { user_id: "" } },
+  ])("throws ParseError when $desc", ({ override }) => {
+    expect(() => toLive({ ...mockStream, ...override } as TwitchStream)).toThrow(ParseError);
+  });
 });
 
 describe("toVideo", () => {
@@ -90,6 +98,13 @@ describe("toVideo", () => {
     expect(result.thumbnail.width).toBe(640);
     expect(result.thumbnail.height).toBe(360);
   });
+
+  it.each([
+    { desc: "missing video.id", override: { id: "" } },
+    { desc: "missing video.user_id", override: { user_id: "" } },
+  ])("throws ParseError when $desc", ({ override }) => {
+    expect(() => toVideo({ ...mockVideo, ...override } as TwitchVideo)).toThrow(ParseError);
+  });
 });
 
 describe("toChannel", () => {
@@ -102,18 +117,12 @@ describe("toChannel", () => {
     expect(result.url).toBe("https://www.twitch.tv/testuser");
     expect(result.thumbnail?.url).toBe("https://static-cdn.jtvnw.net/user-default.png");
   });
-});
 
-describe("Object.freeze", () => {
-  it("returned objects are frozen", () => {
-    const live = toLive(mockStream);
-    expect(Object.isFrozen(live)).toBe(true);
-
-    const video = toVideo(mockVideo);
-    expect(Object.isFrozen(video)).toBe(true);
-
-    const channel = toChannel(mockUser);
-    expect(Object.isFrozen(channel)).toBe(true);
+  it.each([
+    { desc: "missing user.id", override: { id: "" } },
+    { desc: "missing user.login", override: { login: "" } },
+  ])("throws ParseError when $desc", ({ override }) => {
+    expect(() => toChannel({ ...mockUser, ...override } as TwitchUser)).toThrow(ParseError);
   });
 });
 

@@ -39,10 +39,6 @@ export const SpanAttributes = {
   RATE_LIMIT_REMAINING: "unified_live.rate_limit.remaining",
   RATE_LIMIT_LIMIT: "unified_live.rate_limit.limit",
 
-  // Quota attributes
-  QUOTA_CONSUMED: "unified_live.quota.consumed",
-  QUOTA_DAILY_REMAINING: "unified_live.quota.daily_remaining",
-
   // Error attributes (namespaced to avoid OTel convention collision)
   ERROR_CODE: "unified_live.error.code",
   ERROR_TYPE: "error.type",

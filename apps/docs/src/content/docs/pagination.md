@@ -1,5 +1,6 @@
 ---
 title: Pagination
+description: "Cursor-based pagination for listing videos and live streams"
 ---
 
 ## Fetching Videos
@@ -11,6 +12,7 @@ const page = await client.getVideos("youtube", channelId);
 
 console.log(page.items); // Video[]
 console.log(page.cursor); // string | undefined — pass to get next page
+console.log(page.hasMore); // boolean — true if more pages exist
 console.log(page.total); // number | undefined — total count (if available)
 ```
 
@@ -28,6 +30,8 @@ do {
 
 console.log(`Fetched ${allVideos.length} videos`);
 ```
+
+> The `Page<T>` type also provides a `hasMore` boolean. Use `page.cursor` for the loop condition and `page.hasMore` to show "Load More" buttons in UIs.
 
 ## Fetching a Limited Number of Pages
 

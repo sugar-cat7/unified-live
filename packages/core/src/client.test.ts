@@ -49,7 +49,6 @@ const createMockPlugin = (name: string): PlatformPlugin => {
     rest: {} as PlatformPlugin["rest"],
     capabilities: mockCapabilities,
     match: vi.fn(matchUrl),
-    resolveUrl: vi.fn(matchUrl),
     getContent: vi.fn(async () => mockContent),
     getChannel: vi.fn(async () => mockChannel),
     getLiveStreams: vi.fn(async () => []),

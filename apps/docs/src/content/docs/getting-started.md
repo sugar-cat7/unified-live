@@ -1,5 +1,6 @@
 ---
 title: Getting Started
+description: "Install unified-live and run your first API query in minutes"
 ---
 
 ## Installation
@@ -21,25 +22,37 @@ import { UnifiedClient } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
-// 1. Create a client
-using client = UnifiedClient.create();
+// 1. Create a client with platform plugins
+using client = UnifiedClient.create({
+  plugins: [
+    createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
+    createTwitchPlugin({
+      clientId: process.env.TWITCH_CLIENT_ID!,
+      clientSecret: process.env.TWITCH_CLIENT_SECRET!,
+    }),
+  ],
+});
 
-// 2. Register platform plugins
-client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
-client.register(
-  createTwitchPlugin({
-    clientId: process.env.TWITCH_CLIENT_ID!,
-    clientSecret: process.env.TWITCH_CLIENT_SECRET!,
-  }),
-);
-
-// 3. Fetch content by URL — the client auto-detects the platform
+// 2. Fetch content by URL — the client auto-detects the platform
 const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
 console.log(content.title); // Video title
 console.log(content.platform); // "youtube"
 console.log(content.type); // "live" or "video"
 ```
+
+:::tip[About `using`]
+The `using` keyword ([Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management)) automatically disposes the client when it goes out of scope. Requires TypeScript 5.2+ with `"lib": ["esnext.disposable"]`.
+
+Without `using`, call `client[Symbol.dispose]()` manually when done:
+
+```ts
+const client = UnifiedClient.create({ plugins: [...] });
+// ... use client ...
+client[Symbol.dispose]();
+```
+
+:::
 
 ## Requirements
 

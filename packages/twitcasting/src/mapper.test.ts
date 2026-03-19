@@ -1,3 +1,4 @@
+import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
 import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
 
@@ -72,6 +73,15 @@ describe("toLive", () => {
     const result = toLive(noTitle, mockUser);
     expect(result.title).toBe("TestUser's live");
   });
+
+  it.each([
+    { desc: "missing movie.id", movie: { id: "" }, user: {} },
+    { desc: "missing user.id", movie: {}, user: { id: "" } },
+  ])("throws ParseError when $desc", ({ movie, user }) => {
+    expect(() =>
+      toLive({ ...mockLiveMovie, ...movie } as TCMovie, { ...mockUser, ...user } as TCUser),
+    ).toThrow(ParseError);
+  });
 });
 
 describe("toVideo", () => {
@@ -108,6 +118,15 @@ describe("toVideo", () => {
     const result = toVideo(mockArchiveMovie, mockUser);
     expect(result.publishedAt).toEqual(new Date(1741334400 * 1000));
   });
+
+  it.each([
+    { desc: "missing movie.id", movie: { id: "" }, user: {} },
+    { desc: "missing user.id", movie: {}, user: { id: "" } },
+  ])("throws ParseError when $desc", ({ movie, user }) => {
+    expect(() =>
+      toVideo({ ...mockArchiveMovie, ...movie } as TCMovie, { ...mockUser, ...user } as TCUser),
+    ).toThrow(ParseError);
+  });
 });
 
 describe("toContent", () => {
@@ -122,19 +141,6 @@ describe("toContent", () => {
   });
 });
 
-describe("Object.freeze", () => {
-  it("returned objects are frozen", () => {
-    const live = toLive(mockLiveMovie, mockUser);
-    expect(Object.isFrozen(live)).toBe(true);
-
-    const video = toVideo(mockArchiveMovie, mockUser);
-    expect(Object.isFrozen(video)).toBe(true);
-
-    const channel = toChannel(mockUser);
-    expect(Object.isFrozen(channel)).toBe(true);
-  });
-});
-
 describe("toChannel", () => {
   it("converts a TwitCasting user to Channel", () => {
     const result = toChannel(mockUser);
@@ -144,5 +150,12 @@ describe("toChannel", () => {
     expect(result.name).toBe("TestUser");
     expect(result.url).toBe("https://twitcasting.tv/testuser");
     expect(result.thumbnail?.url).toBe("https://img.twitcasting.tv/user.png");
+  });
+
+  it.each([
+    { desc: "missing user.id", override: { id: "" } },
+    { desc: "missing user.screen_id", override: { screen_id: "" } },
+  ])("throws ParseError when $desc", ({ override }) => {
+    expect(() => toChannel({ ...mockUser, ...override } as TCUser)).toThrow(ParseError);
   });
 });

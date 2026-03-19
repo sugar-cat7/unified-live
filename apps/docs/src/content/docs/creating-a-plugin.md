@@ -1,5 +1,6 @@
 ---
 title: Creating a Plugin
+description: "Step-by-step guide to building a custom platform plugin"
 ---
 
 This guide walks you through building a platform plugin for unified-live. A plugin connects a streaming platform's API to the SDK's unified interface.

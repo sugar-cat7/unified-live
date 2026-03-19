@@ -10,9 +10,6 @@ export type YTVideoResource = Schemas["Video"];
 /** YouTube Data API v3 Channel resource (generated from Discovery Document). */
 export type YTChannelResource = Schemas["Channel"];
 
-/** YouTube Data API v3 PlaylistItem resource (generated from Discovery Document). */
-export type YTPlaylistItemResource = Schemas["PlaylistItem"];
-
 /**
  * Select the best available thumbnail (high > medium > default) from a YouTube resource.
  *
@@ -77,7 +74,7 @@ export const toContent = (item: YTVideoResource): Content => {
   const isLive = snippet.liveBroadcastContent === "live";
 
   if (isLive && liveStreamingDetails?.actualStartTime) {
-    return Object.freeze({
+    return {
       id,
       platform: "youtube",
       title: snippet.title ?? "",
@@ -89,10 +86,10 @@ export const toContent = (item: YTVideoResource): Content => {
       viewerCount: Number.parseInt(liveStreamingDetails.concurrentViewers ?? "0", 10),
       startedAt: new Date(liveStreamingDetails.actualStartTime),
       raw: item,
-    } satisfies LiveStream);
+    } satisfies LiveStream;
   }
 
-  return Object.freeze({
+  return {
     id,
     platform: "youtube",
     title: snippet.title ?? "",
@@ -105,7 +102,7 @@ export const toContent = (item: YTVideoResource): Content => {
     viewCount: Number.parseInt(statistics.viewCount ?? "0", 10),
     publishedAt: new Date(publishedAt),
     raw: item,
-  } satisfies Video);
+  } satisfies Video;
 };
 
 /**
@@ -127,13 +124,13 @@ export const toChannel = (item: YTChannelResource): Channel => {
     });
   }
 
-  return Object.freeze({
+  return {
     id,
     platform: "youtube",
     name: snippet.title ?? "",
     url: `https://www.youtube.com/channel/${id}`,
     thumbnail: pickThumbnail(snippet.thumbnails),
-  } satisfies Channel);
+  } satisfies Channel;
 };
 
 /**

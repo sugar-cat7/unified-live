@@ -1,5 +1,6 @@
 ---
 title: Advanced Usage
+description: "OpenTelemetry tracing, resource cleanup, and advanced SDK configuration"
 ---
 
 ## OpenTelemetry Integration
@@ -138,3 +139,8 @@ TWITCH_CLIENT_SECRET=def456
 TWITCASTING_CLIENT_ID=12345
 TWITCASTING_CLIENT_SECRET=secret
 ```
+
+## Next Steps
+
+- [Examples](../examples/) — Practical code recipes
+- [Creating a Plugin](../creating-a-plugin/) — Build your own platform plugin

@@ -172,11 +172,6 @@ export const UnifiedClient = {
         if (!url) {
           throw new ValidationError("VALIDATION_INVALID_INPUT", "URL must be a non-empty string");
         }
-        try {
-          void new URL(url);
-        } catch {
-          throw new ValidationError("VALIDATION_INVALID_URL", `Invalid URL: "${url}"`);
-        }
         const resolved = matchUrl(url);
         if (!resolved) {
           throw new ValidationError(

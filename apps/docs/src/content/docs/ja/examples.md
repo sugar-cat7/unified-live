@@ -1,5 +1,6 @@
 ---
 title: 使用例
+description: "unified-liveの実用的なコードレシピ集"
 ---
 
 unified-live の実践的なコードレシピ集。基本的な使い方から高度なパターンまで。

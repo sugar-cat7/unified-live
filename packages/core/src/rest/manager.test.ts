@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthenticationError, NetworkError, NotFoundError, UnifiedLiveError } from "../errors";
+import { createMockFetch } from "../test-helpers";
 import { createRestManager, parseRetryAfter, RestManager } from "./manager";
 import type { RateLimitHandle, RateLimitStrategy } from "./strategy";
 import { createRateLimitHeaderParser, type RestRequest } from "./types";
@@ -18,28 +19,6 @@ const createMockStrategy = (): RateLimitStrategy => {
     }),
     [Symbol.dispose]: vi.fn(),
   };
-};
-
-const createMockFetch = (
-  responses: Array<{
-    status: number;
-    body?: unknown;
-    headers?: Record<string, string>;
-  }>,
-): typeof globalThis.fetch => {
-  let callIndex = 0;
-  return vi.fn(async () => {
-    const r = responses[callIndex];
-    if (!r)
-      throw new Error(
-        `createMockFetch: unexpected call #${callIndex} (only ${responses.length} responses defined)`,
-      );
-    callIndex++;
-    return new Response(JSON.stringify(r.body ?? {}), {
-      status: r.status,
-      headers: r.headers,
-    });
-  }) as unknown as typeof globalThis.fetch;
 };
 
 describe("createRestManager", () => {

@@ -14,9 +14,9 @@ import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } fro
 
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_BASE_DELAY = 1000;
-const DEFAULT_RETRYABLE_STATUSES = [500, 502, 503, 504];
+const DEFAULT_RETRYABLE_STATUSES: ReadonlySet<number> = new Set([500, 502, 503, 504]);
 /** Client errors that should never be retried (408 is server-initiated timeout, not transient). */
-const NON_RETRYABLE_CLIENT_STATUSES = [400, 408, 413, 415, 422];
+const NON_RETRYABLE_CLIENT_STATUSES: ReadonlySet<number> = new Set([400, 408, 413, 415, 422]);
 
 /** @category Plugin Development */
 export type RestManager = {
@@ -97,7 +97,9 @@ export type RestManager = {
 export const createRestManager = (options: RestManagerOptions): RestManager => {
   const maxRetries = options.retry?.maxRetries ?? DEFAULT_MAX_RETRIES;
   const baseDelay = options.retry?.baseDelay ?? DEFAULT_BASE_DELAY;
-  const retryableStatuses = options.retry?.retryableStatuses ?? DEFAULT_RETRYABLE_STATUSES;
+  const retryableStatuses: ReadonlySet<number> = options.retry?.retryableStatuses
+    ? new Set(options.retry.retryableStatuses)
+    : DEFAULT_RETRYABLE_STATUSES;
   const timeout = options.retry?.timeout;
   const fetchFn = options.fetch ?? globalThis.fetch;
   const tracer = getTracer();
@@ -113,6 +115,11 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
   } catch {
     // ignore invalid URL
   }
+
+  const baseHeaders: Record<string, string> = {
+    Accept: "application/json",
+    ...options.headers,
+  };
 
   const manager: RestManager = {
     platform: options.platform,
@@ -227,7 +234,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
             }
 
             // Non-retryable client errors — fail immediately without retry
-            if (NON_RETRYABLE_CLIENT_STATUSES.includes(response.status)) {
+            if (NON_RETRYABLE_CLIENT_STATUSES.has(response.status)) {
               throw new UnifiedLiveError(
                 `Request to ${req.path} failed with status ${response.status}`,
                 response.status === 408 ? "NETWORK_TIMEOUT" : "INTERNAL",
@@ -241,7 +248,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
             }
 
             // Retryable server errors (5xx)
-            if (retryableStatuses.includes(response.status)) {
+            if (retryableStatuses.has(response.status)) {
               if (attempt < maxRetries) {
                 const jitter = 0.5 + Math.random();
                 await sleep(baseDelay * 2 ** attempt * jitter);
@@ -299,10 +306,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     },
 
     createHeaders: async (_req: RestRequest): Promise<Record<string, string>> => {
-      const headers: Record<string, string> = {
-        Accept: "application/json",
-        ...options.headers,
-      };
+      const headers: Record<string, string> = { ...baseHeaders };
 
       if (manager.tokenManager) {
         headers.Authorization = await manager.tokenManager.getAuthHeader();

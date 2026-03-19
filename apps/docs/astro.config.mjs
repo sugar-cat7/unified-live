@@ -8,6 +8,10 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "unified-live",
+      lastUpdated: true,
+      editLink: {
+        baseUrl: "https://github.com/sugar-cat7/unified-live/edit/main/apps/docs/",
+      },
       defaultLocale: "root",
       locales: {
         root: { label: "English", lang: "en" },

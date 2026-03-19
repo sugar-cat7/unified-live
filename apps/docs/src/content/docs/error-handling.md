@@ -1,5 +1,6 @@
 ---
 title: Error Handling
+description: "Handle API errors gracefully with the unified error hierarchy"
 ---
 
 All errors thrown by the SDK are instances of `UnifiedLiveError`. Use `try/catch` to handle them.
@@ -20,16 +21,16 @@ import {
 } from "@unified-live/core";
 ```
 
-| Error                   | When                                       | What to Do                      |
-| ----------------------- | ------------------------------------------ | ------------------------------- |
-| `NotFoundError`         | Content or channel doesn't exist           | Check the ID or URL             |
-| `QuotaExhaustedError`   | YouTube daily quota exceeded               | Wait until quota resets         |
-| `AuthenticationError`   | Invalid or expired credentials             | Check your API keys             |
-| `RateLimitError`        | Rate limit exceeded after all retries      | Reduce request frequency        |
-| `NetworkError`          | Network failure (timeout, DNS, connection) | Check connectivity, retry later |
-| `ParseError`            | Failed to parse API response               | Report as a bug                 |
-| `ValidationError`       | Invalid input (e.g., empty URL)            | Fix the input                   |
-| `PlatformNotFoundError` | No plugin registered for the platform      | Register the plugin             |
+| Error                   | When                                       | What to Do                                   |
+| ----------------------- | ------------------------------------------ | -------------------------------------------- |
+| `NotFoundError`         | Content or channel doesn't exist           | Check the ID or URL                          |
+| `QuotaExhaustedError`   | YouTube daily quota exceeded               | Wait until quota resets                      |
+| `AuthenticationError`   | Invalid or expired credentials             | Check your API keys                          |
+| `RateLimitError`        | Rate limit exceeded after all retries      | Reduce request frequency; check `retryAfter` |
+| `NetworkError`          | Network failure (timeout, DNS, connection) | Check connectivity, retry later              |
+| `ParseError`            | Failed to parse API response               | Report as a bug                              |
+| `ValidationError`       | Invalid input (e.g., empty URL)            | Fix the input                                |
+| `PlatformNotFoundError` | No plugin registered for the platform      | Register the plugin                          |
 
 ## Basic Error Handling
 
@@ -60,6 +61,7 @@ try {
 Every error has a typed `code` field for programmatic handling:
 
 ```ts
+// Inside a try/catch block:
 catch (error) {
   if (error instanceof UnifiedLiveError) {
     switch (error.code) {
@@ -91,6 +93,7 @@ catch (error) {
 All errors carry structured metadata via `error.context`:
 
 ```ts
+// Inside a try/catch block:
 catch (error) {
   if (error instanceof UnifiedLiveError) {
     console.log(error.platform);          // "youtube" (backward-compat getter)
@@ -98,6 +101,19 @@ catch (error) {
     console.log(error.context.path);      // "/videos" (if applicable)
     console.log(error.context.status);    // 404 (if applicable)
     console.log(error.cause);             // Original error (if wrapped)
+  }
+}
+```
+
+## RateLimitError
+
+`RateLimitError` includes a `retryAfter` property — the number of seconds to wait before retrying, or `undefined` if the server did not provide a value.
+
+```ts
+// Inside a try/catch block:
+catch (error) {
+  if (error instanceof RateLimitError) {
+    console.log(`Rate limited. Retry after: ${error.retryAfter ?? "unknown"} seconds`);
   }
 }
 ```

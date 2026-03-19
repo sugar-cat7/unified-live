@@ -1,5 +1,6 @@
 ---
 title: 概要
+description: "unified-liveの概要と複数プラットフォームAPI統合の課題解決"
 ---
 
 ## 課題

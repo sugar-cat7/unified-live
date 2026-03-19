@@ -1,5 +1,6 @@
 ---
 title: ページネーション
+description: "動画・配信一覧のカーソルベースページネーション"
 ---
 
 ## 動画の取得
@@ -11,6 +12,7 @@ const page = await client.getVideos("youtube", channelId);
 
 console.log(page.items); // Video[]
 console.log(page.cursor); // string | undefined — 次ページ取得用
+console.log(page.hasMore); // boolean — 次のページが存在する場合 true
 console.log(page.total); // number | undefined — 総数（取得可能な場合）
 ```
 
@@ -28,6 +30,8 @@ do {
 
 console.log(`${allVideos.length} 件の動画を取得しました`);
 ```
+
+> `Page<T>` 型は `hasMore` ブール値も提供します。ループ条件には `page.cursor` を使い、UI の「もっと読む」ボタンの表示には `page.hasMore` を使用してください。
 
 ## ページ数を制限して取得
 

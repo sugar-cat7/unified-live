@@ -42,8 +42,6 @@ describe("SpanAttributes", () => {
     ["HTTP_STATUS", "http.response.status_code"],
     ["RATE_LIMIT_REMAINING", "unified_live.rate_limit.remaining"],
     ["RATE_LIMIT_LIMIT", "unified_live.rate_limit.limit"],
-    ["QUOTA_CONSUMED", "unified_live.quota.consumed"],
-    ["QUOTA_DAILY_REMAINING", "unified_live.quota.daily_remaining"],
     ["SERVER_ADDRESS", "server.address"],
     ["SERVER_PORT", "server.port"],
     ["ERROR_CODE", "unified_live.error.code"],
@@ -54,7 +52,7 @@ describe("SpanAttributes", () => {
     expect(SpanAttributes[key]).toBe(expected);
   });
 
-  it("has exactly 14 attribute keys", () => {
-    expect(Object.keys(SpanAttributes)).toHaveLength(14);
+  it("has exactly 12 attribute keys", () => {
+    expect(Object.keys(SpanAttributes)).toHaveLength(12);
   });
 });

@@ -39,6 +39,10 @@ export const twitcastingGetContent = async (rest: RestManager, id: string): Prom
     bucketId: "movies",
   });
 
+  if (!res.data.movie || !res.data.broadcaster) {
+    throw new NotFoundError("twitcasting", id);
+  }
+
   return toContent(res.data.movie, res.data.broadcaster);
 };
 
@@ -141,7 +145,12 @@ export const twitcastingGetVideos = async (
   ]);
 
   const movies = moviesRes.data.movies;
-  const videos = movies.filter((m) => !m.is_live).map((m) => toVideo(m, userRes.data.user));
+  const videos: Video[] = [];
+  for (const m of movies) {
+    if (!m.is_live) {
+      videos.push(toVideo(m, userRes.data.user));
+    }
+  }
 
   // Use last movie ID (not last video) as cursor to avoid stopping when a page has only live movies
   const nextCursor = movies.length === pageSize ? movies.at(-1)!.id : undefined;

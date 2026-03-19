@@ -4,7 +4,7 @@ import {
   type Content,
   type LiveStream,
   NotFoundError,
-  type Page,
+  Page,
   type RestManager,
   type SearchOptions,
   UnifiedLiveError,
@@ -244,7 +244,7 @@ export const twitchSearch = async (
   // Twitch schedule requires broadcaster_id — no general upcoming search
   // Twitch has no general ended/archive search endpoint
   if (options.status === "upcoming" || options.status === "ended") {
-    return { items: [], hasMore: false };
+    return Page.empty<Content>();
   }
 
   // Twitch /search/channels only returns meaningful Content when filtered to live channels.

@@ -4,7 +4,7 @@ import {
   type Content,
   type LiveStream,
   NotFoundError,
-  type Page,
+  Page,
   type RestManager,
   type SearchOptions,
   UnifiedLiveError,
@@ -25,6 +25,8 @@ type YTListResponse<T> = {
   nextPageToken?: string;
 };
 
+const YOUTUBE_VIDEO_PARTS = "snippet,contentDetails,statistics,liveStreamingDetails";
+
 /**
  * Fetch a YouTube video by ID and map to unified Content.
  *
@@ -40,7 +42,7 @@ export const youtubeGetContent = async (rest: RestManager, id: string): Promise<
     method: "GET",
     path: "/videos",
     query: {
-      part: "snippet,contentDetails,statistics,liveStreamingDetails",
+      part: YOUTUBE_VIDEO_PARTS,
       id,
     },
     bucketId: "videos:list",
@@ -130,7 +132,7 @@ export const youtubeGetLiveStreams = async (
     method: "GET",
     path: "/videos",
     query: {
-      part: "snippet,contentDetails,statistics,liveStreamingDetails",
+      part: YOUTUBE_VIDEO_PARTS,
       id: videoIds,
     },
     bucketId: "videos:list",
@@ -214,7 +216,7 @@ export const youtubeGetVideos = async (
     method: "GET",
     path: "/videos",
     query: {
-      part: "snippet,contentDetails,statistics,liveStreamingDetails",
+      part: YOUTUBE_VIDEO_PARTS,
       id: videoIds,
     },
     bucketId: "videos:list",
@@ -281,7 +283,7 @@ export const youtubeGetContents = async (
       method: "GET",
       path: "/videos",
       query: {
-        part: "snippet,contentDetails,statistics,liveStreamingDetails",
+        part: YOUTUBE_VIDEO_PARTS,
         id: chunk.join(","),
       },
       bucketId: "videos:list",
@@ -345,7 +347,7 @@ export const youtubeSearch = async (
   });
 
   if (!searchRes.data.items || searchRes.data.items.length === 0) {
-    return { items: [], hasMore: false };
+    return Page.empty<Content>();
   }
 
   const videoIds = searchRes.data.items
@@ -357,7 +359,7 @@ export const youtubeSearch = async (
     method: "GET",
     path: "/videos",
     query: {
-      part: "snippet,contentDetails,statistics,liveStreamingDetails",
+      part: YOUTUBE_VIDEO_PARTS,
       id: videoIds,
     },
     bucketId: "videos:list",

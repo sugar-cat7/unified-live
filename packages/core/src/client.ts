@@ -7,7 +7,8 @@ import {
   ValidationError,
 } from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import type { BatchResult, Channel, Content, LiveStream, Page, ResolvedUrl, SearchOptions, Video } from "./types";
+import { BatchResult } from "./types";
+import type { Channel, Content, LiveStream, Page, ResolvedUrl, SearchOptions, Video } from "./types";
 
 /** @category Client */
 export type UnifiedClientOptions = {
@@ -207,6 +208,7 @@ export const UnifiedClient = {
     const batchFallback = async <T>(
       fn: (id: string) => Promise<T>,
       ids: string[],
+      platform: string,
     ): Promise<BatchResult<T>> => {
       const CONCURRENCY = 10;
       const values = new Map<string, T>();
@@ -230,7 +232,7 @@ export const UnifiedClient = {
                 : new UnifiedLiveError(
                     result.reason?.message ?? "Unknown error",
                     "INTERNAL",
-                    { platform: "unknown" },
+                    { platform },
                   ),
             );
           }
@@ -296,23 +298,23 @@ export const UnifiedClient = {
       },
 
       async getContents(platform: string, ids: string[]): Promise<BatchResult<Content>> {
-        if (ids.length === 0) return { values: new Map(), errors: new Map() };
+        if (ids.length === 0) return BatchResult.empty();
         const plugin = getPlugin(platform);
         const uniqueIds = [...new Set(ids)];
         if (plugin.getContents) {
           return plugin.getContents(uniqueIds);
         }
-        return batchFallback((id) => plugin.getContent(id), uniqueIds);
+        return batchFallback((id) => plugin.getContent(id), uniqueIds, platform);
       },
 
       async getChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>> {
-        if (ids.length === 0) return { values: new Map(), errors: new Map() };
+        if (ids.length === 0) return BatchResult.empty();
         const plugin = getPlugin(platform);
         const uniqueIds = [...new Set(ids)];
         if (plugin.getChannels) {
           return plugin.getChannels(uniqueIds);
         }
-        return batchFallback((id) => plugin.getChannel(id), uniqueIds);
+        return batchFallback((id) => plugin.getChannel(id), uniqueIds, platform);
       },
 
       async search(platform: string, searchOptions: SearchOptions): Promise<Page<Content>> {

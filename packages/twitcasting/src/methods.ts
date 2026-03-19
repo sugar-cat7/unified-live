@@ -3,7 +3,7 @@ import {
   type Content,
   type LiveStream,
   NotFoundError,
-  type Page,
+  Page,
   type RestManager,
   type SearchOptions,
   type Video,
@@ -211,12 +211,12 @@ export const twitcastingSearch = async (
 ): Promise<Page<Content>> => {
   // TwitCasting has no scheduled/upcoming data
   if (options.status === "upcoming") {
-    return { items: [], hasMore: false };
+    return Page.empty<Content>();
   }
 
   // TwitCasting search requires a keyword
   if (!options.query) {
-    return { items: [], hasMore: false };
+    return Page.empty<Content>();
   }
 
   const query: Record<string, string> = {
@@ -233,33 +233,29 @@ export const twitcastingSearch = async (
   });
 
   const users = res.data.users ?? [];
-  const items: Content[] = [];
 
-  for (const user of users) {
+  const fetchUserContent = async (user: TCUser): Promise<Content[]> => {
     if (options.status === "live") {
-      // Only include users currently live
-      if (!user.is_live) continue;
+      if (!user.is_live) return [];
       const movieRes = await rest.request<{ movie: TCMovie }>({
         method: "GET",
         path: `/users/${user.id}/current_live`,
         bucketId: "movies",
       });
-      if (movieRes.data.movie) {
-        items.push(toLive(movieRes.data.movie, user));
-      }
-    } else {
-      // status === "ended" or no status — fetch recent movies
-      const moviesRes = await rest.request<TCMoviesResponse>({
-        method: "GET",
-        path: `/users/${user.id}/movies`,
-        query: { limit: "5" },
-        bucketId: "movies",
-      });
-      for (const movie of moviesRes.data.movies ?? []) {
-        items.push(toContent(movie, user));
-      }
+      return movieRes.data.movie ? [toLive(movieRes.data.movie, user)] : [];
     }
-  }
+    // status === "ended" or no status — fetch recent movies
+    const moviesRes = await rest.request<TCMoviesResponse>({
+      method: "GET",
+      path: `/users/${user.id}/movies`,
+      query: { limit: "5" },
+      bucketId: "movies",
+    });
+    return (moviesRes.data.movies ?? []).map((movie) => toContent(movie, user));
+  };
+
+  const results = await Promise.all(users.map(fetchUserContent));
+  const items = results.flat();
 
   return { items, hasMore: false };
 };

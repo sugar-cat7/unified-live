@@ -119,11 +119,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     const scheme = parsed.protocol.replace(":", "");
     cachedUrl = {
       hostname: parsed.hostname,
-      port: parsed.port
-        ? Number.parseInt(parsed.port, 10)
-        : scheme === "https"
-          ? 443
-          : 80,
+      port: parsed.port ? Number.parseInt(parsed.port, 10) : scheme === "https" ? 443 : 80,
       scheme,
     };
   } catch {

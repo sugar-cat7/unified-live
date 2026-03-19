@@ -271,26 +271,23 @@ export const UnifiedClient = {
       attrs: Record<string, string | number>,
       fn: () => Promise<T>,
     ): Promise<T> => {
-      return tracer.startActiveSpan(
-        `unified-live.client ${operationName}`,
-        async (span) => {
-          span.setAttribute(SpanAttributes.OPERATION, operationName);
-          for (const [k, v] of Object.entries(attrs)) span.setAttribute(k, v);
-          try {
-            const result = await fn();
-            span.end();
-            return result;
-          } catch (error) {
-            span.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: error instanceof Error ? error.message : String(error),
-            });
-            span.recordException(error instanceof Error ? error : new Error(String(error)));
-            span.end();
-            throw error;
-          }
-        },
-      );
+      return tracer.startActiveSpan(`unified-live.client ${operationName}`, async (span) => {
+        span.setAttribute(SpanAttributes.OPERATION, operationName);
+        for (const [k, v] of Object.entries(attrs)) span.setAttribute(k, v);
+        try {
+          const result = await fn();
+          span.end();
+          return result;
+        } catch (error) {
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error instanceof Error ? error.message : String(error),
+          });
+          span.recordException(error instanceof Error ? error : new Error(String(error)));
+          span.end();
+          throw error;
+        }
+      });
     };
 
     const client: UnifiedClient = {

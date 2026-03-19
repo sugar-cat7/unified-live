@@ -83,38 +83,38 @@ unified-live.client getContent           ← Client-level span
 
 ### Client Span Attributes
 
-| Attribute | Type | Description |
-| :--- | :--- | :--- |
-| `unified_live.platform` | `string` | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`) |
-| `unified_live.operation` | `string` | Operation name (e.g., `"getContent"`, `"search"`) |
-| `unified_live.batch.size` | `number` | Batch size (only for `getContents`, `getLiveStreamsBatch`) |
+| Attribute                 | Type     | Description                                                    |
+| :------------------------ | :------- | :------------------------------------------------------------- |
+| `unified_live.platform`   | `string` | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`) |
+| `unified_live.operation`  | `string` | Operation name (e.g., `"getContent"`, `"search"`)              |
+| `unified_live.batch.size` | `number` | Batch size (only for `getContents`, `getLiveStreamsBatch`)     |
 
 ### REST Span Attributes
 
-| Attribute | Type | Description |
-| :--- | :--- | :--- |
-| `unified_live.platform` | `string` | Platform identifier |
-| `http.request.method` | `string` | HTTP method (`"GET"`) |
-| `url.full` | `string` | Full request URL |
-| `url.path` | `string` | Request path (e.g., `"/videos"`) |
-| `url.scheme` | `string` | URL scheme (e.g., `"https"`) |
-| `http.response.status_code` | `number` | HTTP response status code |
-| `server.address` | `string` | Server hostname |
-| `server.port` | `number` | Server port (defaults to 443 for HTTPS, 80 for HTTP) |
-| `unified_live.rate_limit.remaining` | `number` | Remaining rate limit tokens |
-| `unified_live.rate_limit.limit` | `number` | Total rate limit capacity |
-| `unified_live.error.code` | `string` | Error code (e.g., `"RATE_LIMIT_EXCEEDED"`) |
-| `error.type` | `string` | HTTP status code string (e.g., `"404"`) or exception name |
-| `unified_live.error.has_cause` | `boolean` | Whether the error wraps a cause |
-| `unified_live.retry.count` | `number` | Number of retries performed |
+| Attribute                           | Type      | Description                                               |
+| :---------------------------------- | :-------- | :-------------------------------------------------------- |
+| `unified_live.platform`             | `string`  | Platform identifier                                       |
+| `http.request.method`               | `string`  | HTTP method (`"GET"`)                                     |
+| `url.full`                          | `string`  | Full request URL                                          |
+| `url.path`                          | `string`  | Request path (e.g., `"/videos"`)                          |
+| `url.scheme`                        | `string`  | URL scheme (e.g., `"https"`)                              |
+| `http.response.status_code`         | `number`  | HTTP response status code                                 |
+| `server.address`                    | `string`  | Server hostname                                           |
+| `server.port`                       | `number`  | Server port (defaults to 443 for HTTPS, 80 for HTTP)      |
+| `unified_live.rate_limit.remaining` | `number`  | Remaining rate limit tokens                               |
+| `unified_live.rate_limit.limit`     | `number`  | Total rate limit capacity                                 |
+| `unified_live.error.code`           | `string`  | Error code (e.g., `"RATE_LIMIT_EXCEEDED"`)                |
+| `error.type`                        | `string`  | HTTP status code string (e.g., `"404"`) or exception name |
+| `unified_live.error.has_cause`      | `boolean` | Whether the error wraps a cause                           |
+| `unified_live.retry.count`          | `number`  | Number of retries performed                               |
 
 ### Metrics
 
 The SDK emits the following OTel metrics:
 
-| Metric | Type | Unit | Description |
-| :--- | :--- | :--- | :--- |
-| `http.client.request.duration` | Histogram | `s` | Duration of HTTP client requests |
+| Metric                         | Type      | Unit | Description                      |
+| :----------------------------- | :-------- | :--- | :------------------------------- |
+| `http.client.request.duration` | Histogram | `s`  | Duration of HTTP client requests |
 
 The histogram records the following attributes: `http.request.method`, `server.address`, `server.port`, `http.response.status_code` (when a response was received), `error.type` (on failure).
 

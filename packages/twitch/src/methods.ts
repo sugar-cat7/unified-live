@@ -247,6 +247,8 @@ export const twitchSearch = async (
     return { items: [], hasMore: false };
   }
 
+  // Twitch /search/channels only returns meaningful Content when filtered to live channels.
+  // Without live_only, results are channels (not streams/videos) which don't map to Content.
   const query: Record<string, string> = {
     live_only: "true",
   };

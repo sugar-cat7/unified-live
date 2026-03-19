@@ -258,7 +258,8 @@ export const searchOptionsSchema = z.object({
 
 /**
  * Options for search operations across platforms.
- * All fields are optional — an empty object returns unfiltered results.
+ * All fields are optional at the schema level, but `UnifiedClient.search()`
+ * requires at least one of `query` or `status` to be provided.
  *
  * @category Types
  */

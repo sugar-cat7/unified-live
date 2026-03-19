@@ -11,6 +11,7 @@ import {
   twitcastingGetLiveStreams,
   twitcastingGetVideos,
   twitcastingResolveArchive,
+  twitcastingSearch,
 } from "./methods";
 import { matchTwitCastingUrl } from "./urls";
 
@@ -68,7 +69,7 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
         rateLimitModel: "tokenBucket",
         supportsBatchContent: false,
         supportsBatchChannels: false,
-        supportsSearch: false,
+        supportsSearch: true,
       },
       headers: { "X-Api-Version": "2.0" },
       parseRateLimitHeaders: parseTwitCastingRateLimitHeaders,
@@ -80,6 +81,7 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
       getLiveStreams: twitcastingGetLiveStreams,
       getVideos: twitcastingGetVideos,
       resolveArchive: twitcastingResolveArchive,
+      search: twitcastingSearch,
     },
   );
 };

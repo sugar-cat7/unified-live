@@ -5,6 +5,7 @@ import {
   NotFoundError,
   type Page,
   type RestManager,
+  type SearchOptions,
   type Video,
 } from "@unified-live/core";
 import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
@@ -21,6 +22,10 @@ type TCUserResponse = {
 type TCMoviesResponse = {
   total_count: number;
   movies: TCMovie[];
+};
+
+type TCSearchUsersResponse = {
+  users: TCUser[];
 };
 
 /**
@@ -185,4 +190,76 @@ export const twitcastingResolveArchive = async (
   }
 
   return toVideo(res.data.movie, res.data.broadcaster);
+};
+
+/**
+ * Search TwitCasting for content matching the given options.
+ *
+ * Uses the `/search/users` endpoint to find users by keyword, then fetches
+ * their current live or recent movies depending on the requested status.
+ *
+ * @param rest - REST manager for API requests
+ * @param options - search options (query, status, limit)
+ * @returns paginated list of Content items
+ * @precondition options.query should be provided for meaningful results
+ * @postcondition returns Page with items mapped from TwitCasting resources
+ * @idempotency Safe — read-only API calls
+ */
+export const twitcastingSearch = async (
+  rest: RestManager,
+  options: SearchOptions,
+): Promise<Page<Content>> => {
+  // TwitCasting has no scheduled/upcoming data
+  if (options.status === "upcoming") {
+    return { items: [], hasMore: false };
+  }
+
+  // TwitCasting search requires a keyword
+  if (!options.query) {
+    return { items: [], hasMore: false };
+  }
+
+  const query: Record<string, string> = {
+    words: options.query,
+    lang: "ja",
+  };
+  if (options.limit) query.limit = String(options.limit);
+
+  const res = await rest.request<TCSearchUsersResponse>({
+    method: "GET",
+    path: "/search/users",
+    query,
+    bucketId: "search",
+  });
+
+  const users = res.data.users ?? [];
+  const items: Content[] = [];
+
+  for (const user of users) {
+    if (options.status === "live") {
+      // Only include users currently live
+      if (!user.is_live) continue;
+      const movieRes = await rest.request<{ movie: TCMovie }>({
+        method: "GET",
+        path: `/users/${user.id}/current_live`,
+        bucketId: "movies",
+      });
+      if (movieRes.data.movie) {
+        items.push(toLive(movieRes.data.movie, user));
+      }
+    } else {
+      // status === "ended" or no status — fetch recent movies
+      const moviesRes = await rest.request<TCMoviesResponse>({
+        method: "GET",
+        path: `/users/${user.id}/movies`,
+        query: { limit: "5" },
+        bucketId: "movies",
+      });
+      for (const movie of moviesRes.data.movies ?? []) {
+        items.push(toContent(movie, user));
+      }
+    }
+  }
+
+  return { items, hasMore: false };
 };

@@ -6,6 +6,7 @@ import {
   twitcastingGetLiveStreams,
   twitcastingGetVideos,
   twitcastingResolveArchive,
+  twitcastingSearch,
 } from "./methods";
 import { createMockRest } from "./test-helpers";
 
@@ -222,5 +223,104 @@ describe("twitcastingResolveArchive", () => {
     const result = await twitcastingResolveArchive(rest, live);
     expect(result).not.toBeNull();
     expect(result!.type).toBe("video");
+  });
+});
+
+describe("twitcastingSearch", () => {
+  it("searches live users with query and status=live", async () => {
+    const liveUser = { ...mockUser, is_live: true };
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        // /search/users response
+        return { status: 200, headers: new Headers(), data: { users: [liveUser] } };
+      }
+      // /users/{id}/current_live response
+      return { status: 200, headers: new Headers(), data: { movie: mockLiveMovie } };
+    });
+
+    const result = await twitcastingSearch(rest, { query: "test", status: "live" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.type).toBe("live");
+    expect(result.hasMore).toBe(false);
+  });
+
+  it("skips non-live users when status=live", async () => {
+    const offlineUser = { ...mockUser, is_live: false };
+    const rest = createMockRest({ users: [offlineUser] });
+
+    const result = await twitcastingSearch(rest, { query: "test", status: "live" });
+    expect(result.items).toEqual([]);
+    // Only one request: /search/users — no current_live fetch for offline users
+    expect(rest.request).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns empty for status=upcoming (unsupported)", async () => {
+    const rest = createMockRest({});
+    const result = await twitcastingSearch(rest, { query: "test", status: "upcoming" });
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+    expect(rest.request).not.toHaveBeenCalled();
+  });
+
+  it("returns empty when no query provided", async () => {
+    const rest = createMockRest({});
+    const result = await twitcastingSearch(rest, {});
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+    expect(rest.request).not.toHaveBeenCalled();
+  });
+
+  it("fetches recent movies when status is not specified", async () => {
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { status: 200, headers: new Headers(), data: { users: [mockUser] } };
+      }
+      return {
+        status: 200,
+        headers: new Headers(),
+        data: { movies: [mockArchiveMovie] },
+      };
+    });
+
+    const result = await twitcastingSearch(rest, { query: "test" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.type).toBe("video");
+  });
+
+  it("fetches recent movies when status=ended", async () => {
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { status: 200, headers: new Headers(), data: { users: [mockUser] } };
+      }
+      return {
+        status: 200,
+        headers: new Headers(),
+        data: { movies: [mockArchiveMovie] },
+      };
+    });
+
+    const result = await twitcastingSearch(rest, { query: "test", status: "ended" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.type).toBe("video");
+  });
+
+  it("passes query params correctly", async () => {
+    const rest = createMockRest({ users: [] });
+    await twitcastingSearch(rest, { query: "gaming", limit: 10 });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/search/users",
+        query: { words: "gaming", lang: "ja", limit: "10" },
+      }),
+    );
   });
 });

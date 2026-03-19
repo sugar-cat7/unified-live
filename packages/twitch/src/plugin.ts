@@ -73,6 +73,7 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
         supportsBatchContent: true,
         supportsBatchLiveStreams: true,
         supportsSearch: true,
+        supportsClips: false,
       },
       headers: { "Client-Id": config.clientId },
       parseRateLimitHeaders: parseTwitchRateLimitHeaders,

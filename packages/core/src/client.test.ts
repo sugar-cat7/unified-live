@@ -29,6 +29,7 @@ const mockCapabilities = {
   supportsBatchContent: false,
   supportsBatchLiveStreams: false,
   supportsSearch: false,
+  supportsClips: false,
 };
 
 const createMockPlugin = (name: string): PlatformPlugin => {

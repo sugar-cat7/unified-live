@@ -18,6 +18,7 @@ describe("createTwitchPlugin", () => {
       supportsBatchContent: true,
       supportsBatchLiveStreams: true,
       supportsSearch: true,
+      supportsClips: false,
     });
     plugin[Symbol.dispose]();
   });

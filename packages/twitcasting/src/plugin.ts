@@ -70,6 +70,7 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
         supportsBatchContent: false,
         supportsBatchLiveStreams: false,
         supportsSearch: true,
+        supportsClips: false,
       },
       headers: { "X-Api-Version": "2.0" },
       parseRateLimitHeaders: parseTwitCastingRateLimitHeaders,

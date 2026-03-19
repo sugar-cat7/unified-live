@@ -76,6 +76,7 @@ describe("createYouTubePlugin", () => {
       supportsBatchContent: true,
       supportsBatchLiveStreams: false,
       supportsSearch: true,
+      supportsClips: false,
     });
   });
 

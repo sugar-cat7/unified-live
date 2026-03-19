@@ -3,7 +3,7 @@ import { ValidationError } from "./errors";
 import { PlatformPlugin, type PluginDefinition, type PluginMethods } from "./plugin";
 import type { RateLimitHandle, RateLimitStrategy } from "./rest/strategy";
 import { createMockFetch } from "./test-helpers";
-import type { ResolvedUrl } from "./types";
+import { Page, type ResolvedUrl } from "./types";
 
 const createMockStrategy = (): RateLimitStrategy => {
   return {
@@ -211,6 +211,53 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.search).toBeUndefined();
   });
 
+  it("creates plugin with clips support", () => {
+    const plugin = PlatformPlugin.create(
+      { ...createMinimalDefinition() },
+      { ...createMockMethods(), getClips: async () => Page.empty() },
+    );
+    expect(plugin.capabilities.supportsClips).toBe(true);
+    expect(plugin.getClips).toBeDefined();
+    plugin[Symbol.dispose]();
+  });
+
+  it("wires getClips when provided", async () => {
+    const mockPage = { items: [], hasMore: false };
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      getClips: vi.fn(async () => mockPage),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.getClips).toBeDefined();
+    const result = await plugin.getClips!("ch1", { limit: 10 });
+    expect(methods.getClips).toHaveBeenCalledWith(plugin.rest, "ch1", { limit: 10 });
+    expect(result).toBe(mockPage);
+  });
+
+  it("getClips is undefined when not provided", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+    expect(plugin.getClips).toBeUndefined();
+    expect(plugin.capabilities.supportsClips).toBe(false);
+  });
+
+  it("wires getClipsByIds when provided", async () => {
+    const mockBatchResult = { values: new Map(), errors: new Map() };
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      getClipsByIds: vi.fn(async () => mockBatchResult),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.getClipsByIds).toBeDefined();
+    const result = await plugin.getClipsByIds!(["clip1", "clip2"]);
+    expect(methods.getClipsByIds).toHaveBeenCalledWith(plugin.rest, ["clip1", "clip2"]);
+    expect(result).toBe(mockBatchResult);
+  });
+
+  it("getClipsByIds is undefined when not provided", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+    expect(plugin.getClipsByIds).toBeUndefined();
+  });
+
   it("capabilities include batch and search flags", () => {
     plugin = PlatformPlugin.create(
       createMinimalDefinition({
@@ -222,6 +269,7 @@ describe("PlatformPlugin.create", () => {
           supportsBatchContent: true,
           supportsBatchLiveStreams: false,
           supportsSearch: true,
+          supportsClips: false,
         },
       }),
       createMockMethods(),
@@ -229,6 +277,7 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
     expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);
+    expect(plugin.capabilities.supportsClips).toBe(false);
   });
 
   it("default capabilities infer batch/search from methods", () => {

@@ -6,6 +6,8 @@ import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
 import type {
   BatchResult,
   Channel,
+  Clip,
+  ClipOptions,
   Content,
   LiveStream,
   Page,
@@ -21,7 +23,7 @@ export type PluginCapabilities = {
   /** Whether the plugin supports archive resolution (live -> video) */
   supportsArchiveResolution: boolean;
   /** Authentication model used by this plugin */
-  authModel: "apiKey" | "oauth2" | "basic";
+  authModel: "apiKey" | "oauth2" | "basic" | "none";
   /** Rate limiting model */
   rateLimitModel: "quota" | "tokenBucket";
   /** Whether the plugin supports batch content retrieval */
@@ -30,6 +32,8 @@ export type PluginCapabilities = {
   supportsBatchLiveStreams: boolean;
   /** Whether the plugin supports search */
   supportsSearch: boolean;
+  /** Whether the plugin supports clip retrieval */
+  supportsClips: boolean;
 };
 
 /**
@@ -115,6 +119,12 @@ export type PluginMethods = {
 
   /** Search for content (optional). */
   search?: (rest: RestManager, options: SearchOptions) => Promise<Page<Content>>;
+
+  /** List clips for a channel (optional). */
+  getClips?: (rest: RestManager, channelId: string, options?: ClipOptions) => Promise<Page<Clip>>;
+
+  /** Batch-retrieve clips by IDs (optional). */
+  getClipsByIds?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Clip>>;
 };
 
 /**
@@ -164,6 +174,12 @@ export type PlatformPlugin = {
 
   /** Search for content (platform-specific). */
   search?(options: SearchOptions): Promise<Page<Content>>;
+
+  /** List clips for a channel (platform-specific). */
+  getClips?(channelId: string, options?: ClipOptions): Promise<Page<Clip>>;
+
+  /** Batch-retrieve clips by IDs (platform-specific). */
+  getClipsByIds?(ids: string[]): Promise<BatchResult<Clip>>;
 
   /** Release resources (timers, connections). */
   [Symbol.dispose](): void;
@@ -246,6 +262,7 @@ export const PlatformPlugin = {
         supportsBatchContent: !!methods.getContents,
         supportsBatchLiveStreams: !!methods.getLiveStreamsBatch,
         supportsSearch: !!methods.search,
+        supportsClips: !!methods.getClips,
       },
       match: definition.matchUrl,
       getContent: (id) => methods.getContent(rest, id),
@@ -261,6 +278,12 @@ export const PlatformPlugin = {
         ? (channelIds) => methods.getLiveStreamsBatch!(rest, channelIds)
         : undefined,
       search: methods.search ? (options) => methods.search!(rest, options) : undefined,
+      getClips: methods.getClips
+        ? (channelId, options) => methods.getClips!(rest, channelId, options)
+        : undefined,
+      getClipsByIds: methods.getClipsByIds
+        ? (ids) => methods.getClipsByIds!(rest, ids)
+        : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 

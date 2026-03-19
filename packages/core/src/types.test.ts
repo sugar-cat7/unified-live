@@ -6,8 +6,12 @@ import {
   Channel,
   channelRefSchema,
   channelSchema,
+  Clip,
+  clipOptionsSchema,
+  clipSchema,
   Content,
   contentSchema,
+  knownPlatforms,
   LiveStream,
   liveStreamSchema,
   Page,
@@ -74,6 +78,22 @@ const baseScheduledStream = {
   channel: validChannelRef,
   type: "scheduled" as const,
   scheduledStartAt: new Date("2024-06-01T18:00:00Z"),
+  raw: {},
+};
+
+const baseClip = {
+  id: "clip123",
+  platform: "twitch",
+  title: "Amazing Play",
+  description: "",
+  tags: [],
+  url: "https://clips.twitch.tv/clip123",
+  thumbnail: validThumbnail,
+  channel: validChannelRef,
+  type: "clip" as const,
+  duration: 30,
+  viewCount: 1000,
+  createdAt: new Date("2024-03-15T12:00:00Z"),
   raw: {},
 };
 
@@ -518,6 +538,92 @@ describe("BatchResult.empty", () => {
     const result = BatchResult.empty<Content>();
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
+  });
+});
+
+describe("clipSchema", () => {
+  it.each([
+    { name: "valid clip", input: baseClip, valid: true },
+    {
+      name: "clip with all optional fields",
+      input: {
+        ...baseClip,
+        clipCreator: { id: "user1", name: "ClipMaster" },
+        embedUrl: "https://clips.twitch.tv/embed/clip123",
+        vodOffset: 3600,
+        isFeatured: true,
+        gameId: "12345",
+        languageCode: "en",
+      },
+      valid: true,
+    },
+    {
+      name: "reject negative duration",
+      input: { ...baseClip, duration: -1 },
+      valid: false,
+    },
+  ])("$name", ({ input, valid }) => {
+    const result = clipSchema.safeParse(input);
+    expect(result.success).toBe(valid);
+  });
+});
+
+describe("Content.isClip", () => {
+  it("returns true for clip", () => {
+    const content = contentSchema.parse(baseClip);
+    expect(Content.isClip(content)).toBe(true);
+  });
+
+  it("returns false for live", () => {
+    const content = contentSchema.parse(baseLiveStream);
+    expect(Content.isClip(content)).toBe(false);
+  });
+});
+
+describe("Clip.is", () => {
+  it("returns true for valid Clip", () => {
+    expect(Clip.is(baseClip)).toBe(true);
+  });
+
+  it("returns false for LiveStream", () => {
+    expect(Clip.is(baseLiveStream)).toBe(false);
+  });
+
+  it("returns false for non-object", () => {
+    expect(Clip.is("not an object")).toBe(false);
+  });
+});
+
+describe("clipOptionsSchema", () => {
+  it.each([
+    { name: "empty options valid", input: {}, valid: true },
+    {
+      name: "all options valid",
+      input: {
+        startedAt: new Date("2024-01-01T00:00:00Z"),
+        endedAt: new Date("2024-12-31T23:59:59Z"),
+        limit: 25,
+        cursor: "abc123",
+        isFeatured: true,
+      },
+      valid: true,
+    },
+    { name: "limit over 100 rejected", input: { limit: 101 }, valid: false },
+  ])("$name", ({ input, valid }) => {
+    const result = clipOptionsSchema.safeParse(input);
+    expect(result.success).toBe(valid);
+  });
+});
+
+describe("knownPlatforms", () => {
+  it.each([
+    { name: "accepts youtube", input: "youtube", valid: true },
+    { name: "accepts twitch", input: "twitch", valid: true },
+    { name: "accepts twitcasting", input: "twitcasting", valid: true },
+    { name: "rejects unknown", input: "unknown", valid: false },
+  ])("$name", ({ input, valid }) => {
+    const result = knownPlatforms.safeParse(input);
+    expect(result.success).toBe(valid);
   });
 });
 

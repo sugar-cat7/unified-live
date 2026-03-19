@@ -51,14 +51,18 @@ export { getTracer, SpanAttributes } from "./telemetry/traces";
 export { getMeter, MetricNames } from "./telemetry/metrics";
 
 // --- Types ---
-export type { ResolvedUrl, SearchOptions } from "./types";
+export type { ClipOptions, KnownPlatform, ResolvedUrl, SearchOptions } from "./types";
 export {
   BatchResult,
   Channel,
   channelRefSchema,
   channelSchema,
+  Clip,
+  clipOptionsSchema,
+  clipSchema,
   Content,
   contentSchema,
+  knownPlatforms,
   LiveStream,
   liveStreamSchema,
   Page,

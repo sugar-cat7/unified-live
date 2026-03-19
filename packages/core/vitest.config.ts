@@ -1,8 +1,11 @@
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 import { sharedTestConfig } from "../../vitest.shared";
 
-const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
+const pkg = JSON.parse(
+  readFileSync(fileURLToPath(new URL("./package.json", import.meta.url)), "utf-8"),
+) as { version: string };
 
 export default defineConfig({
   define: {

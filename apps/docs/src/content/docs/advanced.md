@@ -37,7 +37,7 @@ const content = await client.getContent("https://youtube.com/watch?v=abc123");
 You can inject custom `TracerProvider` and `MeterProvider` instances instead of relying on the global OTel registration:
 
 ```ts
-import { UnifiedClient, getTracer, getMeter } from "@unified-live/core";
+import { UnifiedClient, createRestManager, getTracer, getMeter } from "@unified-live/core";
 
 // Inject into the client (for client-level spans)
 const client = UnifiedClient.create({

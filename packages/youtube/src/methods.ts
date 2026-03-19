@@ -68,7 +68,7 @@ export const youtubeGetContent = async (rest: RestManager, id: string): Promise<
  */
 export const youtubeGetChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   const query: Record<string, string> = {
-    part: "snippet,contentDetails",
+    part: "snippet,contentDetails,statistics",
   };
 
   if (id.startsWith("@")) {
@@ -331,6 +331,8 @@ export const youtubeSearch = async (
   if (options.order) query.order = options.order;
   if (options.limit) query.maxResults = String(Math.min(options.limit, 50));
   if (options.cursor) query.pageToken = options.cursor;
+  if (options.safeSearch) query.safeSearch = options.safeSearch;
+  if (options.languageCode) query.relevanceLanguage = options.languageCode;
 
   if (options.status) {
     const eventTypeMap = {

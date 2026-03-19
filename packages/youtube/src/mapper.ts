@@ -91,6 +91,7 @@ export const toContent = (item: YTVideoResource): Content => {
       endedAt: liveStreamingDetails.actualEndTime
         ? new Date(liveStreamingDetails.actualEndTime)
         : undefined,
+      languageCode: snippet.defaultAudioLanguage ?? undefined,
       raw: item,
     } satisfies LiveStream;
   }
@@ -110,6 +111,7 @@ export const toContent = (item: YTVideoResource): Content => {
       scheduledStartAt: liveStreamingDetails?.scheduledStartTime
         ? new Date(liveStreamingDetails.scheduledStartTime)
         : new Date(publishedAt),
+      languageCode: snippet.defaultAudioLanguage ?? undefined,
       raw: item,
     } satisfies ScheduledStream;
   }
@@ -128,6 +130,13 @@ export const toContent = (item: YTVideoResource): Content => {
     duration: parseDuration(contentDetails.duration ?? ""),
     viewCount: Number.parseInt(statistics.viewCount ?? "0", 10),
     publishedAt: new Date(publishedAt),
+    startedAt: liveStreamingDetails?.actualStartTime
+      ? new Date(liveStreamingDetails.actualStartTime)
+      : undefined,
+    endedAt: liveStreamingDetails?.actualEndTime
+      ? new Date(liveStreamingDetails.actualEndTime)
+      : undefined,
+    languageCode: snippet.defaultAudioLanguage ?? undefined,
     raw: item,
   } satisfies Video;
 };
@@ -138,12 +147,12 @@ export const toContent = (item: YTVideoResource): Content => {
  * @param item - YouTube channel resource from the API
  * @returns unified Channel
  * @throws ParseError if required fields (id, snippet) are missing
- * @precondition item was fetched with part=snippet,contentDetails
+ * @precondition item was fetched with part=snippet,contentDetails,statistics
  * @postcondition returns a Channel with thumbnail undefined if none available
  * @idempotency Safe — pure function
  */
 export const toChannel = (item: YTChannelResource): Channel => {
-  const { id, snippet } = item;
+  const { id, snippet, statistics } = item;
   if (!id || !snippet) {
     throw new ParseError("youtube", "PARSE_RESPONSE", {
       message: `YouTube channel resource missing required parts (id, snippet)${id ? ` for channel ${id}` : ""}`,
@@ -157,6 +166,11 @@ export const toChannel = (item: YTChannelResource): Channel => {
     name: snippet.title ?? "",
     url: `https://www.youtube.com/channel/${id}`,
     thumbnail: pickThumbnail(snippet.thumbnails),
+    description: snippet.description ?? undefined,
+    subscriberCount: statistics?.subscriberCount
+      ? Number.parseInt(statistics.subscriberCount, 10)
+      : undefined,
+    publishedAt: snippet.publishedAt ? new Date(snippet.publishedAt) : undefined,
   } satisfies Channel;
 };
 

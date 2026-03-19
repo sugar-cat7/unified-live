@@ -62,6 +62,14 @@ describe("twitcastingGetContent", () => {
     const result = await twitcastingGetContent(rest, "m1");
     expect(result.type).toBe("live");
   });
+
+  it.each([
+    { movie: null, broadcaster: mockUser, label: "movie is null" },
+    { movie: mockArchiveMovie, broadcaster: null, label: "broadcaster is null" },
+  ])("throws NotFoundError when $label", async ({ movie, broadcaster }) => {
+    const rest = createMockRest({ movie, broadcaster });
+    await expect(twitcastingGetContent(rest, "m1")).rejects.toThrow(NotFoundError);
+  });
 });
 
 describe("twitcastingGetChannel", () => {

@@ -75,15 +75,38 @@ export const videoSchema = contentBaseSchema.extend({
 export type Video = z.infer<typeof videoSchema>;
 
 /**
+ * Zod schema for a scheduled (upcoming) live stream.
+ * Validates the scheduled start time.
+ *
+ * @category Types
+ */
+export const scheduledStreamSchema = contentBaseSchema.extend({
+  type: z.literal("scheduled"),
+  scheduledStartAt: z.date(),
+});
+
+/**
+ * A scheduled (upcoming) live stream on any supported platform.
+ * Discriminated by `type: "scheduled"`. Use `Content.isScheduled()` to narrow from Content.
+ *
+ * @category Types
+ */
+export type ScheduledStream = z.infer<typeof scheduledStreamSchema>;
+
+/**
  * Discriminated union schema for content. Discriminates on `type` field.
  *
  * @category Types
  */
-export const contentSchema = z.discriminatedUnion("type", [liveStreamSchema, videoSchema]);
+export const contentSchema = z.discriminatedUnion("type", [
+  liveStreamSchema,
+  videoSchema,
+  scheduledStreamSchema,
+]);
 
 /**
- * A piece of content (live stream or video) on any supported platform.
- * Use `Content.isLive()` / `Content.isVideo()` to narrow.
+ * A piece of content (live stream, video, or scheduled stream) on any supported platform.
+ * Use `Content.isLive()` / `Content.isVideo()` / `Content.isScheduled()` to narrow.
  *
  * @category Types
  */
@@ -232,6 +255,30 @@ export const LiveStream = {
 } as const;
 
 /**
+ * Companion object for the ScheduledStream type.
+ * Provides lightweight structural type guard.
+ *
+ * @example
+ * ```ts
+ * if (ScheduledStream.is(value)) { ... }
+ * ```
+ * @category Types
+ */
+export const ScheduledStream = {
+  /**
+   * Structural type guard for ScheduledStream.
+   *
+   * @param value - the value to check
+   * @returns true if value has the ScheduledStream shape (type === "scheduled")
+   */
+  is: (value: unknown): value is ScheduledStream => {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return obj.type === "scheduled" && typeof obj.id === "string" && typeof obj.platform === "string";
+  },
+} as const;
+
+/**
  * Companion object for the Video type.
  * Provides lightweight structural type guard.
  *
@@ -309,10 +356,11 @@ export const BroadcastSession = {
  * Type guard namespace for Content discriminated union.
  *
  * @precondition content must be a valid Content value
- * @postcondition narrows to LiveStream or Video
+ * @postcondition narrows to LiveStream, Video, or ScheduledStream
  * @category Types
  */
 export const Content = {
   isLive: (content: Content): content is LiveStream => content.type === "live",
   isVideo: (content: Content): content is Video => content.type === "video",
+  isScheduled: (content: Content): content is ScheduledStream => content.type === "scheduled",
 } as const;

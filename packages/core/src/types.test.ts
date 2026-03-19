@@ -11,6 +11,8 @@ import {
   liveStreamSchema,
   Page,
   resolvedUrlSchema,
+  ScheduledStream,
+  scheduledStreamSchema,
   thumbnailSchema,
   Video,
   videoSchema,
@@ -52,6 +54,18 @@ const baseVideo = {
   duration: 3600,
   viewCount: 50000,
   publishedAt: new Date("2024-01-01T00:00:00Z"),
+  raw: {},
+};
+
+const baseScheduledStream = {
+  id: "sched123",
+  platform: "youtube",
+  title: "Upcoming Stream",
+  url: "https://youtube.com/watch?v=sched123",
+  thumbnail: validThumbnail,
+  channel: validChannelRef,
+  type: "scheduled" as const,
+  scheduledStartAt: new Date("2024-06-01T18:00:00Z"),
   raw: {},
 };
 
@@ -142,6 +156,25 @@ describe("videoSchema", () => {
   });
 });
 
+describe("scheduledStreamSchema", () => {
+  it.each([
+    { name: "valid", input: baseScheduledStream, valid: true },
+    {
+      name: "with sessionId",
+      input: { ...baseScheduledStream, sessionId: "s1" },
+      valid: true,
+    },
+    {
+      name: "missing scheduledStartAt",
+      input: { ...baseScheduledStream, scheduledStartAt: undefined },
+      valid: false,
+    },
+  ])("$name", ({ input, valid }) => {
+    const result = scheduledStreamSchema.safeParse(input);
+    expect(result.success).toBe(valid);
+  });
+});
+
 describe("contentSchema (discriminated union)", () => {
   it("parses live stream", () => {
     const result = contentSchema.parse(baseLiveStream);
@@ -151,6 +184,11 @@ describe("contentSchema (discriminated union)", () => {
   it("parses video", () => {
     const result = contentSchema.parse(baseVideo);
     expect(result.type).toBe("video");
+  });
+
+  it("parses scheduled stream", () => {
+    const result = contentSchema.parse(baseScheduledStream);
+    expect(result.type).toBe("scheduled");
   });
 
   it("rejects invalid type", () => {
@@ -279,6 +317,25 @@ describe("Content type guards", () => {
     const content = contentSchema.parse(baseLiveStream);
     expect(Content.isVideo(content)).toBe(false);
   });
+
+  it("isScheduled narrows to ScheduledStream", () => {
+    const content = contentSchema.parse(baseScheduledStream);
+    if (Content.isScheduled(content)) {
+      expect(content.scheduledStartAt).toBeInstanceOf(Date);
+    } else {
+      expect.unreachable("Should be scheduled");
+    }
+  });
+
+  it("isScheduled returns false for live", () => {
+    const content = contentSchema.parse(baseLiveStream);
+    expect(Content.isScheduled(content)).toBe(false);
+  });
+
+  it("isScheduled returns false for video", () => {
+    const content = contentSchema.parse(baseVideo);
+    expect(Content.isScheduled(content)).toBe(false);
+  });
 });
 
 describe("LiveStream.is", () => {
@@ -318,6 +375,24 @@ describe("Channel.is", () => {
 
   it("returns false for invalid object", () => {
     expect(Channel.is({ id: "ch1" })).toBe(false);
+  });
+});
+
+describe("ScheduledStream.is", () => {
+  it("returns true for valid ScheduledStream", () => {
+    expect(ScheduledStream.is(baseScheduledStream)).toBe(true);
+  });
+
+  it("returns false for LiveStream", () => {
+    expect(ScheduledStream.is(baseLiveStream)).toBe(false);
+  });
+
+  it("returns false for Video", () => {
+    expect(ScheduledStream.is(baseVideo)).toBe(false);
+  });
+
+  it("returns false for non-object", () => {
+    expect(ScheduledStream.is("not an object")).toBe(false);
   });
 });
 

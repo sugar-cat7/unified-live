@@ -61,6 +61,8 @@ export {
   liveStreamSchema,
   Page,
   resolvedUrlSchema,
+  ScheduledStream,
+  scheduledStreamSchema,
   thumbnailSchema,
   Video,
   videoSchema,

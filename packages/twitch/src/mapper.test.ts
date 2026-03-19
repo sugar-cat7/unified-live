@@ -1,11 +1,6 @@
 import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
-import type {
-  TwitchSearchChannel,
-  TwitchStream,
-  TwitchUser,
-  TwitchVideo,
-} from "./mapper";
+import type { TwitchSearchChannel, TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
 import { parseDuration, toLive, toChannel, toSearchLive, toVideo } from "./mapper";
 
 const mockStream: TwitchStream = {

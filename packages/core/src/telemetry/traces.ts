@@ -1,22 +1,26 @@
-import type { Tracer } from "@opentelemetry/api";
+import type { Tracer, TracerProvider } from "@opentelemetry/api";
 import { trace } from "@opentelemetry/api";
 
+declare const __SDK_VERSION__: string;
+
 const TRACER_NAME = "unified-live";
-const TRACER_VERSION = "0.1.0";
+const TRACER_VERSION = __SDK_VERSION__;
 
 /**
  * Returns the SDK tracer instance.
  * When no OTel SDK is registered, this returns a no-op tracer automatically
  * (built into @opentelemetry/api).
  *
+ * @param provider - optional TracerProvider override (defaults to global)
  * @returns the SDK tracer instance
  * @precondition none
  * @postcondition returns a Tracer instance (possibly no-op)
- * @idempotency Safe — always returns the same tracer
+ * @idempotency Safe — always returns the same tracer for the same provider
  * @category Observability
  */
-export const getTracer = (): Tracer => {
-  return trace.getTracer(TRACER_NAME, TRACER_VERSION);
+export const getTracer = (provider?: TracerProvider): Tracer => {
+  const tp = provider ?? trace;
+  return tp.getTracer(TRACER_NAME, TRACER_VERSION);
 };
 
 /**
@@ -35,6 +39,10 @@ export const SpanAttributes = {
   SERVER_ADDRESS: "server.address",
   SERVER_PORT: "server.port",
 
+  // HTTP semantic conventions (opt-in)
+  URL_FULL: "url.full",
+  URL_SCHEME: "url.scheme",
+
   // Rate limit attributes
   RATE_LIMIT_REMAINING: "unified_live.rate_limit.remaining",
   RATE_LIMIT_LIMIT: "unified_live.rate_limit.limit",
@@ -46,4 +54,8 @@ export const SpanAttributes = {
 
   // Retry attributes
   RETRY_COUNT: "unified_live.retry.count",
+
+  // Client-level span attributes
+  OPERATION: "unified_live.operation",
+  BATCH_SIZE: "unified_live.batch.size",
 } as const;

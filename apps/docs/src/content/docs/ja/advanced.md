@@ -1,143 +1,117 @@
 ---
 title: 応用
-description: "OpenTelemetryトレーシング、リソース管理、高度な設定"
+description: "OpenTelemetry トレーシングとメトリクス"
 ---
 
 ## OpenTelemetry 連携
 
-SDK はすべての API 呼び出しで OpenTelemetry トレースを出力します。OTel SDK が設定されていればトレースが自動的に表示され、設定されていなければオーバーヘッドはゼロです（内部で no-op トレーサーを使用）。
+SDK はすべての API 呼び出しで OpenTelemetry トレースとメトリクスを出力します。`@opentelemetry/api` は peer dependency です（未設定時は no-op）。
 
 ### セットアップ
 
 ```bash
-pnpm add @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node
+pnpm add @opentelemetry/sdk-node @opentelemetry/sdk-trace-node @opentelemetry/resources @opentelemetry/semantic-conventions
 ```
 
 ```ts
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { ConsoleSpanExporter } from "@opentelemetry/sdk-trace-node";
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 const sdk = new NodeSDK({
-  instrumentations: [getNodeAutoInstrumentations()],
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: "my-app",
+  }),
+  traceExporter: new ConsoleSpanExporter(),
 });
 sdk.start();
 
-// unified-live のすべての API 呼び出しが自動的にトレースを出力
+// unified-live のすべての API 呼び出しが自動的にトレースとメトリクスを出力
 const content = await client.getContent("https://youtube.com/watch?v=abc123");
 ```
 
-### スパンのフォーマット
+### スパン階層
 
-各 API リクエストは `unified-live.rest {platform} {method} {path}` という名前のスパンを生成します。
+2層のスパン階層:
 
-例: `unified-live.rest youtube GET /videos`
+```
+unified-live.client getContent           ← クライアントレベルスパン
+  └── GET                                ← REST レベルスパン (kind: CLIENT)
+```
 
-### スパン属性
+トレーシング UI で Instrumentation Scope 名 `unified-live` でフィルタできます。
 
-| 属性                                 | 型        | 説明                                                               |
-| :----------------------------------- | :-------- | :----------------------------------------------------------------- |
-| `unified_live.platform`              | `string`  | プラットフォーム識別子（`"youtube"`, `"twitch"`, `"twitcasting"`） |
-| `http.request.method`                | `string`  | HTTP メソッド（`"GET"`）                                           |
-| `url.path`                           | `string`  | リクエストパス（例: `"/videos"`）                                  |
-| `http.response.status_code`          | `number`  | HTTP レスポンスステータスコード                                    |
-| `unified_live.rate_limit.remaining`  | `number`  | 残りレート制限トークン数                                           |
-| `unified_live.rate_limit.limit`      | `number`  | レート制限の総容量                                                 |
-| `unified_live.quota.consumed`        | `number`  | 消費クォータユニット数（YouTube）                                  |
-| `unified_live.quota.daily_remaining` | `number`  | 残り日次クォータ（YouTube）                                        |
-| `error.code`                         | `string`  | エラーコード（例: `"RATE_LIMIT_EXCEEDED"`）                        |
-| `error.type`                         | `string`  | エラークラス名                                                     |
-| `error.has_cause`                    | `boolean` | エラーが原因をラップしているかどうか                               |
+### クライアントスパン属性
+
+| 属性                      | 型       | 説明                                                               |
+| :------------------------ | :------- | :----------------------------------------------------------------- |
+| `unified_live.platform`   | `string` | プラットフォーム識別子（`"youtube"`, `"twitch"`, `"twitcasting"`） |
+| `unified_live.operation`  | `string` | 操作名（例: `"getContent"`, `"search"`）                           |
+| `unified_live.batch.size` | `number` | バッチサイズ（`getContents`, `getLiveStreamsBatch` のみ）          |
+
+### REST スパン属性
+
+標準 HTTP semantic conventions（`http.request.method`, `url.full`, `http.response.status_code`, `server.address` 等）が記録されます。SDK 固有の属性:
+
+| 属性                                | 型        | 説明                                        |
+| :---------------------------------- | :-------- | :------------------------------------------ |
+| `unified_live.platform`             | `string`  | プラットフォーム識別子                      |
+| `unified_live.rate_limit.remaining` | `number`  | 残りレート制限トークン数                    |
+| `unified_live.rate_limit.limit`     | `number`  | レート制限の総容量                          |
+| `unified_live.error.code`           | `string`  | エラーコード（例: `"RATE_LIMIT_EXCEEDED"`） |
+| `unified_live.error.has_cause`      | `boolean` | エラーが原因をラップしているかどうか        |
+| `unified_live.retry.count`          | `number`  | 実行されたリトライ回数                      |
+
+### メトリクス
+
+| メトリクス                     | 型        | 単位 | 説明                                |
+| :----------------------------- | :-------- | :--- | :---------------------------------- |
+| `http.client.request.duration` | Histogram | `s`  | HTTP クライアントリクエスト所要時間 |
+
+記録属性: `http.request.method`, `server.address`, `server.port`, `http.response.status_code`, `error.type`。
 
 ### Jaeger での利用
 
 ```bash
-# Jaeger をローカルで起動
 docker run -d --name jaeger \
   -p 16686:16686 \
+  -p 4317:4317 \
   -p 4318:4318 \
-  jaegertracing/all-in-one:latest
+  jaegertracing/jaeger:latest
+```
+
+OTLP エクスポーターをインストールし、`ConsoleSpanExporter` を `OTLPTraceExporter` に置き換えます:
+
+```bash
+pnpm add @opentelemetry/exporter-trace-otlp-http
 ```
 
 ```ts
-import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 
-const sdk = new NodeSDK({
-  traceExporter: new OTLPTraceExporter({
-    url: "http://localhost:4318/v1/traces",
-  }),
+// NodeSDK config 内:
+traceExporter: new OTLPTraceExporter({
+  url: "http://localhost:4318/v1/traces",
+}),
+```
+
+`http://localhost:16686` を開き、サービス名 `my-app` で検索してください。
+
+### カスタム Provider 注入
+
+テストやマルチテナント環境では、グローバルの代わりにカスタムの `TracerProvider` / `MeterProvider` を注入できます:
+
+```ts
+import { UnifiedClient, getTracer, getMeter } from "@unified-live/core";
+
+const client = UnifiedClient.create({
+  plugins: [youtubePlugin],
+  tracerProvider: myTracerProvider,
 });
-sdk.start();
-```
 
-`http://localhost:16686` を開き、サービス名 `unified-live` で検索してください。
-
-### トレーサーへの直接アクセス
-
-カスタム計装には、エクスポートされたトレーサーを使用します:
-
-```ts
-import { getTracer, SpanAttributes } from "@unified-live/core";
-
-const tracer = getTracer();
-const span = tracer.startSpan("my-custom-operation");
-span.setAttribute(SpanAttributes.PLATFORM, "youtube");
-// ... ロジック
-span.end();
-```
-
----
-
-## プラグインへの直接アクセス
-
-プラットフォーム固有の操作には、プラグインに直接アクセスできます:
-
-```ts
-const youtube = client.platform("youtube");
-
-// プラグインのメソッドを直接呼び出し
-const content = await youtube.getContent("dQw4w9WgXcQ");
-const channel = await youtube.getChannel("@GoogleDevelopers");
-```
-
-## 生の API レスポンスへのアクセス
-
-すべての `Content` と `Channel` には、元の API レスポンスが `raw` フィールドに含まれています:
-
-```ts
-const content = await client.getContent(url);
-
-// YouTube/Twitch/TwitCasting の生レスポンスにアクセス
-const rawResponse = content.raw;
-```
-
-## プラットフォームと ID を直接指定
-
-プラットフォームと ID が分かっている場合、URL 解析をスキップできます:
-
-```ts
-// URL から取得（プラットフォーム自動判別）
-const content = await client.getContent("https://youtube.com/watch?v=abc123");
-
-// プラットフォーム + ID で直接取得（URL 解析なし）
-const content = await client.getContentById("youtube", "abc123");
-```
-
-## 環境変数
-
-推奨する `.env` の設定:
-
-```txt
-# YouTube
-YOUTUBE_API_KEY=AIza...
-
-# Twitch
-TWITCH_CLIENT_ID=abc123
-TWITCH_CLIENT_SECRET=def456
-
-# TwitCasting
-TWITCASTING_CLIENT_ID=12345
-TWITCASTING_CLIENT_SECRET=secret
+const tracer = getTracer(myTracerProvider);
+const meter = getMeter(myMeterProvider);
 ```
 
 ## 次のステップ

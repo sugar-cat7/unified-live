@@ -8,7 +8,9 @@ import {
   RateLimitError,
   UnifiedLiveError,
 } from "../errors";
+import { getMeter, MetricNames } from "../telemetry/metrics";
 import { getTracer, SpanAttributes } from "../telemetry/traces";
+import { context, propagation, SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import type { RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } from "./types";
 
@@ -102,18 +104,33 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     : DEFAULT_RETRYABLE_STATUSES;
   const timeout = options.retry?.timeout;
   const fetchFn = options.fetch ?? globalThis.fetch;
-  const tracer = getTracer();
+  const tracer = getTracer(options.tracerProvider);
+  const meter = getMeter(options.meterProvider);
+  const requestDuration = meter.createHistogram(MetricNames.HTTP_CLIENT_REQUEST_DURATION, {
+    description: "Duration of HTTP client requests",
+    unit: "s",
+  });
   let disposed = false;
 
-  // Cache parsed base URL for OTel span attributes (avoids parsing on every request)
-  let cachedHostname: string | undefined;
-  let cachedPort: number | undefined;
+  // Cache parsed base URL components for OTel attributes (avoids parsing on every request)
+  let cachedUrl: { hostname: string; port: number; scheme: string } | undefined;
   try {
     const parsed = new URL(options.baseUrl);
-    cachedHostname = parsed.hostname;
-    cachedPort = parsed.port ? Number.parseInt(parsed.port, 10) : undefined;
+    const scheme = parsed.protocol.replace(":", "");
+    cachedUrl = {
+      hostname: parsed.hostname,
+      port: parsed.port ? Number.parseInt(parsed.port, 10) : scheme === "https" ? 443 : 80,
+      scheme,
+    };
   } catch {
     // ignore invalid URL
+  }
+
+  // Pre-compute base metric attributes that don't change per-request
+  const baseMetricAttrs: Record<string, string | number> = {};
+  if (cachedUrl) {
+    baseMetricAttrs[SpanAttributes.SERVER_ADDRESS] = cachedUrl.hostname;
+    baseMetricAttrs[SpanAttributes.SERVER_PORT] = cachedUrl.port;
   }
 
   const baseHeaders: Record<string, string> = {
@@ -135,19 +152,20 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
           { platform: options.platform },
         );
       }
-      return tracer.startActiveSpan(`unified-live.rest ${req.method}`, async (span) => {
+      return tracer.startActiveSpan(req.method, { kind: SpanKind.CLIENT }, async (span) => {
         span.setAttribute(SpanAttributes.PLATFORM, manager.platform);
         span.setAttribute(SpanAttributes.HTTP_METHOD, req.method);
         span.setAttribute(SpanAttributes.URL_PATH, req.path);
 
-        if (cachedHostname) {
-          span.setAttribute(SpanAttributes.SERVER_ADDRESS, cachedHostname);
-        }
-        if (cachedPort) {
-          span.setAttribute(SpanAttributes.SERVER_PORT, cachedPort);
+        if (cachedUrl) {
+          span.setAttribute(SpanAttributes.SERVER_ADDRESS, cachedUrl.hostname);
+          span.setAttribute(SpanAttributes.SERVER_PORT, cachedUrl.port);
+          span.setAttribute(SpanAttributes.URL_SCHEME, cachedUrl.scheme);
         }
 
         const handle = await manager.rateLimitStrategy.acquire(req);
+        const startTime = performance.now();
+        let lastStatusCode: number | undefined;
 
         try {
           // Hoist invariants out of the retry loop
@@ -164,6 +182,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
             }
           }
           const url = reqUrl.toString();
+          span.setAttribute(SpanAttributes.URL_FULL, url);
           const timeoutSignal = timeout && !req.signal ? AbortSignal.timeout(timeout) : undefined;
           const signal = req.signal ?? timeoutSignal;
           const serializedBody =
@@ -171,6 +190,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
 
           for (let attempt = 0; attempt <= maxRetries; attempt++) {
             const headers = await manager.createHeaders(req);
+            propagation.inject(context.active(), headers);
 
             const init: RequestInit = {
               method: req.method,
@@ -199,6 +219,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 cause: err,
               });
             }
+            lastStatusCode = response.status;
             span.setAttribute(SpanAttributes.HTTP_STATUS, response.status);
 
             // Rate limit handling (429 or 403)
@@ -208,7 +229,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 span.addEvent("retry", {
                   "unified_live.retry.attempt": attempt + 1,
                   "unified_live.retry.reason": "rate_limit",
-                  "http.response.status_code": response.status,
+                  [SpanAttributes.HTTP_STATUS]: response.status,
                 });
                 continue;
               }
@@ -225,7 +246,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 span.addEvent("retry", {
                   "unified_live.retry.attempt": attempt + 1,
                   "unified_live.retry.reason": "auth_refresh",
-                  "http.response.status_code": 401,
+                  [SpanAttributes.HTTP_STATUS]: response.status,
                 });
                 continue;
               }
@@ -260,7 +281,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
                 await sleep(baseDelay * 2 ** attempt * jitter);
                 span.addEvent("retry", {
                   "unified_live.retry.attempt": attempt + 1,
-                  "http.response.status_code": response.status,
+                  [SpanAttributes.HTTP_STATUS]: response.status,
                 });
                 continue;
               }
@@ -283,6 +304,13 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
               span.setAttribute(SpanAttributes.RETRY_COUNT, attempt);
             }
 
+            const duration = (performance.now() - startTime) / 1000;
+            requestDuration.record(duration, {
+              ...baseMetricAttrs,
+              [SpanAttributes.HTTP_METHOD]: req.method,
+              [SpanAttributes.HTTP_STATUS]: response.status,
+            });
+
             handle.complete(response.headers);
             span.end();
             return result;
@@ -294,13 +322,32 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
             method: req.method,
           });
         } catch (error) {
+          // Per semconv: use status code string for HTTP errors, exception name otherwise
+          const errorType =
+            lastStatusCode !== undefined && lastStatusCode >= 400
+              ? String(lastStatusCode)
+              : error instanceof Error
+                ? error.name
+                : "unknown";
+          span.setAttribute(SpanAttributes.ERROR_TYPE, errorType);
+
           if (error instanceof UnifiedLiveError) {
             span.setAttribute(SpanAttributes.ERROR_CODE, error.code);
-            span.setAttribute(SpanAttributes.ERROR_TYPE, error.name);
             span.setAttribute(SpanAttributes.ERROR_HAS_CAUSE, !!error.cause);
           }
+
+          const duration = (performance.now() - startTime) / 1000;
+          requestDuration.record(duration, {
+            ...baseMetricAttrs,
+            [SpanAttributes.HTTP_METHOD]: req.method,
+            [SpanAttributes.ERROR_TYPE]: errorType,
+            ...(lastStatusCode !== undefined && {
+              [SpanAttributes.HTTP_STATUS]: lastStatusCode,
+            }),
+          });
+
           span.setStatus({
-            code: 2, // SpanStatusCode.ERROR
+            code: SpanStatusCode.ERROR,
             message: error instanceof Error ? error.message : String(error),
           });
           span.recordException(error instanceof Error ? error : new Error(String(error)));

@@ -1,3 +1,4 @@
+import type { TracerProvider } from "@opentelemetry/api";
 import { describe, expect, it, vi } from "vitest";
 import { UnifiedClient } from "./client";
 import { NotFoundError, PlatformNotFoundError, RateLimitError, ValidationError } from "./errors";
@@ -518,6 +519,91 @@ describe("UnifiedClient search", () => {
 
     await client.search("test", { channelId: "ch1" });
     expect(plugin.search).toHaveBeenCalledWith({ channelId: "ch1" });
+
+    client[Symbol.dispose]();
+  });
+});
+
+describe("UnifiedClient OTel integration", () => {
+  const createMockTracerProvider = () => {
+    const spans: Array<{
+      name: string;
+      attributes: Record<string, unknown>;
+      status?: { code: number };
+      ended: boolean;
+    }> = [];
+
+    const tracer = {
+      startActiveSpan: vi.fn((name: string, fn: (span: unknown) => unknown) => {
+        const spanRecord = {
+          name,
+          attributes: {} as Record<string, unknown>,
+          status: undefined as { code: number } | undefined,
+          ended: false,
+        };
+        spans.push(spanRecord);
+        const span = {
+          setAttribute: vi.fn((k: string, v: unknown) => {
+            spanRecord.attributes[k] = v;
+          }),
+          setStatus: vi.fn((s: { code: number }) => {
+            spanRecord.status = s;
+          }),
+          recordException: vi.fn(),
+          end: vi.fn(() => {
+            spanRecord.ended = true;
+          }),
+        };
+        return fn(span);
+      }),
+      startSpan: vi.fn(),
+    };
+
+    const provider: TracerProvider = { getTracer: vi.fn().mockReturnValue(tracer) };
+    return { provider, spans };
+  };
+
+  it("creates client-level span for getContentById", async () => {
+    const { provider, spans } = createMockTracerProvider();
+    const plugin = createMockPlugin("youtube");
+    const client = UnifiedClient.create({ plugins: [plugin], tracerProvider: provider });
+
+    await client.getContentById("youtube", "abc");
+
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.name).toBe("unified-live.client getContentById");
+    expect(spans[0]!.attributes["unified_live.operation"]).toBe("getContentById");
+    expect(spans[0]!.attributes["unified_live.platform"]).toBe("youtube");
+    expect(spans[0]!.ended).toBe(true);
+
+    client[Symbol.dispose]();
+  });
+
+  it("sets batch.size for getContents", async () => {
+    const { provider, spans } = createMockTracerProvider();
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin], tracerProvider: provider });
+
+    await client.getContents("test", ["a", "b", "c"]);
+
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.attributes["unified_live.batch.size"]).toBe(3);
+
+    client[Symbol.dispose]();
+  });
+
+  it("records error on client span when plugin throws", async () => {
+    const { provider, spans } = createMockTracerProvider();
+    const plugin = createMockPlugin("test");
+    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new NotFoundError("test", "missing"),
+    );
+    const client = UnifiedClient.create({ plugins: [plugin], tracerProvider: provider });
+
+    await client.getContentById("test", "missing").catch(() => {});
+
+    expect(spans[0]!.status?.code).toBe(2); // SpanStatusCode.ERROR
+    expect(spans[0]!.ended).toBe(true);
 
     client[Symbol.dispose]();
   });

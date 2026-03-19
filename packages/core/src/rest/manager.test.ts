@@ -549,6 +549,245 @@ describe("createRestManager", () => {
   });
 });
 
+describe("createRestManager OTel integration", () => {
+  const createMockTracer = () => {
+    const spans: Array<{
+      name: string;
+      options: unknown;
+      attributes: Record<string, unknown>;
+      status?: { code: number; message?: string };
+      ended: boolean;
+    }> = [];
+
+    const tracer = {
+      startActiveSpan: vi.fn((name: string, optionsOrFn: unknown, maybeFn?: unknown) => {
+        const options = typeof maybeFn === "function" ? optionsOrFn : {};
+        const fn = typeof maybeFn === "function" ? maybeFn : optionsOrFn;
+        const spanRecord = {
+          name,
+          options,
+          attributes: {} as Record<string, unknown>,
+          status: undefined as { code: number; message?: string } | undefined,
+          ended: false,
+        };
+        spans.push(spanRecord);
+        const span = {
+          setAttribute: vi.fn((k: string, v: unknown) => {
+            spanRecord.attributes[k] = v;
+          }),
+          setAttributes: vi.fn(),
+          setStatus: vi.fn((s: { code: number; message?: string }) => {
+            spanRecord.status = s;
+          }),
+          addEvent: vi.fn(),
+          recordException: vi.fn(),
+          end: vi.fn(() => {
+            spanRecord.ended = true;
+          }),
+        };
+        return (fn as (s: typeof span) => unknown)(span);
+      }),
+      startSpan: vi.fn(),
+    };
+
+    return { tracer, spans, provider: { getTracer: vi.fn().mockReturnValue(tracer) } };
+  };
+
+  const createMockMeter = () => {
+    const recordings: Array<{ value: number; attributes: Record<string, unknown> }> = [];
+    const histogram = {
+      record: vi.fn((value: number, attributes: Record<string, unknown>) => {
+        recordings.push({ value, attributes });
+      }),
+    };
+    const meter = {
+      createHistogram: vi.fn().mockReturnValue(histogram),
+      createCounter: vi.fn(),
+      createUpDownCounter: vi.fn(),
+      createObservableGauge: vi.fn(),
+      createObservableCounter: vi.fn(),
+      createObservableUpDownCounter: vi.fn(),
+      createGauge: vi.fn(),
+    };
+    return { meter, histogram, recordings, provider: { getMeter: vi.fn().mockReturnValue(meter) } };
+  };
+
+  it("creates span with HTTP method name and SpanKind.CLIENT", async () => {
+    const { spans, provider: tracerProvider } = createMockTracer();
+    const { provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    await manager.request({ method: "GET", path: "/resources" });
+
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.name).toBe("GET");
+    expect(spans[0]!.options).toEqual({ kind: 2 }); // SpanKind.CLIENT = 2
+    expect(spans[0]!.ended).toBe(true);
+
+    manager[Symbol.dispose]();
+  });
+
+  it("sets required semconv attributes on span", async () => {
+    const { spans, provider: tracerProvider } = createMockTracer();
+    const { provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com:8443",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    await manager.request({ method: "GET", path: "/resources" });
+
+    const attrs = spans[0]!.attributes;
+    expect(attrs["http.request.method"]).toBe("GET");
+    expect(attrs["url.path"]).toBe("/resources");
+    expect(attrs["url.full"]).toBe("https://api.example.com:8443/resources");
+    expect(attrs["url.scheme"]).toBe("https");
+    expect(attrs["server.address"]).toBe("api.example.com");
+    expect(attrs["server.port"]).toBe(8443);
+    expect(attrs["http.response.status_code"]).toBe(200);
+    expect(attrs["unified_live.platform"]).toBe("test");
+
+    manager[Symbol.dispose]();
+  });
+
+  it("defaults server.port to 443 for HTTPS", async () => {
+    const { spans, provider: tracerProvider } = createMockTracer();
+    const { provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    await manager.request({ method: "GET", path: "/test" });
+    expect(spans[0]!.attributes["server.port"]).toBe(443);
+
+    manager[Symbol.dispose]();
+  });
+
+  it("records http.client.request.duration histogram on success", async () => {
+    const { provider: tracerProvider } = createMockTracer();
+    const { recordings, provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    await manager.request({ method: "GET", path: "/test" });
+
+    expect(recordings).toHaveLength(1);
+    expect(recordings[0]!.value).toBeGreaterThan(0);
+    expect(recordings[0]!.attributes["http.request.method"]).toBe("GET");
+    expect(recordings[0]!.attributes["http.response.status_code"]).toBe(200);
+    expect(recordings[0]!.attributes["server.address"]).toBe("api.example.com");
+
+    manager[Symbol.dispose]();
+  });
+
+  it("records histogram with error.type on failure", async () => {
+    const { provider: tracerProvider } = createMockTracer();
+    const { recordings, provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 404 }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    await manager.request({ method: "GET", path: "/missing" }).catch(() => {});
+
+    expect(recordings).toHaveLength(1);
+    expect(recordings[0]!.attributes["error.type"]).toBe("404");
+    expect(recordings[0]!.attributes["http.response.status_code"]).toBe(404);
+
+    manager[Symbol.dispose]();
+  });
+
+  it("sets error.type to status code string for HTTP errors", async () => {
+    const { spans, provider: tracerProvider } = createMockTracer();
+    const { provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 404 }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    await manager.request({ method: "GET", path: "/missing" }).catch(() => {});
+
+    expect(spans[0]!.attributes["error.type"]).toBe("404");
+    expect(spans[0]!.status?.code).toBe(2); // SpanStatusCode.ERROR
+
+    manager[Symbol.dispose]();
+  });
+
+  it("calls propagation.inject on outgoing request headers", async () => {
+    const { propagation } = await import("@opentelemetry/api");
+    const injectSpy = vi.spyOn(propagation, "inject");
+
+    const { provider: tracerProvider } = createMockTracer();
+    const { provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    await manager.request({ method: "GET", path: "/test" });
+
+    expect(injectSpy).toHaveBeenCalledTimes(1);
+
+    injectSpy.mockRestore();
+    manager[Symbol.dispose]();
+  });
+});
+
 describe("parseRetryAfter", () => {
   it.each([
     { header: "5", fallback: 1, expected: 5 },

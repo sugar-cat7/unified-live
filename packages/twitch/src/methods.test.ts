@@ -391,7 +391,7 @@ describe("twitchSearch", () => {
     });
     const result = await twitchSearch(rest, { query: "test" });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.id).toBe("ch1");
+    expect(result.items[0]!.id).toBe("livecaster");
   });
 
   it("returns empty when no results", async () => {

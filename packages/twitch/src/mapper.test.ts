@@ -191,9 +191,10 @@ describe("toSearchLive", () => {
   it("maps search channel to LiveStream", () => {
     const result = toSearchLive(mockSearchChannel);
     expect(result.type).toBe("live");
-    expect(result.id).toBe("ch1");
+    expect(result.id).toBe("livecaster");
     expect(result.description).toBe("");
     expect(result.tags).toEqual([]);
+    expect(result.channel.id).toBe("ch1");
     expect(result.channel.name).toBe("LiveCaster");
     expect(result.url).toBe("https://www.twitch.tv/livecaster");
     expect(result.startedAt).toEqual(new Date("2024-06-01T10:00:00Z"));

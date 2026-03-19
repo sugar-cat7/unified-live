@@ -2,6 +2,7 @@ import {
   AuthenticationError,
   NetworkError,
   PlatformNotFoundError,
+  QuotaExhaustedError,
   RateLimitError,
   UnifiedLiveError,
   ValidationError,
@@ -220,6 +221,7 @@ export const UnifiedClient = {
 
     const isRequestLevelError = (error: unknown): boolean => {
       if (error instanceof RateLimitError) return true;
+      if (error instanceof QuotaExhaustedError) return true;
       if (error instanceof AuthenticationError) return true;
       if (error instanceof NetworkError) return true;
       return false;

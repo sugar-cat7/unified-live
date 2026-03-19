@@ -206,8 +206,10 @@ export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
       path: "/search/channels",
     });
   }
+  // ch.id is the broadcaster ID (user_id), not the stream ID.
+  // Search endpoint does not return stream IDs, so we use broadcaster_login as a proxy ID.
   return {
-    id: ch.id,
+    id: ch.broadcaster_login,
     platform: "twitch",
     title: ch.title,
     description: "",
@@ -219,7 +221,6 @@ export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
       name: ch.display_name,
       url: `https://www.twitch.tv/${ch.broadcaster_login}`,
     },
-    sessionId: ch.id,
     type: "live",
     viewerCount: 0,
     startedAt: new Date(ch.started_at),

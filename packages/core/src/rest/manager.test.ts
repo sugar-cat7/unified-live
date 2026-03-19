@@ -99,6 +99,30 @@ describe("createRestManager", () => {
     expect(url.searchParams.get("emoji")).toBe("\u{1F44D}");
   });
 
+  it("builds URL with repeated query params for array values", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    await manager.request({
+      method: "GET",
+      path: "/streams",
+      query: { user_id: ["1", "2", "3"], type: "live" },
+    });
+
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.getAll("user_id")).toEqual(["1", "2", "3"]);
+    expect(url.searchParams.get("type")).toBe("live");
+    expect(calledUrl).toContain("user_id=1&user_id=2&user_id=3");
+  });
+
   it("retries on 5xx server errors", async () => {
     strategy = createMockStrategy();
     const fetchFn = createMockFetch([

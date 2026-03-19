@@ -154,7 +154,13 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
           const reqUrl = new URL(req.path, manager.baseUrl);
           if (req.query) {
             for (const [key, value] of Object.entries(req.query)) {
-              reqUrl.searchParams.set(key, value);
+              if (Array.isArray(value)) {
+                for (const v of value) {
+                  reqUrl.searchParams.append(key, v);
+                }
+              } else {
+                reqUrl.searchParams.set(key, value);
+              }
             }
           }
           const url = reqUrl.toString();

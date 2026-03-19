@@ -214,6 +214,42 @@ export const twitcastingSearch = async (
     return Page.empty<Content>();
   }
 
+  // channelId-based search: fetch movies for this user directly
+  if (options.channelId) {
+    if (options.status === "live") {
+      const userRes = await rest.request<{ user: TCUser }>({
+        method: "GET",
+        path: `/users/${options.channelId}`,
+        bucketId: "users",
+      });
+      if (!userRes.data.user.is_live) return Page.empty<Content>();
+      const movieRes = await rest.request<{ movie: TCMovie }>({
+        method: "GET",
+        path: `/users/${options.channelId}/current_live`,
+        bucketId: "movies",
+      });
+      return movieRes.data.movie
+        ? { items: [toLive(movieRes.data.movie, userRes.data.user)], hasMore: false }
+        : Page.empty<Content>();
+    }
+    // Default or ended: fetch recent movies
+    const userRes = await rest.request<{ user: TCUser }>({
+      method: "GET",
+      path: `/users/${options.channelId}`,
+      bucketId: "users",
+    });
+    const moviesRes = await rest.request<TCMoviesResponse>({
+      method: "GET",
+      path: `/users/${options.channelId}/movies`,
+      query: { limit: String(options.limit ?? 5) },
+      bucketId: "movies",
+    });
+    return {
+      items: (moviesRes.data.movies ?? []).map((m) => toContent(m, userRes.data.user)),
+      hasMore: false,
+    };
+  }
+
   // TwitCasting search requires a keyword
   if (!options.query) {
     return Page.empty<Content>();

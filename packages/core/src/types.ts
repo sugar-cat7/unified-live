@@ -255,6 +255,8 @@ export const BatchResult = {
 export const searchOptionsSchema = z.object({
   query: z.string().optional(),
   status: z.enum(["live", "upcoming", "ended"]).optional(),
+  channelId: z.string().check(z.minLength(1)).optional(),
+  order: z.enum(["relevance", "date"]).optional(),
   limit: z.int().check(z.positive(), z.lte(100)).optional(),
   cursor: z.string().optional(),
 });
@@ -262,7 +264,7 @@ export const searchOptionsSchema = z.object({
 /**
  * Options for search operations across platforms.
  * All fields are optional at the schema level, but `UnifiedClient.search()`
- * requires at least one of `query` or `status` to be provided.
+ * requires at least one of `query`, `status`, or `channelId` to be provided.
  *
  * @category Types
  */

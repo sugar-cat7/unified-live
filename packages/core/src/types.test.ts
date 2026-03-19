@@ -499,6 +499,12 @@ describe("searchOptionsSchema", () => {
     { name: "limit over 100", input: { query: "test", limit: 101 }, valid: false },
     { name: "float limit", input: { query: "test", limit: 1.5 }, valid: false },
     { name: "empty object", input: {}, valid: true },
+    { name: "channelId only", input: { channelId: "UC123" }, valid: true },
+    { name: "channelId + status", input: { channelId: "UC123", status: "live" }, valid: true },
+    { name: "order relevance", input: { query: "test", order: "relevance" }, valid: true },
+    { name: "order date", input: { query: "test", order: "date" }, valid: true },
+    { name: "invalid order", input: { query: "test", order: "popular" }, valid: false },
+    { name: "empty channelId", input: { channelId: "" }, valid: false },
   ])("$name", ({ input, valid }) => {
     const result = searchOptionsSchema.safeParse(input);
     expect(result.success).toBe(valid);

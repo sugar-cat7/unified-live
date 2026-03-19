@@ -173,7 +173,7 @@ const client = UnifiedClient.create({
 });
 
 const content = await client.getContent("https://www.twitch.tv/videos/123456");
-// A span "unified-live.rest twitch GET /videos" is sent to your collector
+// A span "unified-live.rest GET" is emitted with platform and path attributes
 
 client[Symbol.dispose]();
 await sdk.shutdown();

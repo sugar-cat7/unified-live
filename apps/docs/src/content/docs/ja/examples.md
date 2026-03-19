@@ -173,7 +173,7 @@ const client = UnifiedClient.create({
 });
 
 const content = await client.getContent("https://www.twitch.tv/videos/123456");
-// スパン "unified-live.rest twitch GET /videos" がコレクターに送信される
+// スパン "unified-live.rest GET" がプラットフォームとパス属性付きで発行される
 
 client[Symbol.dispose]();
 await sdk.shutdown();

@@ -68,14 +68,14 @@ console.log(tc.type); // "live" | "video"
 
 ### Feature Matrix
 
-| Feature                  | YouTube | Twitch | TwitCasting |
-| :----------------------- | :-----: | :----: | :---------: |
-| Get content by URL       |   ✅    |   ✅   |     ✅      |
-| Get content by ID        |   ✅    |   ✅   |     ✅      |
-| List live streams        |   ✅    |   ✅   |     ✅      |
-| List videos (pagination) |   ✅    |   ✅   |     ✅      |
-| Get channel info         |   ✅    |   ✅   |     ✅      |
-| Archive resolution       |   ✅    |   ✅   |     ✅      |
+| Feature                        | YouTube | Twitch | TwitCasting |
+| :----------------------------- | :-----: | :----: | :---------: |
+| Get content by URL             |   ✅    |   ✅   |     ✅      |
+| Get content by ID              |   ✅    |   ✅   |     ✅      |
+| List live streams              |   ✅    |   ✅   |     ✅      |
+| List videos (pagination)       |   ✅    |   ✅   |     ✅      |
+| Get channel info               |   ✅    |   ✅   |     ✅      |
+| Archive resolution             |   ✅    |   ✅   |     ✅      |
 | OpenTelemetry traces & metrics |   ✅    |   ✅   |     ✅      |
 
 ## Official API Documentation

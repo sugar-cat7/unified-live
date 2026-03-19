@@ -329,7 +329,7 @@ export const youtubeSearch = async (
   if (options.query) query.q = options.query;
   if (options.channelId) query.channelId = options.channelId;
   if (options.order) query.order = options.order;
-  if (options.limit) query.maxResults = String(options.limit);
+  if (options.limit) query.maxResults = String(Math.min(options.limit, 50));
   if (options.cursor) query.pageToken = options.cursor;
 
   if (options.status) {
@@ -356,6 +356,8 @@ export const youtubeSearch = async (
     .map((item) => item.id?.videoId)
     .filter(Boolean)
     .join(",");
+
+  if (!videoIds) return Page.empty<Content>();
 
   const videosRes = await rest.request<YTListResponse<YTVideoResource>>({
     method: "GET",

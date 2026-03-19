@@ -8,9 +8,11 @@ import { createClientCredentialsTokenManager } from "./auth";
 import {
   twitchGetChannel,
   twitchGetContent,
+  twitchGetContents,
   twitchGetLiveStreams,
   twitchGetVideos,
   twitchResolveArchive,
+  twitchSearch,
 } from "./methods";
 import { matchTwitchUrl } from "./urls";
 
@@ -67,9 +69,9 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
         supportsArchiveResolution: true,
         authModel: "oauth2",
         rateLimitModel: "tokenBucket",
-        supportsBatchContent: false,
+        supportsBatchContent: true,
         supportsBatchChannels: false,
-        supportsSearch: false,
+        supportsSearch: true,
       },
       headers: { "Client-Id": config.clientId },
       parseRateLimitHeaders: parseTwitchRateLimitHeaders,
@@ -77,10 +79,12 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
     },
     {
       getContent: twitchGetContent,
+      getContents: twitchGetContents,
       getChannel: twitchGetChannel,
       getLiveStreams: twitchGetLiveStreams,
       getVideos: twitchGetVideos,
       resolveArchive: twitchResolveArchive,
+      search: twitchSearch,
     },
   );
 };

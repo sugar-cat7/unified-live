@@ -15,9 +15,9 @@ describe("createTwitchPlugin", () => {
       supportsArchiveResolution: true,
       authModel: "oauth2",
       rateLimitModel: "tokenBucket",
-      supportsBatchContent: false,
+      supportsBatchContent: true,
       supportsBatchChannels: false,
-      supportsSearch: false,
+      supportsSearch: true,
     });
     plugin[Symbol.dispose]();
   });

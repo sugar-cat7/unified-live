@@ -1,7 +1,7 @@
 import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
-import type { TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
-import { parseDuration, toLive, toChannel, toVideo } from "./mapper";
+import type { TwitchScheduleSegment, TwitchSearchChannel, TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
+import { parseDuration, toLive, toChannel, toScheduled, toSearchLive, toVideo } from "./mapper";
 
 const mockStream: TwitchStream = {
   id: "stream123",
@@ -123,6 +123,80 @@ describe("toChannel", () => {
     { desc: "missing user.login", override: { login: "" } },
   ])("throws ParseError when $desc", ({ override }) => {
     expect(() => toChannel({ ...mockUser, ...override } as TwitchUser)).toThrow(ParseError);
+  });
+});
+
+describe("toScheduled", () => {
+  it("maps schedule segment to ScheduledStream", () => {
+    const segment: TwitchScheduleSegment = {
+      id: "seg1",
+      start_time: "2024-06-01T18:00:00Z",
+      end_time: null,
+      title: "Upcoming Stream",
+      canceled_until: null,
+      category: null,
+    };
+    const user: TwitchUser = {
+      id: "u1",
+      login: "streamer",
+      display_name: "Streamer",
+      profile_image_url: "https://img.tv/pic.jpg",
+    };
+    const result = toScheduled(segment, user);
+    expect(result.type).toBe("scheduled");
+    expect(result.scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
+    expect(result.channel.id).toBe("u1");
+    expect(result.url).toBe("https://www.twitch.tv/streamer");
+  });
+
+  it("preserves raw segment data", () => {
+    const segment: TwitchScheduleSegment = {
+      id: "seg2",
+      start_time: "2024-06-02T12:00:00Z",
+      end_time: "2024-06-02T14:00:00Z",
+      title: "Scheduled Event",
+      canceled_until: null,
+      category: { id: "cat1", name: "Just Chatting" },
+    };
+    const result = toScheduled(segment, mockUser);
+    expect(result.raw).toBe(segment);
+  });
+});
+
+describe("toSearchLive", () => {
+  const mockSearchChannel: TwitchSearchChannel = {
+    id: "ch1",
+    broadcaster_login: "livecaster",
+    display_name: "LiveCaster",
+    game_name: "Just Chatting",
+    title: "Live Now!",
+    is_live: true,
+    started_at: "2024-06-01T10:00:00Z",
+    thumbnail_url: "https://img.tv/ch1.jpg",
+  };
+
+  it("maps search channel to LiveStream", () => {
+    const result = toSearchLive(mockSearchChannel);
+    expect(result.type).toBe("live");
+    expect(result.id).toBe("ch1");
+    expect(result.channel.name).toBe("LiveCaster");
+    expect(result.url).toBe("https://www.twitch.tv/livecaster");
+    expect(result.startedAt).toEqual(new Date("2024-06-01T10:00:00Z"));
+    expect(result.viewerCount).toBe(0);
+  });
+
+  it("preserves raw data", () => {
+    const result = toSearchLive(mockSearchChannel);
+    expect(result.raw).toBe(mockSearchChannel);
+  });
+
+  it.each([
+    { desc: "missing id", override: { id: "" } },
+    { desc: "missing broadcaster_login", override: { broadcaster_login: "" } },
+  ])("throws ParseError when $desc", ({ override }) => {
+    expect(() => toSearchLive({ ...mockSearchChannel, ...override } as TwitchSearchChannel)).toThrow(
+      ParseError,
+    );
   });
 });
 

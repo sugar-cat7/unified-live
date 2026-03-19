@@ -2,10 +2,12 @@ import { NotFoundError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
 import {
   twitchGetContent,
+  twitchGetContents,
   twitchGetChannel,
   twitchGetLiveStreams,
   twitchGetVideos,
   twitchResolveArchive,
+  twitchSearch,
 } from "./methods";
 import { createMockRest } from "./test-helpers";
 
@@ -195,5 +197,149 @@ describe("twitchResolveArchive", () => {
       raw: {},
     });
     expect(result).toBeNull();
+  });
+});
+
+const createSampleVideo = (id: string) => ({
+  ...sampleVideo,
+  id,
+  url: `https://www.twitch.tv/videos/${id}`,
+});
+
+describe("twitchGetContents", () => {
+  it("fetches multiple videos in one API call", async () => {
+    const rest = createMockRest({ data: [createSampleVideo("v1"), createSampleVideo("v2")] });
+    const result = await twitchGetContents(rest, ["v1", "v2"]);
+    expect(result.values.size).toBe(2);
+    expect(result.errors.size).toBe(0);
+  });
+
+  it("puts missing IDs in errors map", async () => {
+    const rest = createMockRest({ data: [createSampleVideo("v1")] });
+    const result = await twitchGetContents(rest, ["v1", "v2"]);
+    expect(result.values.size).toBe(1);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.get("v2")).toBeInstanceOf(NotFoundError);
+  });
+
+  it("passes comma-separated IDs in query", async () => {
+    const rest = createMockRest({ data: [createSampleVideo("v1"), createSampleVideo("v2")] });
+    await twitchGetContents(rest, ["v1", "v2"]);
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/videos",
+        query: { id: "v1,v2" },
+      }),
+    );
+  });
+
+  it("chunks for >100 IDs", async () => {
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof import("vitest").vi.fn>).mockImplementation(
+      async (req: { query: { id: string } }) => {
+        callCount++;
+        const ids = req.query.id.split(",");
+        return {
+          status: 200,
+          headers: new Headers(),
+          data: { data: ids.map((id: string) => createSampleVideo(id)) },
+        };
+      },
+    );
+    const ids = Array.from({ length: 150 }, (_, i) => `v${i}`);
+    const result = await twitchGetContents(rest, ids);
+    expect(callCount).toBe(2);
+    expect(result.values.size).toBe(150);
+  });
+
+  it("returns empty maps for empty IDs array", async () => {
+    const rest = createMockRest({ data: [] });
+    const result = await twitchGetContents(rest, []);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+  });
+});
+
+const sampleSearchChannel = {
+  id: "ch1",
+  broadcaster_login: "livecaster",
+  display_name: "LiveCaster",
+  game_name: "Just Chatting",
+  title: "Live Now!",
+  is_live: true,
+  started_at: "2024-06-01T10:00:00Z",
+  thumbnail_url: "https://img.tv/ch1.jpg",
+};
+
+describe("twitchSearch", () => {
+  it("searches live channels with query", async () => {
+    const rest = createMockRest({
+      data: [sampleSearchChannel],
+      pagination: { cursor: "next123" },
+    });
+    const result = await twitchSearch(rest, { query: "gaming", status: "live" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.type).toBe("live");
+    expect(result.cursor).toBe("next123");
+    expect(result.hasMore).toBe(true);
+  });
+
+  it("passes query params correctly", async () => {
+    const rest = createMockRest({ data: [], pagination: {} });
+    await twitchSearch(rest, { query: "test", limit: 10, cursor: "abc" });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/search/channels",
+        query: {
+          live_only: "true",
+          query: "test",
+          first: "10",
+          after: "abc",
+        },
+      }),
+    );
+  });
+
+  it("returns empty for upcoming status", async () => {
+    const rest = createMockRest({ data: [] });
+    const result = await twitchSearch(rest, { query: "test", status: "upcoming" });
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+    expect(rest.request).not.toHaveBeenCalled();
+  });
+
+  it("returns empty for ended status", async () => {
+    const rest = createMockRest({ data: [] });
+    const result = await twitchSearch(rest, { query: "test", status: "ended" });
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+    expect(rest.request).not.toHaveBeenCalled();
+  });
+
+  it("defaults to live_only=true when no status", async () => {
+    const rest = createMockRest({ data: [], pagination: {} });
+    await twitchSearch(rest, { query: "test" });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ live_only: "true" }),
+      }),
+    );
+  });
+
+  it("filters out non-live channels from results", async () => {
+    const rest = createMockRest({
+      data: [sampleSearchChannel, { ...sampleSearchChannel, id: "ch2", is_live: false }],
+    });
+    const result = await twitchSearch(rest, { query: "test" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.id).toBe("ch1");
+  });
+
+  it("returns empty when no results", async () => {
+    const rest = createMockRest({ data: [], pagination: {} });
+    const result = await twitchSearch(rest, { query: "nothing" });
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
   });
 });

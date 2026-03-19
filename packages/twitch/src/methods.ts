@@ -1,14 +1,19 @@
 import {
+  type BatchResult,
   type Channel,
   type Content,
   type LiveStream,
   NotFoundError,
   type Page,
   type RestManager,
+  type SearchOptions,
+  UnifiedLiveError,
   type Video,
 } from "@unified-live/core";
 import {
   toLive,
+  toSearchLive,
+  type TwitchSearchChannel,
   type TwitchStream,
   type TwitchUser,
   type TwitchVideo,
@@ -174,4 +179,96 @@ export const twitchResolveArchive = async (
 
   const match = res.data.data.find((v) => v.stream_id === live.sessionId);
   return match ? toVideo(match) : null;
+};
+
+const TWITCH_MAX_IDS_PER_REQUEST = 100;
+
+/**
+ * Batch-fetch Twitch videos by IDs and map to unified Content.
+ *
+ * @param rest - REST manager for API requests
+ * @param ids - array of Twitch video IDs
+ * @returns BatchResult with values for found videos and NotFoundError for missing IDs
+ * @precondition each id is a valid Twitch video ID
+ * @postcondition values contains Content for each found video; errors contains NotFoundError for each missing ID
+ * @idempotency Safe — read-only API calls
+ */
+export const twitchGetContents = async (
+  rest: RestManager,
+  ids: string[],
+): Promise<BatchResult<Content>> => {
+  const values = new Map<string, Content>();
+  const errors = new Map<string, UnifiedLiveError>();
+
+  for (let i = 0; i < ids.length; i += TWITCH_MAX_IDS_PER_REQUEST) {
+    const chunk = ids.slice(i, i + TWITCH_MAX_IDS_PER_REQUEST);
+    const res = await rest.request<TwitchResponse<TwitchVideo>>({
+      method: "GET",
+      path: "/videos",
+      query: { id: chunk.join(",") },
+      bucketId: "videos",
+    });
+
+    const returnedIds = new Set<string>();
+    for (const item of res.data.data) {
+      if (item.id) {
+        values.set(item.id, toVideo(item));
+        returnedIds.add(item.id);
+      }
+    }
+
+    for (const id of chunk) {
+      if (!returnedIds.has(id)) {
+        errors.set(id, new NotFoundError("twitch", id));
+      }
+    }
+  }
+
+  return { values, errors };
+};
+
+/**
+ * Search Twitch for live channels matching the given options.
+ *
+ * @param rest - REST manager for API requests
+ * @param options - search options (query, status, limit, cursor)
+ * @returns paginated list of Content items (LiveStream for live searches, empty for other statuses)
+ * @precondition options.query should be provided for meaningful results
+ * @postcondition returns Page with items mapped from Twitch search channel resources
+ * @idempotency Safe — read-only API calls
+ */
+export const twitchSearch = async (
+  rest: RestManager,
+  options: SearchOptions,
+): Promise<Page<Content>> => {
+  // Twitch schedule requires broadcaster_id — no general upcoming search
+  // Twitch has no general ended/archive search endpoint
+  if (options.status === "upcoming" || options.status === "ended") {
+    return { items: [], hasMore: false };
+  }
+
+  const query: Record<string, string> = {
+    live_only: "true",
+  };
+
+  if (options.query) query.query = options.query;
+  if (options.limit) query.first = String(options.limit);
+  if (options.cursor) query.after = options.cursor;
+
+  const res = await rest.request<TwitchResponse<TwitchSearchChannel>>({
+    method: "GET",
+    path: "/search/channels",
+    query,
+    bucketId: "search",
+  });
+
+  const items: Content[] = res.data.data
+    .filter((ch) => ch.is_live)
+    .map(toSearchLive);
+
+  return {
+    items,
+    cursor: res.data.pagination?.cursor,
+    hasMore: res.data.pagination?.cursor !== undefined,
+  };
 };

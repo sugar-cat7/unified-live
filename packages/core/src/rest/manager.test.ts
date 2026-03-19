@@ -761,7 +761,10 @@ describe("createRestManager OTel integration", () => {
     manager[Symbol.dispose]();
   });
 
-  it("injects trace context headers via propagation.inject", async () => {
+  it("calls propagation.inject on outgoing request headers", async () => {
+    const { propagation } = await import("@opentelemetry/api");
+    const injectSpy = vi.spyOn(propagation, "inject");
+
     const { provider: tracerProvider } = createMockTracer();
     const { provider: meterProvider } = createMockMeter();
     const strategy = createMockStrategy();
@@ -778,12 +781,9 @@ describe("createRestManager OTel integration", () => {
 
     await manager.request({ method: "GET", path: "/test" });
 
-    // Verify propagation.inject was called by checking that headers were passed to fetch
-    // With no global propagator registered, no extra headers are injected,
-    // but the call to propagation.inject() itself is safe (no-op)
-    const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
-    expect(calledInit.headers).toBeDefined();
+    expect(injectSpy).toHaveBeenCalledTimes(1);
 
+    injectSpy.mockRestore();
     manager[Symbol.dispose]();
   });
 });

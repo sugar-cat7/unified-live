@@ -4,6 +4,16 @@ title: Platform Plugins
 
 Each platform has its own package with a factory function. You only install the platforms you need.
 
+## Platform Status
+
+| Platform    | Status    | Auth                      | Rate Limiting          | Archive Resolution |
+| :---------- | :-------- | :------------------------ | :--------------------- | :----------------- |
+| YouTube     | ✅ Stable | API Key (query param)     | Quota Budget (10k/day) | ✅ Supported       |
+| Twitch      | ✅ Stable | OAuth2 Client Credentials | Token Bucket (800/min) | ✅ Supported       |
+| TwitCasting | ✅ Stable | Basic Auth (base64)       | Token Bucket (60/min)  | ✅ Supported       |
+
+---
+
 ## YouTube
 
 > **Official docs:** [YouTube Data API v3](https://developers.google.com/youtube/v3)
@@ -36,12 +46,12 @@ const youtube = createYouTubePlugin({
 
 YouTube uses a cost-based daily quota (default: 10,000 units). Different operations cost different amounts:
 
-| Operation                                      | Cost      |
-| ---------------------------------------------- | --------- |
-| `getContent` (videos.list)                     | 1 unit    |
-| `getChannel` (channels.list)                   | 1 unit    |
-| `getVideos` (playlistItems.list + videos.list) | 2 units   |
-| `getLiveStreams` (search.list + videos.list)   | 101 units |
+| Operation                                                      | Cost      |
+| -------------------------------------------------------------- | --------- |
+| `getContent` (videos.list)                                     | 1 unit    |
+| `getChannel` (channels.list)                                   | 1 unit    |
+| `getVideos` (channels.list + playlistItems.list + videos.list) | 3 units   |
+| `getLiveStreams` (search.list + videos.list)                   | 101 units |
 
 The SDK tracks quota consumption locally and throws `QuotaExhaustedError` when the limit is reached.
 
@@ -147,3 +157,4 @@ using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: ".
 
 - [Error Handling](../error-handling/) — Handling API errors
 - [Pagination](../pagination/) — Fetching video lists
+- [Creating a Plugin](../creating-a-plugin/) — Build your own platform plugin

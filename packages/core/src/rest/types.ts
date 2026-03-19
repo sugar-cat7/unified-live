@@ -6,6 +6,7 @@ import type { RateLimitStrategy } from "./strategy";
  *
  * @precondition path is a relative path (e.g., "/videos")
  * @postcondition query values are URL-encoded by the RestManager
+ * @category Plugin Development
  */
 export type RestRequest = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -29,6 +30,7 @@ export type RestRequest = {
  * Parsed response from a platform API request.
  *
  * @postcondition data contains the parsed JSON response body
+ * @category Plugin Development
  */
 export type RestResponse<T = unknown> = {
   status: number;
@@ -39,6 +41,8 @@ export type RestResponse<T = unknown> = {
 
 /**
  * Rate limit metadata extracted from response headers.
+ *
+ * @category Plugin Development
  */
 export type RateLimitInfo = {
   limit: number;
@@ -52,6 +56,7 @@ export type RateLimitInfo = {
  *
  * @precondition baseUrl must use HTTPS
  * @precondition rateLimitStrategy must be initialized
+ * @category Plugin Development
  */
 export type RestManagerOptions = {
   platform: string;
@@ -65,6 +70,8 @@ export type RestManagerOptions = {
 
 /**
  * Configuration for request retry behavior.
+ *
+ * @category Plugin Development
  */
 export type RetryConfig = {
   maxRetries?: number;
@@ -81,6 +88,7 @@ export type RetryConfig = {
  * @param headerNames - mapping of header names for limit, remaining, and reset
  * @returns a parser function that extracts rate limit info from headers
  * @idempotency Safe — returns a pure function
+ * @category Plugin Development
  */
 export const createRateLimitHeaderParser = (headerNames: {
   limit: string;

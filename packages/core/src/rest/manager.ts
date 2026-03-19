@@ -18,6 +18,7 @@ const DEFAULT_RETRYABLE_STATUSES = [500, 502, 503, 504];
 /** Client errors that should never be retried (408 is server-initiated timeout, not transient). */
 const NON_RETRYABLE_CLIENT_STATUSES = [400, 408, 413, 415, 422];
 
+/** @category Plugin Development */
 export type RestManager = {
   readonly platform: string;
   readonly baseUrl: string;
@@ -91,6 +92,7 @@ export type RestManager = {
  * @precondition options.rateLimitStrategy is initialized
  * @postcondition returns a RestManager with all methods set
  * @idempotency Not idempotent — each call creates a new manager instance
+ * @category Plugin Development
  */
 export const createRestManager = (options: RestManagerOptions): RestManager => {
   const maxRetries = options.retry?.maxRetries ?? DEFAULT_MAX_RETRIES;
@@ -394,6 +396,8 @@ const sleep = (ms: number): Promise<void> => {
 /**
  * Companion object for the RestManager type.
  * Provides type guard utility.
+ *
+ * @category Plugin Development
  */
 export const RestManager = {
   /**
@@ -426,6 +430,7 @@ export const RestManager = {
  * @param header - raw Retry-After header value (may be null)
  * @param fallback - default seconds if header is missing or invalid
  * @returns seconds in range [0, 120], or fallback if header is missing/invalid
+ * @category Plugin Development
  */
 export const parseRetryAfter = (header: string | null, fallback = 1): number => {
   if (!header) return Math.min(Math.max(fallback, 0), 120);

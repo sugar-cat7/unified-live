@@ -13,12 +13,17 @@ const TRACER_VERSION = "0.1.0";
  * @precondition none
  * @postcondition returns a Tracer instance (possibly no-op)
  * @idempotency Safe — always returns the same tracer
+ * @category Observability
  */
 export const getTracer = (): Tracer => {
   return trace.getTracer(TRACER_NAME, TRACER_VERSION);
 };
 
-/** Standard span attribute keys used by the SDK. */
+/**
+ * Standard span attribute keys used by the SDK.
+ *
+ * @category Observability
+ */
 export const SpanAttributes = {
   // Platform attributes
   PLATFORM: "unified_live.platform",

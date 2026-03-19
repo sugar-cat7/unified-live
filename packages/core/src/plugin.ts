@@ -5,6 +5,7 @@ import type { RateLimitStrategy } from "./rest/strategy";
 import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
 import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
 
+/** @category Plugins */
 export type PluginCapabilities = {
   /** Whether the plugin supports live stream detection */
   supportsLiveStreams: boolean;
@@ -19,6 +20,8 @@ export type PluginCapabilities = {
 /**
  * Declarative configuration for creating a PlatformPlugin via `PlatformPlugin.create()`.
  * Plugin authors provide this instead of manually wiring RestManager overrides.
+ *
+ * @category Plugins
  */
 export type PluginDefinition = {
   /** Platform identifier (e.g., "youtube", "twitch"). */
@@ -62,6 +65,8 @@ export type PluginDefinition = {
  * Platform-specific data access methods.
  * Separated from PluginDefinition because they need access to the constructed RestManager.
  * Methods receive `rest` as the first argument — pure functions that are easier to test and compose.
+ *
+ * @category Plugins
  */
 export type PluginMethods = {
   /** Retrieve content by ID. */
@@ -90,6 +95,7 @@ export type PluginMethods = {
  *
  * @precondition Each plugin instance is bound to a single platform
  * @postcondition All returned data conforms to the unified Content/Channel types
+ * @category Plugins
  */
 export type PlatformPlugin = {
   /** Platform identifier (e.g., "youtube", "twitch", "twitcasting"). */
@@ -137,6 +143,7 @@ export type PlatformPlugin = {
  * Companion object for the PlatformPlugin type.
  * Provides factory and type guard utilities.
  *
+ * @category Plugins
  * @example
  * ```ts
  * const plugin = PlatformPlugin.create(definition, methods);

@@ -2,10 +2,12 @@ import { PlatformNotFoundError, ValidationError } from "./errors";
 import type { PlatformPlugin } from "./plugin";
 import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
 
+/** @category Client */
 export type UnifiedClientOptions = {
   plugins?: PlatformPlugin[];
 };
 
+/** @category Client */
 export type UnifiedClient = {
   /**
    * Register a platform plugin.
@@ -118,6 +120,7 @@ export type UnifiedClient = {
  * Companion object for the UnifiedClient type.
  * Provides factory utility.
  *
+ * @category Client
  * @example
  * ```ts
  * const client = UnifiedClient.create({ plugins: [twitchPlugin] });

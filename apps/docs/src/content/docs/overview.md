@@ -10,7 +10,7 @@ Building an application that aggregates live streaming data across YouTube, Twit
 | :------------------- | :-------------------------------------------------------------- | :-------------------------------------------------- | :------------------------------------------------------ |
 | **Auth**             | API Key (query parameter)                                       | OAuth2 Client Credentials                           | Basic Auth (base64)                                     |
 | **Rate Limiting**    | Quota-based (10,000 units/day)                                  | Token bucket (header-driven)                        | Token bucket (60 req/60s)                               |
-| **Cost Model**       | Per-endpoint cost (1–101 units)                                 | Flat (1 req = 1 token)                              | Flat (1 req = 1 token)                                  |
+| **Cost Model**       | Per-endpoint cost (1–1,600 units)                               | Flat (1 req = 1 token)                              | Flat (1 req = 1 token)                                  |
 | **Live vs. Archive** | Same video ID                                                   | Different video IDs                                 | Same movie ID                                           |
 | **Channel ID**       | `UC...` prefix, `@handle`                                       | Login name                                          | User ID                                                 |
 
@@ -44,14 +44,14 @@ const client = UnifiedClient.create({
 });
 
 // One interface — the SDK handles auth, rate limits, and data normalization
-const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
-const content = await client.getContent("https://twitcasting.tv/user/movie/789");
+const yt = await client.getContent("https://www.youtube.com/watch?v=abc123");
+const tw = await client.getContent("https://www.twitch.tv/videos/123456");
+const tc = await client.getContent("https://twitcasting.tv/user/movie/789");
 
 // All return the same Content type
-console.log(content.title); // string
-console.log(content.platform); // "youtube" | "twitch" | "twitcasting"
-console.log(content.type); // "live" | "video"
+console.log(yt.title); // string
+console.log(tw.platform); // "twitch"
+console.log(tc.type); // "live" | "video"
 ```
 
 ### What the SDK Handles for You
@@ -65,6 +65,18 @@ console.log(content.type); // "live" | "video"
 | **URL Resolution**     | Auto-detects platform from URL, supports multiple URL formats per platform                                                             |
 | **Observability**      | OpenTelemetry spans for every API call (zero overhead when OTel is not configured)                                                     |
 
+### Feature Matrix
+
+| Feature                  | YouTube | Twitch | TwitCasting |
+| :----------------------- | :-----: | :----: | :---------: |
+| Get content by URL       |   ✅    |   ✅   |     ✅      |
+| Get content by ID        |   ✅    |   ✅   |     ✅      |
+| List live streams        |   ✅    |   ✅   |     ✅      |
+| List videos (pagination) |   ✅    |   ✅   |     ✅      |
+| Get channel info         |   ✅    |   ✅   |     ✅      |
+| Archive resolution       |   ✅    |   ✅   |     ✅      |
+| OpenTelemetry tracing    |   ✅    |   ✅   |     ✅      |
+
 ## Official API Documentation
 
 - [YouTube Data API v3](https://developers.google.com/youtube/v3/docs) — Google's video platform API (SDK targets **v3**)
@@ -75,3 +87,4 @@ console.log(content.type); // "live" | "video"
 
 - [Getting Started](../getting-started/) — Install and run your first query
 - [Core Concepts](../core-concepts/) — Content, Channel, and the type system
+- [Examples](../examples/) — Practical code recipes

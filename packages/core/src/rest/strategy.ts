@@ -5,6 +5,7 @@ import type { RestRequest } from "./types";
  * Callers must invoke either complete() or release() — never both.
  *
  * @postcondition complete() is called on success, release() on error
+ * @category Plugin Development
  */
 export type RateLimitHandle = {
   /** Called after successful response — updates state from response headers. */
@@ -15,6 +16,8 @@ export type RateLimitHandle = {
 
 /**
  * Snapshot of a rate limit strategy's current state for telemetry.
+ *
+ * @category Plugin Development
  */
 export type RateLimitStatus = {
   remaining: number;
@@ -28,6 +31,7 @@ export type RateLimitStatus = {
  *
  * @precondition One strategy instance per platform
  * @postcondition acquire() resolves when it's safe to proceed with the request
+ * @category Plugin Development
  */
 export type RateLimitStrategy = {
   /**
@@ -50,6 +54,7 @@ export type RateLimitStrategy = {
  * ```ts
  * if (RateLimitStrategy.is(unknown)) { ... }
  * ```
+ * @category Plugin Development
  */
 export const RateLimitStrategy = {
   /**

@@ -4,6 +4,16 @@ title: プラットフォームプラグイン
 
 各プラットフォームは独立したパッケージとして提供されます。必要なプラットフォームだけをインストールできます。
 
+## プラットフォーム一覧
+
+| プラットフォーム | ステータス | 認証                         | レート制限                  | アーカイブ解決 |
+| :--------------- | :--------- | :--------------------------- | :-------------------------- | :------------- |
+| YouTube          | ✅ 安定    | API キー（クエリパラメータ） | クォータバジェット (10k/日) | ✅ 対応        |
+| Twitch           | ✅ 安定    | OAuth2 Client Credentials    | トークンバケット (800/分)   | ✅ 対応        |
+| TwitCasting      | ✅ 安定    | Basic Auth (base64)          | トークンバケット (60/分)    | ✅ 対応        |
+
+---
+
 ## YouTube
 
 > **公式ドキュメント:** [YouTube Data API v3](https://developers.google.com/youtube/v3)
@@ -36,12 +46,12 @@ const youtube = createYouTubePlugin({
 
 YouTube はコストベースの日次クォータを使用します（デフォルト: 10,000 ユニット）。操作ごとにコストが異なります:
 
-| 操作                                            | コスト       |
-| ----------------------------------------------- | ------------ |
-| `getContent`（videos.list）                     | 1 ユニット   |
-| `getChannel`（channels.list）                   | 1 ユニット   |
-| `getVideos`（playlistItems.list + videos.list） | 2 ユニット   |
-| `getLiveStreams`（search.list + videos.list）   | 101 ユニット |
+| 操作                                                            | コスト       |
+| --------------------------------------------------------------- | ------------ |
+| `getContent`（videos.list）                                     | 1 ユニット   |
+| `getChannel`（channels.list）                                   | 1 ユニット   |
+| `getVideos`（channels.list + playlistItems.list + videos.list） | 3 ユニット   |
+| `getLiveStreams`（search.list + videos.list）                   | 101 ユニット |
 
 SDK はクォータ消費をローカルで追跡し、上限に達すると `QuotaExhaustedError` をスローします。
 
@@ -147,3 +157,4 @@ using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: ".
 
 - [エラーハンドリング](../error-handling/) — API エラーの処理
 - [ページネーション](../pagination/) — 動画リストの取得
+- [プラグインの作成](../creating-a-plugin/) — 独自プラグインの構築

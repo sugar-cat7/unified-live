@@ -48,20 +48,20 @@ Filter by Instrumentation Scope name `unified-live` in your tracing UI.
 | :------------------------ | :------- | :------------------------------------------------------------- |
 | `unified_live.platform`   | `string` | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`) |
 | `unified_live.operation`  | `string` | Operation name (e.g., `"getContent"`, `"search"`)              |
-| `unified_live.batch.size` | `number` | Batch size (only for `getContents`, `getLiveStreamsBatch`)      |
+| `unified_live.batch.size` | `number` | Batch size (only for `getContents`, `getLiveStreamsBatch`)     |
 
 ### REST Span Attributes
 
 Standard HTTP semantic conventions (`http.request.method`, `url.full`, `http.response.status_code`, `server.address`, etc.) are recorded. SDK-specific attributes:
 
-| Attribute                           | Type      | Description                            |
-| :---------------------------------- | :-------- | :------------------------------------- |
-| `unified_live.platform`             | `string`  | Platform identifier                    |
-| `unified_live.rate_limit.remaining` | `number`  | Remaining rate limit tokens            |
-| `unified_live.rate_limit.limit`     | `number`  | Total rate limit capacity              |
+| Attribute                           | Type      | Description                                |
+| :---------------------------------- | :-------- | :----------------------------------------- |
+| `unified_live.platform`             | `string`  | Platform identifier                        |
+| `unified_live.rate_limit.remaining` | `number`  | Remaining rate limit tokens                |
+| `unified_live.rate_limit.limit`     | `number`  | Total rate limit capacity                  |
 | `unified_live.error.code`           | `string`  | Error code (e.g., `"RATE_LIMIT_EXCEEDED"`) |
-| `unified_live.error.has_cause`      | `boolean` | Whether the error wraps a cause        |
-| `unified_live.retry.count`          | `number`  | Number of retries performed            |
+| `unified_live.error.has_cause`      | `boolean` | Whether the error wraps a cause            |
+| `unified_live.retry.count`          | `number`  | Number of retries performed                |
 
 ### Metrics
 

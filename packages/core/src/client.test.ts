@@ -1,8 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 import { UnifiedClient } from "./client";
-import { PlatformNotFoundError, ValidationError } from "./errors";
+import { NotFoundError, PlatformNotFoundError, RateLimitError, ValidationError } from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import type { Channel, Content } from "./types";
+import type { BatchResult, Channel, Content, Page } from "./types";
+
+const mockContent: Content = {
+  id: "test-id",
+  platform: "test",
+  title: "Test Content",
+  url: "https://test.com/watch?v=test-id",
+  thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
+  channel: { id: "ch1", name: "Channel", url: "https://test.com/channel/ch1" },
+  type: "video",
+  duration: 3600,
+  viewCount: 1000,
+  publishedAt: new Date("2024-01-01"),
+  raw: {},
+};
 
 const mockCapabilities = {
   supportsLiveStreams: true,
@@ -15,27 +29,7 @@ const mockCapabilities = {
 };
 
 const createMockPlugin = (name: string): PlatformPlugin => {
-  const mockContent: Content = {
-    id: "test-id",
-    platform: name,
-    title: "Test Content",
-    url: `https://${name}.com/watch?v=test-id`,
-    thumbnail: {
-      url: "https://example.com/thumb.jpg",
-      width: 320,
-      height: 180,
-    },
-    channel: {
-      id: "ch1",
-      name: "Channel",
-      url: `https://${name}.com/channel/ch1`,
-    },
-    type: "video",
-    duration: 3600,
-    viewCount: 1000,
-    publishedAt: new Date("2024-01-01"),
-    raw: {},
-  };
+  const pluginContent: Content = { ...mockContent, platform: name, url: `https://${name}.com/watch?v=test-id`, channel: { ...mockContent.channel, url: `https://${name}.com/channel/ch1` } };
 
   const mockChannel: Channel = {
     id: "ch1",
@@ -52,7 +46,7 @@ const createMockPlugin = (name: string): PlatformPlugin => {
     rest: {} as PlatformPlugin["rest"],
     capabilities: mockCapabilities,
     match: vi.fn(matchUrl),
-    getContent: vi.fn(async () => mockContent),
+    getContent: vi.fn(async () => pluginContent),
     getChannel: vi.fn(async () => mockChannel),
     getLiveStreams: vi.fn(async () => []),
     getVideos: vi.fn(async () => ({ items: [], cursor: undefined, hasMore: false })),
@@ -305,6 +299,155 @@ describe("UnifiedClient cross-plugin routing", () => {
     expect(twContent.platform).toBe("twitch");
     expect(yt.getContent).toHaveBeenCalledWith("v1");
     expect(tw.getContent).toHaveBeenCalledWith("v2");
+
+    client[Symbol.dispose]();
+  });
+});
+
+describe("UnifiedClient batch operations", () => {
+  it("getContents returns empty BatchResult for empty IDs", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.getContents("test", []);
+
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+    expect(plugin.getContent).not.toHaveBeenCalled();
+
+    client[Symbol.dispose]();
+  });
+
+  it("getContents deduplicates IDs", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await client.getContents("test", ["id1", "id1", "id1"]);
+
+    expect(plugin.getContent).toHaveBeenCalledTimes(1);
+
+    client[Symbol.dispose]();
+  });
+
+  it("getContents uses fallback when plugin lacks native batch", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.getContents("test", ["a", "b", "c"]);
+
+    expect(plugin.getContent).toHaveBeenCalledTimes(3);
+    expect(result.values.size).toBe(3);
+    expect(result.errors.size).toBe(0);
+
+    client[Symbol.dispose]();
+  });
+
+  it("getContents fallback separates per-item errors", async () => {
+    const plugin = createMockPlugin("test");
+    (plugin.getContent as ReturnType<typeof vi.fn>).mockImplementation(async (id: string) => {
+      if (id === "missing") throw new NotFoundError("test", "missing");
+      return { ...mockContent, id, platform: "test" };
+    });
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.getContents("test", ["ok1", "missing", "ok2"]);
+
+    expect(result.values.size).toBe(2);
+    expect(result.values.has("ok1")).toBe(true);
+    expect(result.values.has("ok2")).toBe(true);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.has("missing")).toBe(true);
+    expect(result.errors.get("missing")).toBeInstanceOf(NotFoundError);
+
+    client[Symbol.dispose]();
+  });
+
+  it("getContents fallback rethrows request-level errors", async () => {
+    const plugin = createMockPlugin("test");
+    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new RateLimitError("test"),
+    );
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await expect(client.getContents("test", ["id1"])).rejects.toThrow(RateLimitError);
+
+    client[Symbol.dispose]();
+  });
+
+  it("getContents delegates to plugin native batch when available", async () => {
+    const plugin = createMockPlugin("test");
+    const nativeBatch: BatchResult<Content> = {
+      values: new Map([["x", { ...mockContent, id: "x", platform: "test" }]]),
+      errors: new Map(),
+    };
+    plugin.getContents = vi.fn(async () => nativeBatch);
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.getContents("test", ["x"]);
+
+    expect(plugin.getContents).toHaveBeenCalledWith(["x"]);
+    expect(plugin.getContent).not.toHaveBeenCalled();
+    expect(result).toBe(nativeBatch);
+
+    client[Symbol.dispose]();
+  });
+
+  it("getContents throws PlatformNotFoundError for unknown platform", async () => {
+    const client = UnifiedClient.create();
+
+    await expect(client.getContents("unknown", ["id1"])).rejects.toThrow(PlatformNotFoundError);
+
+    client[Symbol.dispose]();
+  });
+});
+
+describe("UnifiedClient search", () => {
+  it("search delegates to plugin", async () => {
+    const plugin = createMockPlugin("test");
+    const searchResult: Page<Content> = {
+      items: [{ ...mockContent, platform: "test" }],
+      hasMore: false,
+    };
+    plugin.search = vi.fn(async () => searchResult);
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.search("test", { query: "hello" });
+
+    expect(plugin.search).toHaveBeenCalledWith({ query: "hello" });
+    expect(result).toBe(searchResult);
+
+    client[Symbol.dispose]();
+  });
+
+  it("search throws ValidationError when plugin lacks search", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await expect(client.search("test", { query: "hello" })).rejects.toThrow(ValidationError);
+    await expect(client.search("test", { query: "hello" })).rejects.toThrow(
+      "does not support search",
+    );
+
+    client[Symbol.dispose]();
+  });
+
+  it("search throws PlatformNotFoundError for unknown platform", async () => {
+    const client = UnifiedClient.create();
+
+    await expect(client.search("unknown", { query: "hello" })).rejects.toThrow(
+      PlatformNotFoundError,
+    );
+
+    client[Symbol.dispose]();
+  });
+
+  it("search throws ValidationError when no query or status", async () => {
+    const plugin = createMockPlugin("test");
+    plugin.search = vi.fn(async () => ({ items: [], hasMore: false }));
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await expect(client.search("test", {})).rejects.toThrow(ValidationError);
+    await expect(client.search("test", {})).rejects.toThrow("at least one of");
 
     client[Symbol.dispose]();
   });

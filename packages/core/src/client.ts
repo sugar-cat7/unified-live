@@ -1,6 +1,13 @@
-import { PlatformNotFoundError, ValidationError } from "./errors";
+import {
+  AuthenticationError,
+  NetworkError,
+  PlatformNotFoundError,
+  RateLimitError,
+  UnifiedLiveError,
+  ValidationError,
+} from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import type { Channel, Content, LiveStream, Page, ResolvedUrl, Video } from "./types";
+import type { BatchResult, Channel, Content, LiveStream, Page, ResolvedUrl, SearchOptions, Video } from "./types";
 
 /** @category Client */
 export type UnifiedClientOptions = {
@@ -82,6 +89,43 @@ export type UnifiedClient = {
   getChannel(platform: string, id: string): Promise<Channel>;
 
   /**
+   * Batch retrieve content by platform and IDs.
+   *
+   * @param platform - platform name
+   * @param ids - content identifiers
+   * @returns batch result with values and per-item errors
+   * @precondition platform is registered
+   * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getContents(platform: string, ids: string[]): Promise<BatchResult<Content>>;
+
+  /**
+   * Batch retrieve channels by platform and IDs.
+   *
+   * @param platform - platform name
+   * @param ids - channel identifiers
+   * @returns batch result with values and per-item errors
+   * @precondition platform is registered
+   * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  getChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>>;
+
+  /**
+   * Search content on a platform. At least one of query/status required.
+   *
+   * @param platform - platform name
+   * @param options - search options (query, status, limit, cursor)
+   * @returns paginated search results
+   * @precondition platform is registered and supports search
+   * @precondition at least one of options.query or options.status is provided
+   * @throws PlatformNotFoundError if platform is not registered
+   * @throws ValidationError if no query or status provided, or platform doesn't support search
+   */
+  search(platform: string, options: SearchOptions): Promise<Page<Content>>;
+
+  /**
    * Access a specific platform plugin.
    *
    * @param name - platform name to look up
@@ -153,6 +197,49 @@ export const UnifiedClient = {
       return plugin;
     };
 
+    const isRequestLevelError = (error: unknown): boolean => {
+      if (error instanceof RateLimitError) return true;
+      if (error instanceof AuthenticationError) return true;
+      if (error instanceof NetworkError) return true;
+      return false;
+    };
+
+    const batchFallback = async <T>(
+      fn: (id: string) => Promise<T>,
+      ids: string[],
+    ): Promise<BatchResult<T>> => {
+      const CONCURRENCY = 10;
+      const values = new Map<string, T>();
+      const errors = new Map<string, UnifiedLiveError>();
+
+      for (let i = 0; i < ids.length; i += CONCURRENCY) {
+        const chunk = ids.slice(i, i + CONCURRENCY);
+        const settled = await Promise.allSettled(
+          chunk.map(async (id) => ({ id, value: await fn(id) })),
+        );
+        for (const [j, result] of settled.entries()) {
+          if (result.status === "fulfilled") {
+            values.set(result.value.id, result.value.value);
+          } else {
+            if (isRequestLevelError(result.reason)) throw result.reason;
+            const id = chunk[j] as string;
+            errors.set(
+              id,
+              result.reason instanceof UnifiedLiveError
+                ? result.reason
+                : new UnifiedLiveError(
+                    result.reason?.message ?? "Unknown error",
+                    "INTERNAL",
+                    { platform: "unknown" },
+                  ),
+            );
+          }
+        }
+      }
+
+      return { values, errors };
+    };
+
     const matchUrl = (url: string): ResolvedUrl | null => {
       for (const plugin of plugins.values()) {
         const resolved = plugin.match(url);
@@ -208,6 +295,43 @@ export const UnifiedClient = {
         return plugin.getChannel(id);
       },
 
+      async getContents(platform: string, ids: string[]): Promise<BatchResult<Content>> {
+        if (ids.length === 0) return { values: new Map(), errors: new Map() };
+        const plugin = getPlugin(platform);
+        const uniqueIds = [...new Set(ids)];
+        if (plugin.getContents) {
+          return plugin.getContents(uniqueIds);
+        }
+        return batchFallback((id) => plugin.getContent(id), uniqueIds);
+      },
+
+      async getChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>> {
+        if (ids.length === 0) return { values: new Map(), errors: new Map() };
+        const plugin = getPlugin(platform);
+        const uniqueIds = [...new Set(ids)];
+        if (plugin.getChannels) {
+          return plugin.getChannels(uniqueIds);
+        }
+        return batchFallback((id) => plugin.getChannel(id), uniqueIds);
+      },
+
+      async search(platform: string, searchOptions: SearchOptions): Promise<Page<Content>> {
+        const plugin = getPlugin(platform);
+        if (!searchOptions.query && !searchOptions.status) {
+          throw new ValidationError(
+            "VALIDATION_INVALID_INPUT",
+            "search requires at least one of 'query' or 'status'",
+          );
+        }
+        if (!plugin.search) {
+          throw new ValidationError(
+            "VALIDATION_INVALID_INPUT",
+            `Platform '${platform}' does not support search`,
+          );
+        }
+        return plugin.search(searchOptions);
+      },
+
       platform(name: string): PlatformPlugin {
         return getPlugin(name);
       },
@@ -253,6 +377,9 @@ export const UnifiedClient = {
       typeof obj.getLiveStreams === "function" &&
       typeof obj.getVideos === "function" &&
       typeof obj.getChannel === "function" &&
+      typeof obj.getContents === "function" &&
+      typeof obj.getChannels === "function" &&
+      typeof obj.search === "function" &&
       typeof obj.platform === "function" &&
       typeof obj.match === "function" &&
       typeof obj.platforms === "function" &&

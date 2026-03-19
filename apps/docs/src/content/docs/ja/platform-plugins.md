@@ -10,7 +10,7 @@ title: プラットフォームプラグイン
 | :--------------- | :--------- | :--------------------------- | :-------------------------- | :------------- |
 | YouTube          | ✅ 安定    | API キー（クエリパラメータ） | クォータバジェット (10k/日) | ✅ 対応        |
 | Twitch           | ✅ 安定    | OAuth2 Client Credentials    | トークンバケット (800/分)   | ✅ 対応        |
-| TwitCasting      | ✅ 安定    | Basic Auth (base64)          | トークンバケット (60/分)    | ❌ 未対応      |
+| TwitCasting      | ✅ 安定    | Basic Auth (base64)          | トークンバケット (60/分)    | ✅ 対応        |
 
 ---
 
@@ -50,7 +50,7 @@ YouTube はコストベースの日次クォータを使用します（デフォ
 | ----------------------------------------------- | ------------ |
 | `getContent`（videos.list）                     | 1 ユニット   |
 | `getChannel`（channels.list）                   | 1 ユニット   |
-| `getVideos`（playlistItems.list + videos.list） | 2 ユニット   |
+| `getVideos`（channels.list + playlistItems.list + videos.list） | 3 ユニット   |
 | `getLiveStreams`（search.list + videos.list）   | 101 ユニット |
 
 SDK はクォータ消費をローカルで追跡し、上限に達すると `QuotaExhaustedError` をスローします。

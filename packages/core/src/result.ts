@@ -44,6 +44,9 @@ export const Err = <E extends UnifiedLiveError>(err: E): ErrResult<E> => {
  * @param p - the promise to wrap
  * @param errorFactory - converts caught errors into UnifiedLiveError subclasses
  * @returns Ok on success, Err on failure
+ * @precondition errorFactory converts any caught Error into a UnifiedLiveError subclass
+ * @postcondition returns Ok on success, Err on failure — never throws
+ * @idempotency Safe — pure wrapper
  */
 export const wrap = async <T, E extends UnifiedLiveError>(
   p: Promise<T>,
@@ -63,6 +66,8 @@ export const wrap = async <T, E extends UnifiedLiveError>(
  * @internal
  * @param result - the Result to unwrap
  * @returns the contained value
+ * @precondition result is a valid Result
+ * @postcondition returns val if Ok, throws err if Err
  */
 export const unwrap = <V, E extends UnifiedLiveError>(result: Result<V, E>): V => {
   if (result.err) {

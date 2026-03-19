@@ -197,7 +197,7 @@ const mockContent: Content = {
   id: "test-1",
   platform: "mock",
   type: "video",
-  title: "テスト動画",
+  title: "Test Video",
   url: "https://example.com/video/test-1",
   thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
   channel: { id: "ch-1", name: "テストチャンネル", url: "https://example.com/channel/ch-1" },
@@ -224,7 +224,7 @@ const mockPlugin: PlatformPlugin = {
   getChannel: async () => ({
     id: "ch-1",
     platform: "mock",
-    name: "テストチャンネル",
+    name: "Test Channel",
     url: "https://example.com/channel/ch-1",
   }),
   getLiveStreams: async () => [],
@@ -235,7 +235,7 @@ const mockPlugin: PlatformPlugin = {
 // テストで使用
 const client = UnifiedClient.create({ plugins: [mockPlugin] });
 const content = await client.getContent("https://example.com/video/test-1");
-expect(content.title).toBe("テスト動画");
+expect(content.title).toBe("Test Video");
 ```
 
 ## 次のステップ

@@ -10,7 +10,7 @@ Each platform has its own package with a factory function. You only install the 
 | :---------- | :-------- | :------------------------ | :--------------------- | :----------------- |
 | YouTube     | ✅ Stable | API Key (query param)     | Quota Budget (10k/day) | ✅ Supported       |
 | Twitch      | ✅ Stable | OAuth2 Client Credentials | Token Bucket (800/min) | ✅ Supported       |
-| TwitCasting | ✅ Stable | Basic Auth (base64)       | Token Bucket (60/min)  | ❌ Not supported   |
+| TwitCasting | ✅ Stable | Basic Auth (base64)       | Token Bucket (60/min)  | ✅ Supported       |
 
 ---
 
@@ -50,7 +50,7 @@ YouTube uses a cost-based daily quota (default: 10,000 units). Different operati
 | ---------------------------------------------- | --------- |
 | `getContent` (videos.list)                     | 1 unit    |
 | `getChannel` (channels.list)                   | 1 unit    |
-| `getVideos` (playlistItems.list + videos.list) | 2 units   |
+| `getVideos` (channels.list + playlistItems.list + videos.list) | 3 units   |
 | `getLiveStreams` (search.list + videos.list)   | 101 units |
 
 The SDK tracks quota consumption locally and throws `QuotaExhaustedError` when the limit is reached.

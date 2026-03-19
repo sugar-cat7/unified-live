@@ -7,6 +7,8 @@ const baseVideoResource: YTVideoResource = {
   id: "dQw4w9WgXcQ",
   snippet: {
     title: "Test Video",
+    description: "A test video description",
+    tags: ["test", "video"],
     channelId: "UC123",
     channelTitle: "Test Channel",
     thumbnails: {
@@ -59,6 +61,8 @@ describe("toContent", () => {
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");
     expect(content.title).toBe("Test Video");
+    expect(content.description).toBe("A test video description");
+    expect(content.tags).toEqual(["test", "video"]);
     expect(content.sessionId).toBe("dQw4w9WgXcQ");
     expect(content.url).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
@@ -75,18 +79,54 @@ describe("toContent", () => {
     expect(content.type).toBe("live");
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");
+    expect(content.description).toBe("A test video description");
+    expect(content.tags).toEqual(["test", "video"]);
     expect(content.sessionId).toBe("dQw4w9WgXcQ");
 
     if (content.type === "live") {
       expect(content.viewerCount).toBe(1500);
       expect(content.startedAt).toEqual(new Date("2024-01-01T12:00:00Z"));
+      expect(content.endedAt).toBeUndefined();
+    }
+  });
+
+  it("maps endedAt when actualEndTime is present", () => {
+    const endedResource: YTVideoResource = {
+      ...liveVideoResource,
+      liveStreamingDetails: {
+        ...liveVideoResource.liveStreamingDetails,
+        actualEndTime: "2024-01-01T14:00:00Z",
+      },
+    };
+    const content = toContent(endedResource);
+
+    if (content.type === "live") {
+      expect(content.endedAt).toEqual(new Date("2024-01-01T14:00:00Z"));
+    } else {
+      expect.unreachable("Should be live");
     }
   });
 
   it("maps upcoming broadcast to ScheduledStream", () => {
     const result = toContent(upcomingVideoResource);
     expect(result.type).toBe("scheduled");
+    expect(result.description).toBe("A test video description");
+    expect(result.tags).toEqual(["test", "video"]);
     expect((result as ScheduledStream).scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
+  });
+
+  it("defaults description to empty string and tags to empty array when missing", () => {
+    const noDescTags: YTVideoResource = {
+      ...baseVideoResource,
+      snippet: {
+        ...baseVideoResource.snippet,
+        description: undefined,
+        tags: undefined,
+      },
+    };
+    const content = toContent(noDescTags);
+    expect(content.description).toBe("");
+    expect(content.tags).toEqual([]);
   });
 
   it("maps upcoming without scheduledStartTime using publishedAt", () => {

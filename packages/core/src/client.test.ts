@@ -8,6 +8,8 @@ const mockContent: Content = {
   id: "test-id",
   platform: "test",
   title: "Test Content",
+  description: "Test Content",
+  tags: [],
   url: "https://test.com/watch?v=test-id",
   thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
   channel: { id: "ch1", name: "Channel", url: "https://test.com/channel/ch1" },

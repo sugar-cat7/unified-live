@@ -54,7 +54,10 @@ describe("toLive", () => {
     expect(result.id).toBe("stream123");
     expect(result.platform).toBe("twitch");
     expect(result.title).toBe("Test Stream");
+    expect(result.description).toBe("");
+    expect(result.tags).toEqual([]);
     expect(result.viewerCount).toBe(1234);
+    expect(result.endedAt).toBeUndefined();
     expect(result.sessionId).toBe("stream123");
     expect(result.channel.id).toBe("user456");
     expect(result.url).toBe("https://www.twitch.tv/testuser");
@@ -81,6 +84,8 @@ describe("toVideo", () => {
     expect(result.id).toBe("v789");
     expect(result.platform).toBe("twitch");
     expect(result.title).toBe("Past Stream");
+    expect(result.description).toBe("");
+    expect(result.tags).toEqual([]);
     expect(result.duration).toBe(10921); // 3*3600 + 2*60 + 1
     expect(result.viewCount).toBe(5678);
     expect(result.sessionId).toBe("stream123");
@@ -150,6 +155,8 @@ describe("toScheduled", () => {
     };
     const result = toScheduled(segment, user);
     expect(result.type).toBe("scheduled");
+    expect(result.description).toBe("");
+    expect(result.tags).toEqual([]);
     expect(result.scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
     expect(result.channel.id).toBe("u1");
     expect(result.url).toBe("https://www.twitch.tv/streamer");
@@ -185,9 +192,12 @@ describe("toSearchLive", () => {
     const result = toSearchLive(mockSearchChannel);
     expect(result.type).toBe("live");
     expect(result.id).toBe("ch1");
+    expect(result.description).toBe("");
+    expect(result.tags).toEqual([]);
     expect(result.channel.name).toBe("LiveCaster");
     expect(result.url).toBe("https://www.twitch.tv/livecaster");
     expect(result.startedAt).toEqual(new Date("2024-06-01T10:00:00Z"));
+    expect(result.endedAt).toBeUndefined();
     expect(result.viewerCount).toBe(0);
   });
 

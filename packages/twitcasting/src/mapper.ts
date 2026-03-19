@@ -51,6 +51,8 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
     id: movie.id,
     platform: "twitcasting",
     title: movie.title || `${user.name}'s live`,
+    description: movie.subtitle ?? "",
+    tags: [],
     url: movie.link,
     thumbnail: {
       url: movie.large_thumbnail,
@@ -66,6 +68,7 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
     type: "live",
     viewerCount: movie.current_view_count,
     startedAt: new Date(movie.created * 1000),
+    endedAt: undefined,
     raw: movie,
   } satisfies LiveStream;
 };
@@ -90,6 +93,8 @@ export const toVideo = (movie: TCMovie, user: TCUser): Video => {
     id: movie.id,
     platform: "twitcasting",
     title: movie.title || `${user.name}'s broadcast`,
+    description: movie.subtitle ?? "",
+    tags: [],
     url: movie.link,
     thumbnail: {
       url: movie.large_thumbnail,

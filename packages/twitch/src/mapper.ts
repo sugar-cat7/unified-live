@@ -81,6 +81,8 @@ export const toLive = (stream: TwitchStream): LiveStream => {
     id: stream.id,
     platform: "twitch",
     title: stream.title,
+    description: "",
+    tags: [],
     url: `https://www.twitch.tv/${stream.user_login}`,
     thumbnail: formatThumbnailUrl(stream.thumbnail_url),
     channel: {
@@ -92,6 +94,7 @@ export const toLive = (stream: TwitchStream): LiveStream => {
     type: "live",
     viewerCount: stream.viewer_count,
     startedAt: new Date(stream.started_at),
+    endedAt: undefined,
     raw: stream,
   } satisfies LiveStream;
 };
@@ -115,6 +118,8 @@ export const toVideo = (video: TwitchVideo): Video => {
     id: video.id,
     platform: "twitch",
     title: video.title,
+    description: "",
+    tags: [],
     url: video.url,
     thumbnail: formatThumbnailUrl(video.thumbnail_url),
     channel: {
@@ -171,6 +176,8 @@ export const toScheduled = (segment: TwitchScheduleSegment, user: TwitchUser): S
     id: segment.id,
     platform: "twitch",
     title: segment.title,
+    description: "",
+    tags: [],
     url: `https://www.twitch.tv/${user.login}`,
     thumbnail: { url: user.profile_image_url, width: 300, height: 300 },
     channel: {
@@ -203,6 +210,8 @@ export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
     id: ch.id,
     platform: "twitch",
     title: ch.title,
+    description: "",
+    tags: [],
     url: `https://www.twitch.tv/${ch.broadcaster_login}`,
     thumbnail: { url: ch.thumbnail_url, width: 300, height: 300 },
     channel: {
@@ -214,6 +223,7 @@ export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
     type: "live",
     viewerCount: 0,
     startedAt: new Date(ch.started_at),
+    endedAt: undefined,
     raw: ch,
   } satisfies LiveStream;
 };

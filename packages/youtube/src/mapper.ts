@@ -79,6 +79,8 @@ export const toContent = (item: YTVideoResource): Content => {
       id,
       platform: "youtube",
       title: snippet.title ?? "",
+      description: snippet.description ?? "",
+      tags: snippet.tags ?? [],
       url: `https://www.youtube.com/watch?v=${id}`,
       thumbnail,
       channel,
@@ -86,6 +88,9 @@ export const toContent = (item: YTVideoResource): Content => {
       type: "live",
       viewerCount: Number.parseInt(liveStreamingDetails.concurrentViewers ?? "0", 10),
       startedAt: new Date(liveStreamingDetails.actualStartTime),
+      endedAt: liveStreamingDetails.actualEndTime
+        ? new Date(liveStreamingDetails.actualEndTime)
+        : undefined,
       raw: item,
     } satisfies LiveStream;
   }
@@ -95,6 +100,8 @@ export const toContent = (item: YTVideoResource): Content => {
       id,
       platform: "youtube",
       title: snippet.title ?? "",
+      description: snippet.description ?? "",
+      tags: snippet.tags ?? [],
       url: `https://www.youtube.com/watch?v=${id}`,
       thumbnail,
       channel,
@@ -111,6 +118,8 @@ export const toContent = (item: YTVideoResource): Content => {
     id,
     platform: "youtube",
     title: snippet.title ?? "",
+    description: snippet.description ?? "",
+    tags: snippet.tags ?? [],
     url: `https://www.youtube.com/watch?v=${id}`,
     thumbnail,
     channel,

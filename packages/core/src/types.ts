@@ -28,6 +28,8 @@ const contentBaseSchema = z.object({
   id: z.string().check(z.minLength(1)),
   platform: z.string().check(z.minLength(1)),
   title: z.string(),
+  description: z.string(),
+  tags: z.array(z.string()),
   url: z.url(),
   thumbnail: thumbnailSchema,
   channel: channelRefSchema,
@@ -45,6 +47,7 @@ export const liveStreamSchema = contentBaseSchema.extend({
   type: z.literal("live"),
   viewerCount: z.int().check(z.nonnegative()),
   startedAt: z.date(),
+  endedAt: z.date().optional(),
 });
 
 /**

@@ -36,6 +36,8 @@ const baseLiveStream = {
   id: "abc123",
   platform: "youtube",
   title: "Test Live",
+  description: "Test live stream description",
+  tags: ["tag1", "tag2"],
   url: "https://youtube.com/watch?v=abc123",
   thumbnail: validThumbnail,
   channel: validChannelRef,
@@ -49,6 +51,8 @@ const baseVideo = {
   id: "xyz789",
   platform: "youtube",
   title: "Test Video",
+  description: "Test video description",
+  tags: [],
   url: "https://youtube.com/watch?v=xyz789",
   thumbnail: validThumbnail,
   channel: validChannelRef,
@@ -63,6 +67,8 @@ const baseScheduledStream = {
   id: "sched123",
   platform: "youtube",
   title: "Upcoming Stream",
+  description: "",
+  tags: ["upcoming"],
   url: "https://youtube.com/watch?v=sched123",
   thumbnail: validThumbnail,
   channel: validChannelRef,
@@ -132,6 +138,16 @@ describe("liveStreamSchema", () => {
       name: "missing startedAt",
       input: { ...baseLiveStream, startedAt: undefined },
       valid: false,
+    },
+    {
+      name: "with endedAt",
+      input: { ...baseLiveStream, endedAt: new Date("2024-01-01T01:00:00Z") },
+      valid: true,
+    },
+    {
+      name: "without endedAt",
+      input: baseLiveStream,
+      valid: true,
     },
   ])("$name", ({ input, valid }) => {
     const result = liveStreamSchema.safeParse(input);

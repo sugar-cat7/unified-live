@@ -330,6 +330,8 @@ describe("createYouTubePlugin", () => {
       platform: "youtube",
       type: "live",
       title: "Live Stream",
+      description: "",
+      tags: [],
       url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
       thumbnail: {
         url: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
@@ -368,6 +370,8 @@ describe("createYouTubePlugin", () => {
       platform: "youtube",
       type: "live",
       title: "Live Stream",
+      description: "",
+      tags: [],
       url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
       thumbnail: {
         url: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",

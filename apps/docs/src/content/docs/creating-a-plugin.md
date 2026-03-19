@@ -232,7 +232,10 @@ const createOAuth2TokenManager = (config: {
             client_secret: config.clientSecret,
           }).toString(),
         });
-        if (!res.ok) throw new AuthenticationError("example", { message: `Token endpoint returned ${res.status}` });
+        if (!res.ok)
+          throw new AuthenticationError("example", {
+            message: `Token endpoint returned ${res.status}`,
+          });
         const data = await res.json();
         token = data.access_token;
         expiresAt = Date.now() + data.expires_in * 1000 * 0.9; // refresh at 90%

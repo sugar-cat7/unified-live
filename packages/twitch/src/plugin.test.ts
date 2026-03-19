@@ -1,38 +1,7 @@
 import { ValidationError } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTwitchPlugin } from "./plugin";
-
-const createMockFetch = (
-  responses: Array<{
-    status: number;
-    body?: unknown;
-    headers?: Record<string, string>;
-  }>,
-): typeof globalThis.fetch => {
-  let callIndex = 0;
-  return vi.fn(async (input: string | URL | Request) => {
-    const url = typeof input === "string" ? input : input.toString();
-    // Handle token endpoint
-    if (url.includes("id.twitch.tv/oauth2/token")) {
-      return new Response(
-        JSON.stringify({
-          access_token: "test-token",
-          expires_in: 5000000,
-          token_type: "bearer",
-        }),
-        { status: 200 },
-      );
-    }
-
-    const r = responses[callIndex];
-    if (!r) throw new Error(`Unexpected fetch call #${callIndex}`);
-    callIndex++;
-    return new Response(JSON.stringify(r.body ?? {}), {
-      status: r.status,
-      headers: r.headers,
-    });
-  }) as unknown as typeof globalThis.fetch;
-};
+import { createMockFetch } from "./test-helpers";
 
 describe("createTwitchPlugin", () => {
   it("reports correct capabilities", () => {

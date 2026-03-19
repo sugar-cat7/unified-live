@@ -16,6 +16,8 @@ import {
   toVideo,
 } from "./mapper";
 
+const NUMERIC_ID = /^\d+$/;
+
 type TwitchResponse<T> = {
   data: T[];
   pagination?: { cursor?: string };
@@ -61,7 +63,7 @@ export const twitchGetChannel = async (rest: RestManager, id: string): Promise<C
   const query: Record<string, string> = {};
 
   // Numeric IDs use id param, login names use login param
-  if (/^\d+$/.test(id)) {
+  if (NUMERIC_ID.test(id)) {
     query.id = id;
   } else {
     query.login = id;

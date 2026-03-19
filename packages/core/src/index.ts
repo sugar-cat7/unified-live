@@ -52,8 +52,6 @@ export { getTracer, SpanAttributes } from "./telemetry/traces";
 // --- Types ---
 export type { ResolvedUrl } from "./types";
 export {
-  BroadcastSession,
-  broadcastSessionSchema,
   Channel,
   channelRefSchema,
   channelSchema,

@@ -1,5 +1,6 @@
 ---
 title: はじめに
+description: "unified-liveのインストールと最初のAPIクエリ実行"
 ---
 
 ## インストール
@@ -21,25 +22,37 @@ import { UnifiedClient } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
-// 1. クライアントを作成
-using client = UnifiedClient.create();
+// 1. プラットフォームプラグインを指定してクライアントを作成
+using client = UnifiedClient.create({
+  plugins: [
+    createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
+    createTwitchPlugin({
+      clientId: process.env.TWITCH_CLIENT_ID!,
+      clientSecret: process.env.TWITCH_CLIENT_SECRET!,
+    }),
+  ],
+});
 
-// 2. プラットフォームプラグインを登録
-client.register(createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }));
-client.register(
-  createTwitchPlugin({
-    clientId: process.env.TWITCH_CLIENT_ID!,
-    clientSecret: process.env.TWITCH_CLIENT_SECRET!,
-  }),
-);
-
-// 3. URL からコンテンツを取得 — プラットフォームは自動判別
+// 2. URL からコンテンツを取得 — プラットフォームは自動判別
 const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
 console.log(content.title); // 動画タイトル
 console.log(content.platform); // "youtube"
 console.log(content.type); // "live" または "video"
 ```
+
+:::tip[`using` について]
+`using` キーワード（[Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management)）はスコープを抜けるとき自動的にクライアントを破棄します。TypeScript 5.2+ と `"lib": ["esnext.disposable"]` が必要です。
+
+`using` を使わない場合は、手動で `client[Symbol.dispose]()` を呼びます:
+
+```ts
+const client = UnifiedClient.create({ plugins: [...] });
+// ... client を使用 ...
+client[Symbol.dispose]();
+```
+
+:::
 
 ## 動作要件
 

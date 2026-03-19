@@ -1,6 +1,5 @@
 import { NotFoundError } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
-import type { RestManager } from "@unified-live/core";
 import {
   twitcastingGetContent,
   twitcastingGetChannel,
@@ -8,20 +7,7 @@ import {
   twitcastingGetVideos,
   twitcastingResolveArchive,
 } from "./methods";
-
-const createMockRest = (response: unknown): RestManager => ({
-  platform: "twitcasting",
-  baseUrl: "https://apiv2.twitcasting.tv",
-  rateLimitStrategy: {} as RestManager["rateLimitStrategy"],
-  tokenManager: undefined,
-  request: vi.fn().mockResolvedValue({ status: 200, headers: new Headers(), data: response }),
-  createHeaders: vi.fn(),
-  runRequest: vi.fn(),
-  handleResponse: vi.fn(),
-  handleRateLimit: vi.fn(),
-  parseRateLimitHeaders: vi.fn(),
-  [Symbol.dispose]: vi.fn(),
-});
+import { createMockRest } from "./test-helpers";
 
 const mockUser = {
   id: "u1",
@@ -75,6 +61,14 @@ describe("twitcastingGetContent", () => {
     const rest = createMockRest({ movie: mockLiveMovie, broadcaster: mockUser });
     const result = await twitcastingGetContent(rest, "m1");
     expect(result.type).toBe("live");
+  });
+
+  it.each([
+    { movie: null, broadcaster: mockUser, label: "movie is null" },
+    { movie: mockArchiveMovie, broadcaster: null, label: "broadcaster is null" },
+  ])("throws NotFoundError when $label", async ({ movie, broadcaster }) => {
+    const rest = createMockRest({ movie, broadcaster });
+    await expect(twitcastingGetContent(rest, "m1")).rejects.toThrow(NotFoundError);
   });
 });
 

@@ -1,5 +1,6 @@
 ---
 title: 基本概念
+description: "Content、Channel、URL解決、統一型システム"
 ---
 
 ## Content
@@ -73,15 +74,27 @@ console.log(channel.thumbnail); // サムネイル（任意）
 クライアントは URL からプラットフォームを自動判別します:
 
 ```ts
-// プラットフォームを自動判別してコンテンツを取得
+// YouTube
 const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
-const content = await client.getContent("https://twitcasting.tv/user/movie/123");
+```
 
+```ts
+// Twitch
+const content = await client.getContent("https://www.twitch.tv/videos/123456");
+```
+
+```ts
+// TwitCasting
+const content = await client.getContent("https://twitcasting.tv/user/movie/123");
+```
+
+```ts
 // 取得せずに URL だけ解析
 const resolved = client.match("https://www.youtube.com/watch?v=abc123");
 // { platform: "youtube", type: "content", id: "abc123" }
+```
 
+```ts
 const resolved = client.match("https://www.twitch.tv/username");
 // { platform: "twitch", type: "channel", id: "username" }
 ```

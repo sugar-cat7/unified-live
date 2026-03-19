@@ -1,5 +1,6 @@
 ---
 title: Platform Plugins
+description: "Configure YouTube, Twitch, and TwitCasting platform plugins"
 ---
 
 Each platform has its own package with a factory function. You only install the platforms you need.
@@ -129,19 +130,25 @@ The SDK uses Basic Authentication (`base64(clientId:clientSecret)`) for applicat
 
 ## Registering Plugins
 
+**Option A — Pass plugins at creation:**
+
 ```ts
 import { UnifiedClient } from "@unified-live/core";
 
-// Option A: Register after creation
+const client = UnifiedClient.create({
+  plugins: [youtube, twitch, twitcasting],
+});
+```
+
+**Option B — Register after creation:**
+
+```ts
+import { UnifiedClient } from "@unified-live/core";
+
 const client = UnifiedClient.create();
 client.register(youtube);
 client.register(twitch);
 client.register(twitcasting);
-
-// Option B: Pass plugins at creation
-const client = UnifiedClient.create({
-  plugins: [youtube, twitch, twitcasting],
-});
 ```
 
 ## Cleanup

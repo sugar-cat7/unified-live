@@ -1,5 +1,8 @@
 import { AuthenticationError, type TokenManager } from "@unified-live/core";
 
+/** Refresh at 90% of token lifetime to avoid edge-case expiry. */
+const REFRESH_MARGIN = 0.9;
+
 type TwitchTokenResponse = {
   access_token: string;
   expires_in: number;
@@ -54,7 +57,7 @@ export const createClientCredentialsTokenManager = (config: {
     const data = (await res.json()) as TwitchTokenResponse;
     token = data.access_token;
     // Refresh at 90% of expiry
-    expiresAt = new Date(Date.now() + data.expires_in * 900);
+    expiresAt = new Date(Date.now() + data.expires_in * 1000 * REFRESH_MARGIN);
     return token;
   };
 

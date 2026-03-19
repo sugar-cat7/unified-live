@@ -1,25 +1,7 @@
 import { ValidationError } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTwitCastingPlugin } from "./plugin";
-
-const createMockFetch = (
-  responses: Array<{
-    status: number;
-    body?: unknown;
-    headers?: Record<string, string>;
-  }>,
-): typeof globalThis.fetch => {
-  let callIndex = 0;
-  return vi.fn(async () => {
-    const r = responses[callIndex];
-    if (!r) throw new Error(`Unexpected fetch call #${callIndex}`);
-    callIndex++;
-    return new Response(JSON.stringify(r.body ?? {}), {
-      status: r.status,
-      headers: r.headers,
-    });
-  }) as unknown as typeof globalThis.fetch;
-};
+import { createMockFetch } from "./test-helpers";
 
 const mockUser = {
   id: "u1",

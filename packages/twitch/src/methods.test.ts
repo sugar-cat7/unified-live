@@ -1,6 +1,5 @@
 import { NotFoundError } from "@unified-live/core";
-import { describe, expect, it, vi } from "vitest";
-import type { RestManager } from "@unified-live/core";
+import { describe, expect, it } from "vitest";
 import {
   twitchGetContent,
   twitchGetChannel,
@@ -8,20 +7,7 @@ import {
   twitchGetVideos,
   twitchResolveArchive,
 } from "./methods";
-
-const createMockRest = (response: unknown): RestManager => ({
-  platform: "twitch",
-  baseUrl: "https://api.twitch.tv/helix",
-  rateLimitStrategy: {} as RestManager["rateLimitStrategy"],
-  tokenManager: undefined,
-  request: vi.fn().mockResolvedValue({ status: 200, headers: new Headers(), data: response }),
-  createHeaders: vi.fn(),
-  runRequest: vi.fn(),
-  handleResponse: vi.fn(),
-  handleRateLimit: vi.fn(),
-  parseRateLimitHeaders: vi.fn(),
-  [Symbol.dispose]: vi.fn(),
-});
+import { createMockRest } from "./test-helpers";
 
 const sampleStream = {
   id: "s1",

@@ -1,3 +1,4 @@
+import { ParseError } from "@unified-live/core";
 import type { Channel, LiveStream, Video } from "@unified-live/core";
 
 /** Subset of Twitch Helix Stream resource fields actually used. */
@@ -48,7 +49,13 @@ export type TwitchUser = {
  * @postcondition returns LiveStream with sessionId set to stream.id
  */
 export const toLive = (stream: TwitchStream): LiveStream => {
-  return Object.freeze({
+  if (!stream.id || !stream.user_id) {
+    throw new ParseError("twitch", "PARSE_RESPONSE", {
+      message: `Twitch stream resource missing required fields (id, user_id)${stream.id ? ` for stream ${stream.id}` : ""}`,
+      path: "/streams",
+    });
+  }
+  return {
     id: stream.id,
     platform: "twitch",
     title: stream.title,
@@ -64,7 +71,7 @@ export const toLive = (stream: TwitchStream): LiveStream => {
     viewerCount: stream.viewer_count,
     startedAt: new Date(stream.started_at),
     raw: stream,
-  } satisfies LiveStream);
+  } satisfies LiveStream;
 };
 
 /**
@@ -76,7 +83,13 @@ export const toLive = (stream: TwitchStream): LiveStream => {
  * @postcondition returns Video with sessionId set to stream_id (if available)
  */
 export const toVideo = (video: TwitchVideo): Video => {
-  return Object.freeze({
+  if (!video.id || !video.user_id) {
+    throw new ParseError("twitch", "PARSE_RESPONSE", {
+      message: `Twitch video resource missing required fields (id, user_id)${video.id ? ` for video ${video.id}` : ""}`,
+      path: "/videos",
+    });
+  }
+  return {
     id: video.id,
     platform: "twitch",
     title: video.title,
@@ -93,7 +106,7 @@ export const toVideo = (video: TwitchVideo): Video => {
     viewCount: video.view_count,
     publishedAt: new Date(video.published_at),
     raw: video,
-  } satisfies Video);
+  } satisfies Video;
 };
 
 /**
@@ -103,7 +116,13 @@ export const toVideo = (video: TwitchVideo): Video => {
  * @returns unified Channel
  */
 export const toChannel = (user: TwitchUser): Channel => {
-  return Object.freeze({
+  if (!user.id || !user.login) {
+    throw new ParseError("twitch", "PARSE_RESPONSE", {
+      message: `Twitch user resource missing required fields (id, login)${user.id ? ` for user ${user.id}` : ""}`,
+      path: "/users",
+    });
+  }
+  return {
     id: user.id,
     platform: "twitch",
     name: user.display_name,
@@ -113,7 +132,7 @@ export const toChannel = (user: TwitchUser): Channel => {
       width: 300,
       height: 300,
     },
-  } satisfies Channel);
+  } satisfies Channel;
 };
 
 /**
@@ -142,11 +161,13 @@ export const parseDuration = (duration: string): number => {
  * @param templateUrl - thumbnail URL with {width}/{height} placeholders
  * @returns resolved thumbnail with URL and dimensions
  */
+const THUMBNAIL_TEMPLATE = /[%]?\{(width|height)\}/g;
+const THUMBNAIL_DIMS = { width: "640", height: "360" } as const;
+
 const formatThumbnailUrl = (templateUrl: string) => {
-  const url = templateUrl
-    .replace("%{width}", "640")
-    .replace("%{height}", "360")
-    .replace("{width}", "640")
-    .replace("{height}", "360");
+  const url = templateUrl.replace(
+    THUMBNAIL_TEMPLATE,
+    (_, key: string) => THUMBNAIL_DIMS[key as keyof typeof THUMBNAIL_DIMS],
+  );
   return { url, width: 640, height: 360 };
 };

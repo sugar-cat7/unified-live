@@ -1,3 +1,4 @@
+import { ParseError } from "@unified-live/core";
 import type { Channel, Content, LiveStream, Video } from "@unified-live/core";
 
 /** Subset of TwitCasting Movie resource fields actually used. */
@@ -40,7 +41,13 @@ export type TCUser = {
  * @postcondition returns LiveStream with sessionId set to movie.id
  */
 export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
-  return Object.freeze({
+  if (!movie.id || !user.id) {
+    throw new ParseError("twitcasting", "PARSE_RESPONSE", {
+      message: `TwitCasting resource missing required fields (movie.id, user.id)${movie.id ? ` for movie ${movie.id}` : ""}`,
+      path: "/movies",
+    });
+  }
+  return {
     id: movie.id,
     platform: "twitcasting",
     title: movie.title || `${user.name}'s live`,
@@ -60,7 +67,7 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
     viewerCount: movie.current_view_count,
     startedAt: new Date(movie.created * 1000),
     raw: movie,
-  } satisfies LiveStream);
+  } satisfies LiveStream;
 };
 
 /**
@@ -73,7 +80,13 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
  * @postcondition returns Video with sessionId set to movie.id
  */
 export const toVideo = (movie: TCMovie, user: TCUser): Video => {
-  return Object.freeze({
+  if (!movie.id || !user.id) {
+    throw new ParseError("twitcasting", "PARSE_RESPONSE", {
+      message: `TwitCasting resource missing required fields (movie.id, user.id)${movie.id ? ` for movie ${movie.id}` : ""}`,
+      path: "/movies",
+    });
+  }
+  return {
     id: movie.id,
     platform: "twitcasting",
     title: movie.title || `${user.name}'s broadcast`,
@@ -94,7 +107,7 @@ export const toVideo = (movie: TCMovie, user: TCUser): Video => {
     viewCount: movie.total_view_count,
     publishedAt: new Date(movie.created * 1000),
     raw: movie,
-  } satisfies Video);
+  } satisfies Video;
 };
 
 /**
@@ -118,7 +131,13 @@ export const toContent = (movie: TCMovie, user: TCUser): Content => {
  * @returns unified Channel
  */
 export const toChannel = (user: TCUser): Channel => {
-  return Object.freeze({
+  if (!user.id || !user.screen_id) {
+    throw new ParseError("twitcasting", "PARSE_RESPONSE", {
+      message: `TwitCasting user resource missing required fields (id, screen_id)${user.id ? ` for user ${user.id}` : ""}`,
+      path: "/users",
+    });
+  }
+  return {
     id: user.id,
     platform: "twitcasting",
     name: user.name,
@@ -128,5 +147,5 @@ export const toChannel = (user: TCUser): Channel => {
       width: 300,
       height: 300,
     },
-  } satisfies Channel);
+  } satisfies Channel;
 };

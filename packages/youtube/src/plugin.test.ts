@@ -7,28 +7,7 @@ import {
 } from "@unified-live/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
-
-const createMockFetch = (
-  responses: Array<{
-    body: unknown;
-    status?: number;
-    headers?: Record<string, string>;
-  }>,
-): typeof globalThis.fetch => {
-  let callIndex = 0;
-  return vi.fn(async () => {
-    const r = responses[callIndex];
-    if (!r)
-      throw new Error(
-        `createMockFetch: unexpected call #${callIndex} (only ${responses.length} responses defined)`,
-      );
-    callIndex++;
-    return new Response(JSON.stringify(r.body), {
-      status: r.status ?? 200,
-      headers: { "Content-Type": "application/json", ...r.headers },
-    });
-  }) as unknown as typeof globalThis.fetch;
-};
+import { createMockFetch } from "./test-helpers";
 
 const sampleVideoItem = {
   id: "dQw4w9WgXcQ",
@@ -330,20 +309,6 @@ describe("createYouTubePlugin", () => {
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     await expect(plugin.getVideos("UC_nonexistent")).rejects.toThrow(NotFoundError);
-  });
-
-  it("resolveUrl delegates to match", () => {
-    plugin = createYouTubePlugin({
-      apiKey: "test-key",
-      fetch: createMockFetch([]),
-    });
-
-    expect(plugin.resolveUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toEqual({
-      platform: "youtube",
-      type: "content",
-      id: "dQw4w9WgXcQ",
-    });
-    expect(plugin.resolveUrl("https://example.com/foo")).toBeNull();
   });
 
   it("resolveArchive returns Video when broadcast has ended", async () => {

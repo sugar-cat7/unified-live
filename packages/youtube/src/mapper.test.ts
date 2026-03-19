@@ -192,28 +192,6 @@ describe("toChannel", () => {
   });
 });
 
-describe("Object.freeze", () => {
-  it("returned objects are frozen", () => {
-    const content = toContent(baseVideoResource);
-    expect(Object.isFrozen(content)).toBe(true);
-
-    const channel = toChannel({
-      id: "UC123",
-      snippet: {
-        title: "Test Channel",
-        thumbnails: {
-          high: {
-            url: "https://example.com/avatar.jpg",
-            width: 800,
-            height: 800,
-          },
-        },
-      },
-    });
-    expect(Object.isFrozen(channel)).toBe(true);
-  });
-});
-
 describe("parseDuration", () => {
   it.each([
     { input: "PT1H2M3S", expected: 3723 },

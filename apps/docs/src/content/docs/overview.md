@@ -1,5 +1,6 @@
 ---
 title: Overview
+description: "Why unified-live exists and how it solves multi-platform live streaming API challenges"
 ---
 
 ## The Problem

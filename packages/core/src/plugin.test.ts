@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ValidationError } from "./errors";
 import { PlatformPlugin, type PluginDefinition, type PluginMethods } from "./plugin";
 import type { RateLimitHandle, RateLimitStrategy } from "./rest/strategy";
+import { createMockFetch } from "./test-helpers";
 import type { ResolvedUrl } from "./types";
 
 const createMockStrategy = (): RateLimitStrategy => {
@@ -18,25 +19,6 @@ const createMockStrategy = (): RateLimitStrategy => {
     }),
     [Symbol.dispose]: vi.fn(),
   };
-};
-
-const createMockFetch = (
-  responses: Array<{
-    status: number;
-    body?: unknown;
-    headers?: Record<string, string>;
-  }>,
-): typeof globalThis.fetch => {
-  let callIndex = 0;
-  return vi.fn(async () => {
-    const r = responses[callIndex];
-    if (!r) throw new Error(`Unexpected fetch call #${callIndex}`);
-    callIndex++;
-    return new Response(JSON.stringify(r.body ?? {}), {
-      status: r.status,
-      headers: r.headers,
-    });
-  }) as unknown as typeof globalThis.fetch;
 };
 
 const mockMatchUrl = (url: string): ResolvedUrl | null => {
@@ -108,14 +90,11 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.capabilities.supportsLiveStreams).toBe(true);
   });
 
-  it("wires match and resolveUrl to definition.matchUrl", () => {
+  it("wires match to definition.matchUrl", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 
     const matched = plugin.match("https://example.com/video");
     expect(matched).toEqual({ platform: "test", type: "content", id: "123" });
-
-    const resolved = plugin.resolveUrl("https://example.com/video");
-    expect(resolved).toEqual({ platform: "test", type: "content", id: "123" });
 
     expect(plugin.match("https://other.com")).toBeNull();
   });
@@ -348,7 +327,6 @@ describe("PlatformPlugin.is", () => {
         rateLimitModel: "tokenBucket",
       },
       match: () => null,
-      resolveUrl: () => null,
       getContent: async () => ({}),
       getChannel: async () => ({}),
       getLiveStreams: async () => [],

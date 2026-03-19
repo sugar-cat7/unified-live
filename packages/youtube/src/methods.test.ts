@@ -1,5 +1,4 @@
 import { NotFoundError } from "@unified-live/core";
-import type { RestManager } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
 import {
   youtubeGetChannel,
@@ -8,20 +7,7 @@ import {
   youtubeGetVideos,
   youtubeResolveArchive,
 } from "./methods";
-
-const createMockRest = (): RestManager => ({
-  platform: "youtube",
-  baseUrl: "https://www.googleapis.com/youtube/v3",
-  rateLimitStrategy: {} as RestManager["rateLimitStrategy"],
-  tokenManager: undefined,
-  request: vi.fn(),
-  createHeaders: vi.fn(),
-  runRequest: vi.fn(),
-  handleResponse: vi.fn(),
-  handleRateLimit: vi.fn(),
-  parseRateLimitHeaders: vi.fn(),
-  [Symbol.dispose]: vi.fn(),
-});
+import { createMockRest } from "./test-helpers";
 
 const sampleVideoItem = {
   id: "dQw4w9WgXcQ",

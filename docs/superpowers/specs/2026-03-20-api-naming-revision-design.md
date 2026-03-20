@@ -33,17 +33,25 @@ Revise the UnifiedClient public API naming to follow industry-standard conventio
 | `Video` | `Archive` | `"video"` → `"archive"` |
 | `Clip` | `Clip` | `"clip"` (unchanged) |
 | `Content` (union) | `Content` | — (unchanged) |
+| `BroadcastSession` | `BroadcastSession` | — (unchanged; groups Broadcast + Archive, no collision) |
 
-Rationale: Broadcast-axis naming reflects the SDK's focus on live-streaming platforms. `Archive` clearly denotes a completed broadcast recording. `Clip` is universal.
+Rationale: Broadcast-axis naming reflects the SDK's focus on live-streaming platforms. `Archive` clearly denotes a completed broadcast recording. `Clip` is universal. `BroadcastSession` remains unchanged as it describes a session concept linking `Broadcast` and `Archive`.
+
+**`BroadcastSession.contentIds.liveId`**: Rename to `broadcastId` for consistency with `LiveStream` → `Broadcast`. Similarly, `archiveId` remains unchanged (already aligned with `Archive`).
 
 ### Zod Schema Renames
 
 | Current | New |
 |---|---|
-| `LiveStreamSchema` | `BroadcastSchema` |
-| `ScheduledStreamSchema` | `ScheduledBroadcastSchema` |
-| `VideoSchema` | `ArchiveSchema` |
-| `ClipSchema` | `ClipSchema` (unchanged) |
+| `liveStreamSchema` | `broadcastSchema` |
+| `scheduledStreamSchema` | `scheduledBroadcastSchema` |
+| `videoSchema` | `archiveSchema` |
+| `clipSchema` | `clipSchema` (unchanged) |
+| `contentSchema` | `contentSchema` (unchanged; internal discriminant literals updated to `"broadcast"` / `"archive"`) |
+| `broadcastSessionSchema` | `broadcastSessionSchema` (unchanged) |
+| `searchOptionsSchema` | `searchOptionsSchema` (unchanged; see note on `status` below) |
+
+**Note on `searchOptionsSchema.status`**: The `status` enum `["live", "upcoming", "ended"]` is **unchanged**. `"live"` here describes a broadcast state ("currently live"), not a content type discriminant. These are different semantic axes: `type: "broadcast"` identifies the content kind; `status: "live"` describes the current state. Keeping `status: "live"` avoids confusion with the common English meaning.
 
 ### Type Guard Renames (Companion Objects)
 
@@ -52,9 +60,23 @@ Rationale: Broadcast-axis naming reflects the SDK's focus on live-streaming plat
 | `Content.isLive()` | `Content.isBroadcast()` |
 | `Content.isVideo()` | `Content.isArchive()` |
 | `Content.isScheduled()` | `Content.isScheduledBroadcast()` |
+| `Content.isClip()` | `Content.isClip()` (unchanged) |
 | `LiveStream.is()` | `Broadcast.is()` |
 | `Video.is()` | `Archive.is()` |
 | `ScheduledStream.is()` | `ScheduledBroadcast.is()` |
+| `Clip.is()` | `Clip.is()` (unchanged) |
+| `Channel.is()` | `Channel.is()` (unchanged) |
+| `BroadcastSession.is()` | `BroadcastSession.is()` (unchanged) |
+
+### PluginCapabilities Field Renames
+
+| Current | New |
+|---|---|
+| `supportsLiveStreams` | `supportsBroadcasts` |
+| `supportsBatchLiveStreams` | `supportsBatchBroadcasts` |
+| `supportsArchiveResolution` | `supportsArchiveResolution` (unchanged; already uses "Archive") |
+| `supportsSearch` | `supportsSearch` (unchanged) |
+| `supportsClips` | `supportsClips` (unchanged) |
 
 ### UnifiedClient Method Renames
 
@@ -95,9 +117,15 @@ Rationale: Broadcast-axis naming reflects the SDK's focus on live-streaming plat
 | `getAllLiveStreams(channelIds)` | `crossListBroadcasts(channels)` | `Record<string, BatchResult<Broadcast[]>>` |
 | `searchAll(options)` | `crossSearch(options)` | `Record<string, Page<Content>>` |
 
+Note: `crossListBroadcasts` parameter renamed from `channelIds` to `channels` for clarity. Type remains `Record<string, string[]>`.
+
 #### Utility (unchanged)
 
 - `register(plugin)`, `platform(name)`, `match(url)`, `platforms()`, `[Symbol.dispose]()`
+
+#### UnifiedClient.is() Type Guard
+
+`UnifiedClient.is()` and `PlatformPlugin.is()` both check for method existence to identify instances. The checked method names must be updated to reflect the renames (e.g., check for `resolve`, `getContent`, `listBroadcasts` instead of `getContent`, `getContentById`, `getLiveStreams`).
 
 ### PlatformPlugin Method Renames
 
@@ -115,12 +143,32 @@ Rationale: Broadcast-axis naming reflects the SDK's focus on live-streaming plat
 
 | Current | New |
 |---|---|
-| `resolveArchive?(live)` | `resolveArchive?(broadcast)` (param type changes to `Broadcast`) |
+| `resolveArchive?(live: LiveStream)` | `resolveArchive?(broadcast: Broadcast): Promise<Archive \| null>` (param + return type updated) |
 | `getContents?(ids)` | `batchGetContents?(ids)` |
 | `getLiveStreamsBatch?(channelIds)` | `batchGetBroadcasts?(channelIds)` |
 | `search?(options)` | `search?(options)` (unchanged) |
 | `getClips?(channelId, options?)` | `listClips?(channelId, options?)` |
 | `getClipsByIds?(ids)` | `batchGetClips?(ids)` |
+
+### PluginMethods Type
+
+`PluginMethods` (the implementation type wired to `PlatformPlugin` via `PlatformPlugin.create()`) must rename all method keys in lockstep with the PlatformPlugin table above. The same renames apply to `PluginDefinition.methods`.
+
+### Observability: Span Operation Names
+
+All `withClientSpan("operationName", ...)` calls use the method name as the OpenTelemetry span operation name. These must be updated in lockstep with method renames (e.g., `"getLiveStreams"` → `"listBroadcasts"`, `"getAllLiveStreams"` → `"crossListBroadcasts"`). This is a clean break — no backward-compatible span aliases.
+
+### Error Message Strings
+
+User-facing error messages that reference method names (e.g., `"searchAll requires at least one of..."`) must be updated to use new names (e.g., `"crossSearch requires..."`).
+
+### Naming Note: `resolve(url)` vs `resolveArchive(broadcast)`
+
+Both use the verb "resolve" but at different levels with clear context:
+- `client.resolve(url)` — resolves a URL to its content (client-level convenience)
+- `plugin.resolveArchive(broadcast)` — resolves a broadcast to its archived recording (plugin-level)
+
+The full method names are sufficiently distinct. No rename needed.
 
 ## Migration Strategy
 
@@ -133,7 +181,7 @@ Rationale: Broadcast-axis naming reflects the SDK's focus on live-streaming plat
 
 | Package | Impact |
 |---|---|
-| `packages/core` | Type definitions, client, plugin interface, tests |
+| `packages/core` | Type definitions (`types.ts`), client (`client.ts`), plugin interface (`plugin.ts`), barrel exports (`index.ts`), tests |
 | `packages/youtube` | Plugin implementation |
 | `packages/twitch` | Plugin implementation |
 | `packages/twitcasting` | Plugin implementation |
@@ -143,12 +191,13 @@ Rationale: Broadcast-axis naming reflects the SDK's focus on live-streaming plat
 
 Bottom-up per project convention:
 
-1. Types (`types.ts` — schemas, types, companion objects)
-2. Plugin interface (`plugin.ts`)
-3. Client (`client.ts` — type + implementation)
-4. Plugin implementations (youtube, twitch, twitcasting)
-5. Tests (all `*.test.ts`)
-6. Documentation (`apps/docs`)
+1. Types (`types.ts` — schemas, discriminant literals, types, companion objects, `contentSchema` union)
+2. Plugin interface (`plugin.ts` — `PluginCapabilities`, `PluginMethods`, `PluginDefinition`, `PlatformPlugin`)
+3. Client (`client.ts` — `UnifiedClient` type, implementation, `UnifiedClient.is()` type guard)
+4. Barrel exports (`index.ts`)
+5. Plugin implementations (youtube, twitch, twitcasting)
+6. Tests (all `*.test.ts`)
+7. Documentation (`apps/docs`)
 
 ## References
 

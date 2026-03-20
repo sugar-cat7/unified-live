@@ -30,10 +30,10 @@ const mockMatchUrl = (url: string): ResolvedUrl | null => {
 
 const createMockMethods = (): PluginMethods => {
   return {
-    getContent: vi.fn().mockResolvedValue({ type: "video", id: "v1" }),
+    getContent: vi.fn().mockResolvedValue({ type: "archive", id: "v1" }),
     getChannel: vi.fn().mockResolvedValue({ id: "ch1" }),
-    getLiveStreams: vi.fn().mockResolvedValue([]),
-    getVideos: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
+    listBroadcasts: vi.fn().mockResolvedValue([]),
+    listArchives: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
   };
 };
 
@@ -87,7 +87,7 @@ describe("PlatformPlugin.create", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 
     expect(plugin.capabilities).toBeDefined();
-    expect(plugin.capabilities.supportsLiveStreams).toBe(true);
+    expect(plugin.capabilities.supportsBroadcasts).toBe(true);
   });
 
   it("wires match to definition.matchUrl", () => {
@@ -113,8 +113,8 @@ describe("PlatformPlugin.create", () => {
       expectedPluginArgs: ["ch1"],
     },
     {
-      name: "getLiveStreams",
-      methodName: "getLiveStreams" as const,
+      name: "listBroadcasts",
+      methodName: "listBroadcasts" as const,
       args: ["ch1"],
       expectedPluginArgs: ["ch1"],
     },
@@ -128,13 +128,13 @@ describe("PlatformPlugin.create", () => {
     },
   );
 
-  it("delegates getVideos to methods with rest and cursor injected", async () => {
+  it("delegates listArchives to methods with rest and cursor injected", async () => {
     const methods = createMockMethods();
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
 
-    await plugin.getVideos("ch1", "cursor123");
+    await plugin.listArchives("ch1", "cursor123");
 
-    expect(methods.getVideos).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123", undefined);
+    expect(methods.listArchives).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123", undefined);
   });
 
   it("wires resolveArchive when provided", async () => {
@@ -142,7 +142,7 @@ describe("PlatformPlugin.create", () => {
     methods.resolveArchive = vi.fn().mockResolvedValue(null);
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
 
-    const live = { type: "live" as const, id: "l1" } as Parameters<
+    const live = { type: "broadcast" as const, id: "l1" } as Parameters<
       NonNullable<PlatformPlugin["resolveArchive"]>
     >[0];
     await plugin.resolveArchive!(live);
@@ -157,40 +157,40 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.resolveArchive).toBeUndefined();
   });
 
-  it("wires getContents when provided", async () => {
+  it("wires batchGetContents when provided", async () => {
     const mockBatchResult = { values: new Map(), errors: new Map() };
     const methods: PluginMethods = {
       ...createMockMethods(),
-      getContents: vi.fn(async () => mockBatchResult),
+      batchGetContents: vi.fn(async () => mockBatchResult),
     };
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-    expect(plugin.getContents).toBeDefined();
-    const result = await plugin.getContents!(["id1", "id2"]);
-    expect(methods.getContents).toHaveBeenCalled();
+    expect(plugin.batchGetContents).toBeDefined();
+    const result = await plugin.batchGetContents!(["id1", "id2"]);
+    expect(methods.batchGetContents).toHaveBeenCalled();
     expect(result).toBe(mockBatchResult);
   });
 
-  it("getContents is undefined when not provided", () => {
+  it("batchGetContents is undefined when not provided", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
-    expect(plugin.getContents).toBeUndefined();
+    expect(plugin.batchGetContents).toBeUndefined();
   });
 
-  it("wires getLiveStreamsBatch when provided", async () => {
+  it("wires batchGetBroadcasts when provided", async () => {
     const mockResult = { values: new Map(), errors: new Map() };
     const methods: PluginMethods = {
       ...createMockMethods(),
-      getLiveStreamsBatch: vi.fn(async () => mockResult),
+      batchGetBroadcasts: vi.fn(async () => mockResult),
     };
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-    expect(plugin.getLiveStreamsBatch).toBeDefined();
-    const result = await plugin.getLiveStreamsBatch!(["ch1"]);
-    expect(methods.getLiveStreamsBatch).toHaveBeenCalled();
+    expect(plugin.batchGetBroadcasts).toBeDefined();
+    const result = await plugin.batchGetBroadcasts!(["ch1"]);
+    expect(methods.batchGetBroadcasts).toHaveBeenCalled();
     expect(result).toBe(mockResult);
   });
 
-  it("getLiveStreamsBatch is undefined when not provided", () => {
+  it("batchGetBroadcasts is undefined when not provided", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
-    expect(plugin.getLiveStreamsBatch).toBeUndefined();
+    expect(plugin.batchGetBroadcasts).toBeUndefined();
   });
 
   it("wires search when provided", async () => {
@@ -214,60 +214,60 @@ describe("PlatformPlugin.create", () => {
   it("creates plugin with clips support", () => {
     const plugin = PlatformPlugin.create(
       { ...createMinimalDefinition() },
-      { ...createMockMethods(), getClips: async () => Page.empty() },
+      { ...createMockMethods(), listClips: async () => Page.empty() },
     );
     expect(plugin.capabilities.supportsClips).toBe(true);
-    expect(plugin.getClips).toBeDefined();
+    expect(plugin.listClips).toBeDefined();
     plugin[Symbol.dispose]();
   });
 
-  it("wires getClips when provided", async () => {
+  it("wires listClips when provided", async () => {
     const mockPage = { items: [], hasMore: false };
     const methods: PluginMethods = {
       ...createMockMethods(),
-      getClips: vi.fn(async () => mockPage),
+      listClips: vi.fn(async () => mockPage),
     };
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-    expect(plugin.getClips).toBeDefined();
-    const result = await plugin.getClips!("ch1", { limit: 10 });
-    expect(methods.getClips).toHaveBeenCalledWith(plugin.rest, "ch1", { limit: 10 });
+    expect(plugin.listClips).toBeDefined();
+    const result = await plugin.listClips!("ch1", { limit: 10 });
+    expect(methods.listClips).toHaveBeenCalledWith(plugin.rest, "ch1", { limit: 10 });
     expect(result).toBe(mockPage);
   });
 
-  it("getClips is undefined when not provided", () => {
+  it("listClips is undefined when not provided", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
-    expect(plugin.getClips).toBeUndefined();
+    expect(plugin.listClips).toBeUndefined();
     expect(plugin.capabilities.supportsClips).toBe(false);
   });
 
-  it("wires getClipsByIds when provided", async () => {
+  it("wires batchGetClips when provided", async () => {
     const mockBatchResult = { values: new Map(), errors: new Map() };
     const methods: PluginMethods = {
       ...createMockMethods(),
-      getClipsByIds: vi.fn(async () => mockBatchResult),
+      batchGetClips: vi.fn(async () => mockBatchResult),
     };
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
-    expect(plugin.getClipsByIds).toBeDefined();
-    const result = await plugin.getClipsByIds!(["clip1", "clip2"]);
-    expect(methods.getClipsByIds).toHaveBeenCalledWith(plugin.rest, ["clip1", "clip2"]);
+    expect(plugin.batchGetClips).toBeDefined();
+    const result = await plugin.batchGetClips!(["clip1", "clip2"]);
+    expect(methods.batchGetClips).toHaveBeenCalledWith(plugin.rest, ["clip1", "clip2"]);
     expect(result).toBe(mockBatchResult);
   });
 
-  it("getClipsByIds is undefined when not provided", () => {
+  it("batchGetClips is undefined when not provided", () => {
     plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
-    expect(plugin.getClipsByIds).toBeUndefined();
+    expect(plugin.batchGetClips).toBeUndefined();
   });
 
   it("capabilities include batch and search flags", () => {
     plugin = PlatformPlugin.create(
       createMinimalDefinition({
         capabilities: {
-          supportsLiveStreams: true,
+          supportsBroadcasts: true,
           supportsArchiveResolution: false,
           authModel: "apiKey",
           rateLimitModel: "tokenBucket",
           supportsBatchContent: true,
-          supportsBatchLiveStreams: false,
+          supportsBatchBroadcasts: false,
           supportsSearch: true,
           supportsClips: false,
         },
@@ -275,7 +275,7 @@ describe("PlatformPlugin.create", () => {
       createMockMethods(),
     );
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
-    expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
+    expect(plugin.capabilities.supportsBatchBroadcasts).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);
     expect(plugin.capabilities.supportsClips).toBe(false);
   });
@@ -283,12 +283,12 @@ describe("PlatformPlugin.create", () => {
   it("default capabilities infer batch/search from methods", () => {
     const methods: PluginMethods = {
       ...createMockMethods(),
-      getContents: vi.fn(async () => ({ values: new Map(), errors: new Map() })),
+      batchGetContents: vi.fn(async () => ({ values: new Map(), errors: new Map() })),
       search: vi.fn(async () => ({ items: [], hasMore: false })),
     };
     plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
     expect(plugin.capabilities.supportsBatchContent).toBe(true);
-    expect(plugin.capabilities.supportsBatchLiveStreams).toBe(false);
+    expect(plugin.capabilities.supportsBatchBroadcasts).toBe(false);
     expect(plugin.capabilities.supportsSearch).toBe(true);
   });
 
@@ -304,7 +304,7 @@ describe("PlatformPlugin.create", () => {
     const methods = createMockMethods();
     methods.getContent = async (rest, id) => {
       await rest.request({ method: "GET", path: "/videos", query: { id } });
-      return { type: "video", id } as Awaited<ReturnType<typeof methods.getContent>>;
+      return { type: "archive", id } as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
@@ -349,7 +349,7 @@ describe("PlatformPlugin.create", () => {
     const methods = createMockMethods();
     methods.getContent = async (rest, id) => {
       await rest.request({ method: "GET", path: "/test" });
-      return { type: "video", id } as Awaited<ReturnType<typeof methods.getContent>>;
+      return { type: "archive", id } as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
@@ -373,7 +373,7 @@ describe("PlatformPlugin.create", () => {
     const methods = createMockMethods();
     methods.getContent = async (rest, id) => {
       await rest.request({ method: "GET", path: "/test" });
-      return { type: "video", id } as Awaited<ReturnType<typeof methods.getContent>>;
+      return { type: "archive", id } as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
@@ -397,7 +397,7 @@ describe("PlatformPlugin.create", () => {
         method: "GET",
         path: "/test",
       });
-      return { type: "video", id } as unknown as Awaited<ReturnType<typeof methods.getContent>>;
+      return { type: "archive", id } as unknown as Awaited<ReturnType<typeof methods.getContent>>;
     };
 
     plugin = PlatformPlugin.create(definition, methods);
@@ -456,19 +456,19 @@ describe("PlatformPlugin.is", () => {
       name: "manual",
       rest: {},
       capabilities: {
-        supportsLiveStreams: true,
+        supportsBroadcasts: true,
         supportsArchiveResolution: false,
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
         supportsBatchContent: false,
-        supportsBatchLiveStreams: false,
+        supportsBatchBroadcasts: false,
         supportsSearch: false,
       },
       match: () => null,
       getContent: async () => ({}),
       getChannel: async () => ({}),
-      getLiveStreams: async () => [],
-      getVideos: async () => ({ items: [] }),
+      listBroadcasts: async () => [],
+      listArchives: async () => ({ items: [] }),
       [Symbol.dispose]: () => {},
     };
 

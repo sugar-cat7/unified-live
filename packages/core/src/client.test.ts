@@ -14,7 +14,7 @@ const mockContent: Content = {
   url: "https://test.com/watch?v=test-id",
   thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
   channel: { id: "ch1", name: "Channel", url: "https://test.com/channel/ch1" },
-  type: "video",
+  type: "archive",
   duration: 3600,
   viewCount: 1000,
   publishedAt: new Date("2024-01-01"),
@@ -22,12 +22,12 @@ const mockContent: Content = {
 };
 
 const mockCapabilities = {
-  supportsLiveStreams: true,
+  supportsBroadcasts: true,
   supportsArchiveResolution: false,
   authModel: "apiKey" as const,
   rateLimitModel: "tokenBucket" as const,
   supportsBatchContent: false,
-  supportsBatchLiveStreams: false,
+  supportsBatchBroadcasts: false,
   supportsSearch: false,
   supportsClips: false,
 };
@@ -57,8 +57,8 @@ const createMockPlugin = (name: string): PlatformPlugin => {
     match: vi.fn(matchUrl),
     getContent: vi.fn(async () => pluginContent),
     getChannel: vi.fn(async () => mockChannel),
-    getLiveStreams: vi.fn(async () => []),
-    getVideos: vi.fn(async () => ({ items: [], cursor: undefined, hasMore: false })),
+    listBroadcasts: vi.fn(async () => []),
+    listArchives: vi.fn(async () => ({ items: [], cursor: undefined, hasMore: false })),
     [Symbol.dispose]: vi.fn(),
   };
 };
@@ -122,23 +122,23 @@ describe("UnifiedClient.create", () => {
 
   it.each([
     {
-      method: "getContentById" as const,
+      method: "getContent" as const,
       args: ["youtube", "abc123"],
       pluginMethod: "getContent" as const,
       pluginArgs: ["abc123"],
       assertion: (result: Content) => expect(result.platform).toBe("youtube"),
     },
     {
-      method: "getLiveStreams" as const,
+      method: "listBroadcasts" as const,
       args: ["youtube", "ch1"],
-      pluginMethod: "getLiveStreams" as const,
+      pluginMethod: "listBroadcasts" as const,
       pluginArgs: ["ch1"],
       assertion: (result: unknown) => expect(result).toEqual([]),
     },
     {
-      method: "getVideos" as const,
+      method: "listArchives" as const,
       args: ["youtube", "ch1", "cursor1"],
-      pluginMethod: "getVideos" as const,
+      pluginMethod: "listArchives" as const,
       pluginArgs: ["ch1", "cursor1", undefined],
       assertion: (result: { items: unknown[] }) => expect(result.items).toEqual([]),
     },
@@ -163,39 +163,39 @@ describe("UnifiedClient.create", () => {
     },
   );
 
-  it("getContent routes URL to correct plugin", async () => {
+  it("resolve routes URL to correct plugin", async () => {
     const plugin = createMockPlugin("youtube");
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContent("https://youtube.com/watch?v=abc");
+    const content = await client.resolve("https://youtube.com/watch?v=abc");
     expect(content.platform).toBe("youtube");
     expect(plugin.getContent).toHaveBeenCalledWith("test-id");
 
     client[Symbol.dispose]();
   });
 
-  it("getContent throws ValidationError on empty URL", async () => {
+  it("resolve throws ValidationError on empty URL", async () => {
     const client = UnifiedClient.create();
 
-    await expect(client.getContent("")).rejects.toThrow(ValidationError);
-    await expect(client.getContent("")).rejects.toThrow("URL must be a non-empty string");
+    await expect(client.resolve("")).rejects.toThrow(ValidationError);
+    await expect(client.resolve("")).rejects.toThrow("URL must be a non-empty string");
 
     client[Symbol.dispose]();
   });
 
-  it("getContent throws ValidationError for malformed URL", async () => {
+  it("resolve throws ValidationError for malformed URL", async () => {
     const client = UnifiedClient.create();
-    await expect(client.getContent("not-a-url")).rejects.toThrow(ValidationError);
+    await expect(client.resolve("not-a-url")).rejects.toThrow(ValidationError);
     client[Symbol.dispose]();
   });
 
-  it("getContent throws ValidationError for unmatched URL", async () => {
+  it("resolve throws ValidationError for unmatched URL", async () => {
     const client = UnifiedClient.create();
 
-    await expect(client.getContent("https://unknown.com/video/123")).rejects.toThrow(
+    await expect(client.resolve("https://unknown.com/video/123")).rejects.toThrow(
       ValidationError,
     );
-    await expect(client.getContent("https://unknown.com/video/123")).rejects.toThrow(
+    await expect(client.resolve("https://unknown.com/video/123")).rejects.toThrow(
       "No registered plugin matches URL",
     );
 
@@ -300,8 +300,8 @@ describe("UnifiedClient cross-plugin routing", () => {
     const client = UnifiedClient.create({ plugins: [yt, tw] });
 
     const [ytContent, twContent] = await Promise.all([
-      client.getContentById("youtube", "v1"),
-      client.getContentById("twitch", "v2"),
+      client.getContent("youtube", "v1"),
+      client.getContent("twitch", "v2"),
     ]);
 
     expect(ytContent.platform).toBe("youtube");
@@ -314,11 +314,11 @@ describe("UnifiedClient cross-plugin routing", () => {
 });
 
 describe("UnifiedClient batch operations", () => {
-  it("getContents returns empty BatchResult for empty IDs", async () => {
+  it("batchGetContents returns empty BatchResult for empty IDs", async () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.getContents("test", []);
+    const result = await client.batchGetContents("test", []);
 
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
@@ -327,22 +327,22 @@ describe("UnifiedClient batch operations", () => {
     client[Symbol.dispose]();
   });
 
-  it("getContents deduplicates IDs", async () => {
+  it("batchGetContents deduplicates IDs", async () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await client.getContents("test", ["id1", "id1", "id1"]);
+    await client.batchGetContents("test", ["id1", "id1", "id1"]);
 
     expect(plugin.getContent).toHaveBeenCalledTimes(1);
 
     client[Symbol.dispose]();
   });
 
-  it("getContents uses fallback when plugin lacks native batch", async () => {
+  it("batchGetContents uses fallback when plugin lacks native batch", async () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.getContents("test", ["a", "b", "c"]);
+    const result = await client.batchGetContents("test", ["a", "b", "c"]);
 
     expect(plugin.getContent).toHaveBeenCalledTimes(3);
     expect(result.values.size).toBe(3);
@@ -351,7 +351,7 @@ describe("UnifiedClient batch operations", () => {
     client[Symbol.dispose]();
   });
 
-  it("getContents fallback separates per-item errors", async () => {
+  it("batchGetContents fallback separates per-item errors", async () => {
     const plugin = createMockPlugin("test");
     (plugin.getContent as ReturnType<typeof vi.fn>).mockImplementation(async (id: string) => {
       if (id === "missing") throw new NotFoundError("test", "missing");
@@ -359,7 +359,7 @@ describe("UnifiedClient batch operations", () => {
     });
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.getContents("test", ["ok1", "missing", "ok2"]);
+    const result = await client.batchGetContents("test", ["ok1", "missing", "ok2"]);
 
     expect(result.values.size).toBe(2);
     expect(result.values.has("ok1")).toBe(true);
@@ -371,48 +371,48 @@ describe("UnifiedClient batch operations", () => {
     client[Symbol.dispose]();
   });
 
-  it("getContents fallback rethrows request-level errors", async () => {
+  it("batchGetContents fallback rethrows request-level errors", async () => {
     const plugin = createMockPlugin("test");
     (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(new RateLimitError("test"));
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.getContents("test", ["id1"])).rejects.toThrow(RateLimitError);
+    await expect(client.batchGetContents("test", ["id1"])).rejects.toThrow(RateLimitError);
 
     client[Symbol.dispose]();
   });
 
-  it("getContents delegates to plugin native batch when available", async () => {
+  it("batchGetContents delegates to plugin native batch when available", async () => {
     const plugin = createMockPlugin("test");
     const nativeBatch: BatchResult<Content> = {
       values: new Map([["x", { ...mockContent, id: "x", platform: "test" }]]),
       errors: new Map(),
     };
-    plugin.getContents = vi.fn(async () => nativeBatch);
+    plugin.batchGetContents = vi.fn(async () => nativeBatch);
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.getContents("test", ["x"]);
+    const result = await client.batchGetContents("test", ["x"]);
 
-    expect(plugin.getContents).toHaveBeenCalledWith(["x"]);
+    expect(plugin.batchGetContents).toHaveBeenCalledWith(["x"]);
     expect(plugin.getContent).not.toHaveBeenCalled();
     expect(result).toBe(nativeBatch);
 
     client[Symbol.dispose]();
   });
 
-  it("getContents throws PlatformNotFoundError for unknown platform", async () => {
+  it("batchGetContents throws PlatformNotFoundError for unknown platform", async () => {
     const client = UnifiedClient.create();
 
-    await expect(client.getContents("unknown", ["id1"])).rejects.toThrow(PlatformNotFoundError);
+    await expect(client.batchGetContents("unknown", ["id1"])).rejects.toThrow(PlatformNotFoundError);
 
     client[Symbol.dispose]();
   });
 });
 
-describe("UnifiedClient getLiveStreamsBatch", () => {
+describe("UnifiedClient batchGetBroadcasts", () => {
   it("returns empty for empty channelIds", async () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
-    const result = await client.getLiveStreamsBatch("test", []);
+    const result = await client.batchGetBroadcasts("test", []);
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
     client[Symbol.dispose]();
@@ -421,10 +421,10 @@ describe("UnifiedClient getLiveStreamsBatch", () => {
   it("uses fallback when plugin lacks native batch", async () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
-    const result = await client.getLiveStreamsBatch("test", ["ch1", "ch2"]);
-    expect(plugin.getLiveStreams).toHaveBeenCalledTimes(2);
+    const result = await client.batchGetBroadcasts("test", ["ch1", "ch2"]);
+    expect(plugin.listBroadcasts).toHaveBeenCalledTimes(2);
     expect(result.values.size).toBe(2);
-    // Each value should be an array (LiveStream[])
+    // Each value should be an array (Broadcast[])
     for (const streams of result.values.values()) {
       expect(Array.isArray(streams)).toBe(true);
     }
@@ -434,26 +434,26 @@ describe("UnifiedClient getLiveStreamsBatch", () => {
   it("deduplicates channel IDs", async () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
-    await client.getLiveStreamsBatch("test", ["ch1", "ch1", "ch1"]);
-    expect(plugin.getLiveStreams).toHaveBeenCalledTimes(1);
+    await client.batchGetBroadcasts("test", ["ch1", "ch1", "ch1"]);
+    expect(plugin.listBroadcasts).toHaveBeenCalledTimes(1);
     client[Symbol.dispose]();
   });
 
   it("delegates to native batch when available", async () => {
     const plugin = createMockPlugin("test");
     const nativeResult = { values: new Map([["ch1", []]]), errors: new Map() };
-    plugin.getLiveStreamsBatch = vi.fn(async () => nativeResult);
+    plugin.batchGetBroadcasts = vi.fn(async () => nativeResult);
     const client = UnifiedClient.create({ plugins: [plugin] });
-    const result = await client.getLiveStreamsBatch("test", ["ch1"]);
-    expect(plugin.getLiveStreamsBatch).toHaveBeenCalledWith(["ch1"]);
-    expect(plugin.getLiveStreams).not.toHaveBeenCalled();
+    const result = await client.batchGetBroadcasts("test", ["ch1"]);
+    expect(plugin.batchGetBroadcasts).toHaveBeenCalledWith(["ch1"]);
+    expect(plugin.listBroadcasts).not.toHaveBeenCalled();
     expect(result).toBe(nativeResult);
     client[Symbol.dispose]();
   });
 
   it("throws PlatformNotFoundError for unknown platform", async () => {
     const client = UnifiedClient.create();
-    await expect(client.getLiveStreamsBatch("unknown", ["ch1"])).rejects.toThrow(
+    await expect(client.batchGetBroadcasts("unknown", ["ch1"])).rejects.toThrow(
       PlatformNotFoundError,
     );
     client[Symbol.dispose]();
@@ -564,28 +564,28 @@ describe("UnifiedClient OTel integration", () => {
     return { provider, spans };
   };
 
-  it("creates client-level span for getContentById", async () => {
+  it("creates client-level span for getContent", async () => {
     const { provider, spans } = createMockTracerProvider();
     const plugin = createMockPlugin("youtube");
     const client = UnifiedClient.create({ plugins: [plugin], tracerProvider: provider });
 
-    await client.getContentById("youtube", "abc");
+    await client.getContent("youtube", "abc");
 
     expect(spans).toHaveLength(1);
-    expect(spans[0]!.name).toBe("unified-live.client getContentById");
-    expect(spans[0]!.attributes["unified_live.operation"]).toBe("getContentById");
+    expect(spans[0]!.name).toBe("unified-live.client getContent");
+    expect(spans[0]!.attributes["unified_live.operation"]).toBe("getContent");
     expect(spans[0]!.attributes["unified_live.platform"]).toBe("youtube");
     expect(spans[0]!.ended).toBe(true);
 
     client[Symbol.dispose]();
   });
 
-  it("sets batch.size for getContents", async () => {
+  it("sets batch.size for batchGetContents", async () => {
     const { provider, spans } = createMockTracerProvider();
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin], tracerProvider: provider });
 
-    await client.getContents("test", ["a", "b", "c"]);
+    await client.batchGetContents("test", ["a", "b", "c"]);
 
     expect(spans).toHaveLength(1);
     expect(spans[0]!.attributes["unified_live.batch.size"]).toBe(3);
@@ -601,7 +601,7 @@ describe("UnifiedClient OTel integration", () => {
     );
     const client = UnifiedClient.create({ plugins: [plugin], tracerProvider: provider });
 
-    await client.getContentById("test", "missing").catch(() => {});
+    await client.getContent("test", "missing").catch(() => {});
 
     expect(spans[0]!.status?.code).toBe(2); // SpanStatusCode.ERROR
     expect(spans[0]!.ended).toBe(true);
@@ -626,20 +626,20 @@ const mockClip: Clip = {
   raw: {},
 };
 
-describe("UnifiedClient getClips", () => {
+describe("UnifiedClient listClips", () => {
   it("delegates to plugin when supported", async () => {
     const plugin = createMockPlugin("test");
     const clipPage: Page<Clip> = { items: [mockClip], hasMore: false };
-    plugin.getClips = vi.fn(async () => clipPage);
+    plugin.listClips = vi.fn(async () => clipPage);
     (plugin as { capabilities: typeof mockCapabilities }).capabilities = {
       ...mockCapabilities,
       supportsClips: true,
     };
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.getClips("test", "ch1", { limit: 10 });
+    const result = await client.listClips("test", "ch1", { limit: 10 });
 
-    expect(plugin.getClips).toHaveBeenCalledWith("ch1", { limit: 10 });
+    expect(plugin.listClips).toHaveBeenCalledWith("ch1", { limit: 10 });
     expect(result).toBe(clipPage);
 
     client[Symbol.dispose]();
@@ -649,8 +649,8 @@ describe("UnifiedClient getClips", () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.getClips("test", "ch1")).rejects.toThrow(ValidationError);
-    await expect(client.getClips("test", "ch1")).rejects.toThrow("does not support clips");
+    await expect(client.listClips("test", "ch1")).rejects.toThrow(ValidationError);
+    await expect(client.listClips("test", "ch1")).rejects.toThrow("does not support clips");
 
     client[Symbol.dispose]();
   });
@@ -658,25 +658,25 @@ describe("UnifiedClient getClips", () => {
   it("throws PlatformNotFoundError for unknown platform", async () => {
     const client = UnifiedClient.create();
 
-    await expect(client.getClips("unknown", "ch1")).rejects.toThrow(PlatformNotFoundError);
+    await expect(client.listClips("unknown", "ch1")).rejects.toThrow(PlatformNotFoundError);
 
     client[Symbol.dispose]();
   });
 });
 
-describe("UnifiedClient getClipsByIds", () => {
+describe("UnifiedClient batchGetClips", () => {
   it("delegates to plugin when supported", async () => {
     const plugin = createMockPlugin("test");
     const batchResult: BatchResult<Clip> = {
       values: new Map([["clip-1", mockClip]]),
       errors: new Map(),
     };
-    plugin.getClipsByIds = vi.fn(async () => batchResult);
+    plugin.batchGetClips = vi.fn(async () => batchResult);
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.getClipsByIds("test", ["clip-1"]);
+    const result = await client.batchGetClips("test", ["clip-1"]);
 
-    expect(plugin.getClipsByIds).toHaveBeenCalledWith(["clip-1"]);
+    expect(plugin.batchGetClips).toHaveBeenCalledWith(["clip-1"]);
     expect(result).toBe(batchResult);
 
     client[Symbol.dispose]();
@@ -684,24 +684,24 @@ describe("UnifiedClient getClipsByIds", () => {
 
   it("returns empty BatchResult for empty array", async () => {
     const plugin = createMockPlugin("test");
-    plugin.getClipsByIds = vi.fn(async () => ({ values: new Map(), errors: new Map() }));
+    plugin.batchGetClips = vi.fn(async () => ({ values: new Map(), errors: new Map() }));
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.getClipsByIds("test", []);
+    const result = await client.batchGetClips("test", []);
 
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
-    expect(plugin.getClipsByIds).not.toHaveBeenCalled();
+    expect(plugin.batchGetClips).not.toHaveBeenCalled();
 
     client[Symbol.dispose]();
   });
 
-  it("throws ValidationError when plugin does not support getClipsByIds", async () => {
+  it("throws ValidationError when plugin does not support batchGetClips", async () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.getClipsByIds("test", ["clip-1"])).rejects.toThrow(ValidationError);
-    await expect(client.getClipsByIds("test", ["clip-1"])).rejects.toThrow(
+    await expect(client.batchGetClips("test", ["clip-1"])).rejects.toThrow(ValidationError);
+    await expect(client.batchGetClips("test", ["clip-1"])).rejects.toThrow(
       "does not support clip retrieval by IDs",
     );
 
@@ -710,24 +710,24 @@ describe("UnifiedClient getClipsByIds", () => {
 
   it("deduplicates IDs", async () => {
     const plugin = createMockPlugin("test");
-    plugin.getClipsByIds = vi.fn(async () => ({ values: new Map(), errors: new Map() }));
+    plugin.batchGetClips = vi.fn(async () => ({ values: new Map(), errors: new Map() }));
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await client.getClipsByIds("test", ["clip-1", "clip-1", "clip-1"]);
+    await client.batchGetClips("test", ["clip-1", "clip-1", "clip-1"]);
 
-    expect(plugin.getClipsByIds).toHaveBeenCalledWith(["clip-1"]);
+    expect(plugin.batchGetClips).toHaveBeenCalledWith(["clip-1"]);
 
     client[Symbol.dispose]();
   });
 });
 
-describe("UnifiedClient getAllLiveStreams", () => {
+describe("UnifiedClient crossListBroadcasts", () => {
   it("fetches from multiple platforms in parallel", async () => {
     const yt = createMockPlugin("youtube");
     const tw = createMockPlugin("twitch");
     const client = UnifiedClient.create({ plugins: [yt, tw] });
 
-    const result = await client.getAllLiveStreams({
+    const result = await client.crossListBroadcasts({
       youtube: ["yt-ch1", "yt-ch2"],
       twitch: ["tw-ch1"],
     });
@@ -743,10 +743,10 @@ describe("UnifiedClient getAllLiveStreams", () => {
 
   it("returns empty BatchResult for failed platforms", async () => {
     const yt = createMockPlugin("youtube");
-    // twitch is not registered, so getLiveStreamsBatch will throw PlatformNotFoundError
+    // twitch is not registered, so batchGetBroadcasts will throw PlatformNotFoundError
     const client = UnifiedClient.create({ plugins: [yt] });
 
-    const result = await client.getAllLiveStreams({
+    const result = await client.crossListBroadcasts({
       youtube: ["yt-ch1"],
       twitch: ["tw-ch1"],
     });
@@ -764,7 +764,7 @@ describe("UnifiedClient getAllLiveStreams", () => {
   it("returns empty result for empty input", async () => {
     const client = UnifiedClient.create();
 
-    const result = await client.getAllLiveStreams({});
+    const result = await client.crossListBroadcasts({});
 
     expect(Object.keys(result)).toHaveLength(0);
 
@@ -772,7 +772,7 @@ describe("UnifiedClient getAllLiveStreams", () => {
   });
 });
 
-describe("UnifiedClient searchAll", () => {
+describe("UnifiedClient crossSearch", () => {
   it("searches all searchable plugins", async () => {
     const yt = createMockPlugin("youtube");
     const tw = createMockPlugin("twitch");
@@ -797,7 +797,7 @@ describe("UnifiedClient searchAll", () => {
     };
     const client = UnifiedClient.create({ plugins: [yt, tw] });
 
-    const result = await client.searchAll({ query: "test" });
+    const result = await client.crossSearch({ query: "test" });
 
     expect(Object.keys(result)).toHaveLength(2);
     expect(result.youtube).toBe(ytResult);
@@ -827,7 +827,7 @@ describe("UnifiedClient searchAll", () => {
     };
     const client = UnifiedClient.create({ plugins: [yt, tw] });
 
-    const result = await client.searchAll({ query: "test" });
+    const result = await client.crossSearch({ query: "test" });
 
     expect(result.youtube).toBe(ytResult);
     expect(result.twitch).toBeDefined();
@@ -849,7 +849,7 @@ describe("UnifiedClient searchAll", () => {
     // twitch has no search and supportsSearch=false (default)
     const client = UnifiedClient.create({ plugins: [yt, tw] });
 
-    const result = await client.searchAll({ query: "test" });
+    const result = await client.crossSearch({ query: "test" });
 
     expect(Object.keys(result)).toHaveLength(1);
     expect(result.youtube).toBeDefined();
@@ -862,7 +862,7 @@ describe("UnifiedClient searchAll", () => {
     const plugin = createMockPlugin("test");
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    const result = await client.searchAll({ query: "test" });
+    const result = await client.crossSearch({ query: "test" });
 
     expect(Object.keys(result)).toHaveLength(0);
 

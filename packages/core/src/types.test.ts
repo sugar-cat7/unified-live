@@ -12,16 +12,16 @@ import {
   Content,
   contentSchema,
   knownPlatforms,
-  LiveStream,
-  liveStreamSchema,
+  Broadcast,
+  broadcastSchema,
   Page,
   resolvedUrlSchema,
-  ScheduledStream,
-  scheduledStreamSchema,
+  ScheduledBroadcast,
+  scheduledBroadcastSchema,
   searchOptionsSchema,
   thumbnailSchema,
-  Video,
-  videoSchema,
+  Archive,
+  archiveSchema,
 } from "./types";
 
 const validThumbnail = {
@@ -36,7 +36,7 @@ const validChannelRef = {
   url: "https://youtube.com/channel/UC123",
 };
 
-const baseLiveStream = {
+const baseBroadcast = {
   id: "abc123",
   platform: "youtube",
   title: "Test Live",
@@ -45,13 +45,13 @@ const baseLiveStream = {
   url: "https://youtube.com/watch?v=abc123",
   thumbnail: validThumbnail,
   channel: validChannelRef,
-  type: "live" as const,
+  type: "broadcast" as const,
   viewerCount: 1000,
   startedAt: new Date("2024-01-01T00:00:00Z"),
   raw: {},
 };
 
-const baseVideo = {
+const baseArchive = {
   id: "xyz789",
   platform: "youtube",
   title: "Test Video",
@@ -60,14 +60,14 @@ const baseVideo = {
   url: "https://youtube.com/watch?v=xyz789",
   thumbnail: validThumbnail,
   channel: validChannelRef,
-  type: "video" as const,
+  type: "archive" as const,
   duration: 3600,
   viewCount: 50000,
   publishedAt: new Date("2024-01-01T00:00:00Z"),
   raw: {},
 };
 
-const baseScheduledStream = {
+const baseScheduledBroadcast = {
   id: "sched123",
   platform: "youtube",
   title: "Upcoming Stream",
@@ -141,61 +141,61 @@ describe("channelRefSchema", () => {
   });
 });
 
-describe("liveStreamSchema", () => {
+describe("broadcastSchema", () => {
   it.each([
-    { name: "valid", input: baseLiveStream, valid: true },
+    { name: "valid", input: baseBroadcast, valid: true },
     {
       name: "with sessionId",
-      input: { ...baseLiveStream, sessionId: "s1" },
+      input: { ...baseBroadcast, sessionId: "s1" },
       valid: true,
     },
     {
       name: "negative viewerCount",
-      input: { ...baseLiveStream, viewerCount: -1 },
+      input: { ...baseBroadcast, viewerCount: -1 },
       valid: false,
     },
     {
       name: "missing startedAt",
-      input: { ...baseLiveStream, startedAt: undefined },
+      input: { ...baseBroadcast, startedAt: undefined },
       valid: false,
     },
     {
       name: "with endedAt",
-      input: { ...baseLiveStream, endedAt: new Date("2024-01-01T01:00:00Z") },
+      input: { ...baseBroadcast, endedAt: new Date("2024-01-01T01:00:00Z") },
       valid: true,
     },
     {
       name: "without endedAt",
-      input: baseLiveStream,
+      input: baseBroadcast,
       valid: true,
     },
   ])("$name", ({ input, valid }) => {
-    const result = liveStreamSchema.safeParse(input);
+    const result = broadcastSchema.safeParse(input);
     expect(result.success).toBe(valid);
   });
 });
 
-describe("videoSchema", () => {
+describe("archiveSchema", () => {
   it.each([
-    { name: "valid", input: baseVideo, valid: true },
+    { name: "valid", input: baseArchive, valid: true },
     {
       name: "negative duration",
-      input: { ...baseVideo, duration: -1 },
+      input: { ...baseArchive, duration: -1 },
       valid: false,
     },
     {
       name: "negative viewCount",
-      input: { ...baseVideo, viewCount: -1 },
+      input: { ...baseArchive, viewCount: -1 },
       valid: false,
     },
   ])("$name", ({ input, valid }) => {
-    const result = videoSchema.safeParse(input);
+    const result = archiveSchema.safeParse(input);
     expect(result.success).toBe(valid);
   });
 
   it("accepts optional startedAt and endedAt", () => {
-    const result = videoSchema.safeParse({
-      ...baseVideo,
+    const result = archiveSchema.safeParse({
+      ...baseArchive,
       startedAt: new Date("2024-01-01T00:00:00Z"),
       endedAt: new Date("2024-01-01T01:00:00Z"),
     });
@@ -207,7 +207,7 @@ describe("videoSchema", () => {
   });
 
   it("accepts video without startedAt/endedAt", () => {
-    const result = videoSchema.safeParse(baseVideo);
+    const result = archiveSchema.safeParse(baseArchive);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.startedAt).toBeUndefined();
@@ -218,7 +218,7 @@ describe("videoSchema", () => {
 
 describe("contentBaseSchema languageCode", () => {
   it("accepts content with languageCode", () => {
-    const result = liveStreamSchema.safeParse({ ...baseLiveStream, languageCode: "ja" });
+    const result = broadcastSchema.safeParse({ ...baseBroadcast, languageCode: "ja" });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.languageCode).toBe("ja");
@@ -226,7 +226,7 @@ describe("contentBaseSchema languageCode", () => {
   });
 
   it("accepts content without languageCode", () => {
-    const result = liveStreamSchema.safeParse(baseLiveStream);
+    const result = broadcastSchema.safeParse(baseBroadcast);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.languageCode).toBeUndefined();
@@ -234,48 +234,48 @@ describe("contentBaseSchema languageCode", () => {
   });
 });
 
-describe("scheduledStreamSchema", () => {
+describe("scheduledBroadcastSchema", () => {
   it.each([
-    { name: "valid", input: baseScheduledStream, valid: true },
+    { name: "valid", input: baseScheduledBroadcast, valid: true },
     {
       name: "with sessionId",
-      input: { ...baseScheduledStream, sessionId: "s1" },
+      input: { ...baseScheduledBroadcast, sessionId: "s1" },
       valid: true,
     },
     {
       name: "missing scheduledStartAt",
-      input: { ...baseScheduledStream, scheduledStartAt: undefined },
+      input: { ...baseScheduledBroadcast, scheduledStartAt: undefined },
       valid: false,
     },
     {
       name: "string scheduledStartAt rejected (no coercion)",
-      input: { ...baseScheduledStream, scheduledStartAt: "2024-06-01T18:00:00Z" },
+      input: { ...baseScheduledBroadcast, scheduledStartAt: "2024-06-01T18:00:00Z" },
       valid: false,
     },
   ])("$name", ({ input, valid }) => {
-    const result = scheduledStreamSchema.safeParse(input);
+    const result = scheduledBroadcastSchema.safeParse(input);
     expect(result.success).toBe(valid);
   });
 });
 
 describe("contentSchema (discriminated union)", () => {
-  it("parses live stream", () => {
-    const result = contentSchema.parse(baseLiveStream);
-    expect(result.type).toBe("live");
+  it("parses broadcast", () => {
+    const result = contentSchema.parse(baseBroadcast);
+    expect(result.type).toBe("broadcast");
   });
 
-  it("parses video", () => {
-    const result = contentSchema.parse(baseVideo);
-    expect(result.type).toBe("video");
+  it("parses archive", () => {
+    const result = contentSchema.parse(baseArchive);
+    expect(result.type).toBe("archive");
   });
 
-  it("parses scheduled stream", () => {
-    const result = contentSchema.parse(baseScheduledStream);
+  it("parses scheduled broadcast", () => {
+    const result = contentSchema.parse(baseScheduledBroadcast);
     expect(result.type).toBe("scheduled");
   });
 
   it("rejects invalid type", () => {
-    expect(() => contentSchema.parse({ ...baseLiveStream, type: "unknown" })).toThrow();
+    expect(() => contentSchema.parse({ ...baseBroadcast, type: "unknown" })).toThrow();
   });
 });
 
@@ -325,7 +325,7 @@ describe("broadcastSessionSchema", () => {
       platform: "twitch",
       channel: validChannelRef,
       startedAt: new Date(),
-      contentIds: { liveId: "l1" },
+      contentIds: { broadcastId: "l1" },
     });
     expect(result.success).toBe(true);
   });
@@ -371,77 +371,77 @@ describe("resolvedUrlSchema", () => {
 });
 
 describe("Content type guards", () => {
-  it("isLive narrows to LiveStream", () => {
-    const content = contentSchema.parse(baseLiveStream);
-    if (Content.isLive(content)) {
+  it("isBroadcast narrows to Broadcast", () => {
+    const content = contentSchema.parse(baseBroadcast);
+    if (Content.isBroadcast(content)) {
       expect(content.viewerCount).toBe(1000);
       expect(content.startedAt).toBeInstanceOf(Date);
     } else {
-      expect.unreachable("Should be live");
+      expect.unreachable("Should be broadcast");
     }
   });
 
-  it("isVideo narrows to Video", () => {
-    const content = contentSchema.parse(baseVideo);
-    if (Content.isVideo(content)) {
+  it("isArchive narrows to Archive", () => {
+    const content = contentSchema.parse(baseArchive);
+    if (Content.isArchive(content)) {
       expect(content.duration).toBe(3600);
       expect(content.publishedAt).toBeInstanceOf(Date);
     } else {
-      expect.unreachable("Should be video");
+      expect.unreachable("Should be archive");
     }
   });
 
-  it("isLive returns false for video", () => {
-    const content = contentSchema.parse(baseVideo);
-    expect(Content.isLive(content)).toBe(false);
+  it("isBroadcast returns false for archive", () => {
+    const content = contentSchema.parse(baseArchive);
+    expect(Content.isBroadcast(content)).toBe(false);
   });
 
-  it("isVideo returns false for live", () => {
-    const content = contentSchema.parse(baseLiveStream);
-    expect(Content.isVideo(content)).toBe(false);
+  it("isArchive returns false for broadcast", () => {
+    const content = contentSchema.parse(baseBroadcast);
+    expect(Content.isArchive(content)).toBe(false);
   });
 
-  it("isScheduled narrows to ScheduledStream", () => {
-    const content = contentSchema.parse(baseScheduledStream);
-    if (Content.isScheduled(content)) {
+  it("isScheduledBroadcast narrows to ScheduledBroadcast", () => {
+    const content = contentSchema.parse(baseScheduledBroadcast);
+    if (Content.isScheduledBroadcast(content)) {
       expect(content.scheduledStartAt).toBeInstanceOf(Date);
     } else {
-      expect.unreachable("Should be scheduled");
+      expect.unreachable("Should be scheduled broadcast");
     }
   });
 
-  it("isScheduled returns false for live", () => {
-    const content = contentSchema.parse(baseLiveStream);
-    expect(Content.isScheduled(content)).toBe(false);
+  it("isScheduledBroadcast returns false for broadcast", () => {
+    const content = contentSchema.parse(baseBroadcast);
+    expect(Content.isScheduledBroadcast(content)).toBe(false);
   });
 
-  it("isScheduled returns false for video", () => {
-    const content = contentSchema.parse(baseVideo);
-    expect(Content.isScheduled(content)).toBe(false);
+  it("isScheduledBroadcast returns false for archive", () => {
+    const content = contentSchema.parse(baseArchive);
+    expect(Content.isScheduledBroadcast(content)).toBe(false);
   });
 });
 
-describe("LiveStream.is", () => {
-  it("returns true for valid LiveStream", () => {
-    expect(LiveStream.is(baseLiveStream)).toBe(true);
+describe("Broadcast.is", () => {
+  it("returns true for valid Broadcast", () => {
+    expect(Broadcast.is(baseBroadcast)).toBe(true);
   });
 
-  it("returns false for Video", () => {
-    expect(LiveStream.is(baseVideo)).toBe(false);
+  it("returns false for Archive", () => {
+    expect(Broadcast.is(baseArchive)).toBe(false);
   });
 
   it("returns false for non-object", () => {
-    expect(LiveStream.is("not an object")).toBe(false);
+    expect(Broadcast.is("not an object")).toBe(false);
   });
 });
 
-describe("Video.is", () => {
-  it("returns true for valid Video", () => {
-    expect(Video.is(baseVideo)).toBe(true);
+describe("Archive.is", () => {
+  it("returns true for valid Archive", () => {
+    expect(Archive.is(baseArchive)).toBe(true);
   });
 
-  it("returns false for LiveStream", () => {
-    expect(Video.is(baseLiveStream)).toBe(false);
+  it("returns false for Broadcast", () => {
+    expect(Archive.is(baseBroadcast)).toBe(false);
   });
 });
 
@@ -461,21 +461,21 @@ describe("Channel.is", () => {
   });
 });
 
-describe("ScheduledStream.is", () => {
-  it("returns true for valid ScheduledStream", () => {
-    expect(ScheduledStream.is(baseScheduledStream)).toBe(true);
+describe("ScheduledBroadcast.is", () => {
+  it("returns true for valid ScheduledBroadcast", () => {
+    expect(ScheduledBroadcast.is(baseScheduledBroadcast)).toBe(true);
   });
 
-  it("returns false for LiveStream", () => {
-    expect(ScheduledStream.is(baseLiveStream)).toBe(false);
+  it("returns false for Broadcast", () => {
+    expect(ScheduledBroadcast.is(baseBroadcast)).toBe(false);
   });
 
-  it("returns false for Video", () => {
-    expect(ScheduledStream.is(baseVideo)).toBe(false);
+  it("returns false for Archive", () => {
+    expect(ScheduledBroadcast.is(baseArchive)).toBe(false);
   });
 
   it("returns false for non-object", () => {
-    expect(ScheduledStream.is("not an object")).toBe(false);
+    expect(ScheduledBroadcast.is("not an object")).toBe(false);
   });
 });
 
@@ -486,7 +486,7 @@ describe("BroadcastSession.is", () => {
       platform: "twitch",
       channel: validChannelRef,
       startedAt: new Date(),
-      contentIds: { liveId: "l1" },
+      contentIds: { broadcastId: "l1" },
     };
     expect(BroadcastSession.is(session)).toBe(true);
   });
@@ -574,8 +574,8 @@ describe("Content.isClip", () => {
     expect(Content.isClip(content)).toBe(true);
   });
 
-  it("returns false for live", () => {
-    const content = contentSchema.parse(baseLiveStream);
+  it("returns false for broadcast", () => {
+    const content = contentSchema.parse(baseBroadcast);
     expect(Content.isClip(content)).toBe(false);
   });
 });
@@ -585,8 +585,8 @@ describe("Clip.is", () => {
     expect(Clip.is(baseClip)).toBe(true);
   });
 
-  it("returns false for LiveStream", () => {
-    expect(Clip.is(baseLiveStream)).toBe(false);
+  it("returns false for Broadcast", () => {
+    expect(Clip.is(baseBroadcast)).toBe(false);
   });
 
   it("returns false for non-object", () => {

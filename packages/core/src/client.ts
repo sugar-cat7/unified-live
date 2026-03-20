@@ -346,14 +346,10 @@ export const UnifiedClient = {
             `No registered plugin matches URL: "${url}"`,
           );
         }
-        return withClientSpan(
-          "resolve",
-          { [SpanAttributes.PLATFORM]: resolved.platform },
-          () => {
-            const plugin = getPlugin(resolved.platform);
-            return plugin.getContent(resolved.id);
-          },
-        );
+        return withClientSpan("resolve", { [SpanAttributes.PLATFORM]: resolved.platform }, () => {
+          const plugin = getPlugin(resolved.platform);
+          return plugin.getContent(resolved.id);
+        });
       },
 
       async getContent(platform: string, id: string): Promise<Content> {

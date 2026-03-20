@@ -283,9 +283,7 @@ export const PlatformPlugin = {
       listClips: methods.listClips
         ? (channelId, options) => methods.listClips!(rest, channelId, options)
         : undefined,
-      batchGetClips: methods.batchGetClips
-        ? (ids) => methods.batchGetClips!(rest, ids)
-        : undefined,
+      batchGetClips: methods.batchGetClips ? (ids) => methods.batchGetClips!(rest, ids) : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 

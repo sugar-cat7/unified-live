@@ -136,7 +136,9 @@ describe("toContent", () => {
     expect(result.type).toBe("scheduled");
     expect(result.description).toBe("A test video description");
     expect(result.tags).toEqual(["test", "video"]);
-    expect((result as ScheduledBroadcast).scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
+    expect((result as ScheduledBroadcast).scheduledStartAt).toEqual(
+      new Date("2024-06-01T18:00:00Z"),
+    );
   });
 
   it("maps startedAt/endedAt on video from liveStreamingDetails", () => {
@@ -203,7 +205,9 @@ describe("toContent", () => {
     const item: YTVideoResource = { ...upcomingVideoResource, liveStreamingDetails: {} };
     const result = toContent(item);
     expect(result.type).toBe("scheduled");
-    expect((result as ScheduledBroadcast).scheduledStartAt).toEqual(new Date("2024-01-01T00:00:00Z"));
+    expect((result as ScheduledBroadcast).scheduledStartAt).toEqual(
+      new Date("2024-01-01T00:00:00Z"),
+    );
   });
 
   it("preserves raw data", () => {

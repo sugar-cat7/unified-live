@@ -192,9 +192,7 @@ describe("UnifiedClient.create", () => {
   it("resolve throws ValidationError for unmatched URL", async () => {
     const client = UnifiedClient.create();
 
-    await expect(client.resolve("https://unknown.com/video/123")).rejects.toThrow(
-      ValidationError,
-    );
+    await expect(client.resolve("https://unknown.com/video/123")).rejects.toThrow(ValidationError);
     await expect(client.resolve("https://unknown.com/video/123")).rejects.toThrow(
       "No registered plugin matches URL",
     );
@@ -402,7 +400,9 @@ describe("UnifiedClient batch operations", () => {
   it("batchGetContents throws PlatformNotFoundError for unknown platform", async () => {
     const client = UnifiedClient.create();
 
-    await expect(client.batchGetContents("unknown", ["id1"])).rejects.toThrow(PlatformNotFoundError);
+    await expect(client.batchGetContents("unknown", ["id1"])).rejects.toThrow(
+      PlatformNotFoundError,
+    );
 
     client[Symbol.dispose]();
   });

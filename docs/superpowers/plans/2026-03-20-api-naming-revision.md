@@ -881,6 +881,4 @@ Note: `Video` as a standalone word is too generic — check manually for type us
 
 - [ ] **Step 4: Final commit if any fixes needed**
 
-```bash
-git add -A && git commit -m "fix: address remaining orphaned old names"
-```
+Stage only the specific files that needed fixing, then commit.

@@ -14,14 +14,14 @@ export type LoggerProvider = {
 let globalLoggerProvider: LoggerProvider | undefined;
 
 /**
- * Set the global logger provider for SDK internal logging.
- * @param provider - the LoggerProvider to install globally
+ * Set or clear the global logger provider for SDK internal logging.
+ * @param provider - the LoggerProvider to install globally, or `undefined` to clear
  * @precondition none
- * @postcondition SDK internal log calls will be routed to the provider
+ * @postcondition SDK internal log calls will be routed to the provider if set, or no-op if cleared
  * @idempotency Safe — last call wins
  * @category Observability
  */
-export const setLoggerProvider = (provider: LoggerProvider): void => {
+export const setLoggerProvider = (provider: LoggerProvider | undefined): void => {
   globalLoggerProvider = provider;
 };
 

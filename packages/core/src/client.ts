@@ -513,6 +513,12 @@ export const UnifiedClient = {
 
       async searchAll(searchOptions: SearchOptions): Promise<Record<string, Page<Content>>> {
         return withClientSpan("searchAll", {}, async () => {
+          if (!searchOptions.query && !searchOptions.status && !searchOptions.channelId) {
+            throw new ValidationError(
+              "VALIDATION_INVALID_INPUT",
+              "searchAll requires at least one of 'query', 'status', or 'channelId'",
+            );
+          }
           const searchablePlugins = [...plugins.entries()].filter(
             ([, p]) => p.capabilities.supportsSearch && p.search,
           );

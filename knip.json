@@ -10,6 +10,10 @@
       "ignore": ["examples/**", "tests/runtime/**"],
       "ignoreDependencies": [
         "@textlint/textlint-plugin-markdown",
+        "@unified-live/core",
+        "@unified-live/twitcasting",
+        "@unified-live/twitch",
+        "@unified-live/youtube",
         "textlint-rule-preset-ja-technical-writing"
       ]
     },

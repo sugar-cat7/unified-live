@@ -39,11 +39,8 @@ const formatResults = (results: { packageName: string; checks: VerifyResult[] }[
   return lines.join("\n");
 };
 
-export const runAll = async (): Promise<void> => {
+export const runAll = async (): Promise<boolean> => {
   const { ok, results } = await collectResults();
   console.log(formatResults(results));
-
-  if (!ok) {
-    process.exitCode = 1;
-  }
+  return ok;
 };

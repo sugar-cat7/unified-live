@@ -21,6 +21,10 @@
   "devDependencies": {
     "@textlint/textlint-plugin-markdown": "^15.5.2",
     "@types/node": "catalog:",
+    "@unified-live/core": "workspace:*",
+    "@unified-live/twitcasting": "workspace:*",
+    "@unified-live/twitch": "workspace:*",
+    "@unified-live/youtube": "workspace:*",
     "knip": "^5.82.1",
     "openapi-typescript": "^7.13.0",
     "oxfmt": "^0.40.0",

@@ -41,6 +41,18 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.25
+      '@unified-live/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@unified-live/twitcasting':
+        specifier: workspace:*
+        version: link:packages/twitcasting
+      '@unified-live/twitch':
+        specifier: workspace:*
+        version: link:packages/twitch
+      '@unified-live/youtube':
+        specifier: workspace:*
+        version: link:packages/youtube
       knip:
         specifier: ^5.82.1
         version: 5.82.1(@types/node@20.19.25)(typescript@5.9.3)

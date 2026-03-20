@@ -16,9 +16,14 @@
     "test": "turbo test:run",
     "test:run": "turbo test:run",
     "test:coverage": "turbo test:coverage",
-    "security-scan": "./scripts/security-scan.sh"
+    "security-scan": "./scripts/security-scan.sh",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.30.0",
     "@textlint/textlint-plugin-markdown": "^15.5.2",
     "@types/node": "catalog:",
     "@unified-live/core": "workspace:*",

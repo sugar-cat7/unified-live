@@ -9,6 +9,8 @@
     ".": {
       "ignore": ["examples/**", "tests/runtime/**"],
       "ignoreDependencies": [
+        "@changesets/changelog-github",
+        "@changesets/cli",
         "@textlint/textlint-plugin-markdown",
         "@unified-live/core",
         "@unified-live/twitcasting",

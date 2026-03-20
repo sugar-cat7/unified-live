@@ -1,4 +1,4 @@
-import type { PackageVerifier, VerifyResult } from "./types.ts";
+import type { PackageResult, PackageVerifier, VerifyResult } from "./types.ts";
 import { verifyCorePackage } from "./core.ts";
 import { verifyTwitchPackage } from "./twitch.ts";
 import { verifyYouTubePackage } from "./youtube.ts";
@@ -13,9 +13,9 @@ const verifiers: PackageVerifier[] = [
 
 export const collectResults = async (): Promise<{
   ok: boolean;
-  results: { packageName: string; checks: VerifyResult[] }[];
+  results: PackageResult[];
 }> => {
-  const results: { packageName: string; checks: VerifyResult[] }[] = [];
+  const results: PackageResult[] = [];
 
   for (const v of verifiers) {
     const checks = await v.verify();
@@ -26,7 +26,7 @@ export const collectResults = async (): Promise<{
   return { ok, results };
 };
 
-const formatResults = (results: { packageName: string; checks: VerifyResult[] }[]): string => {
+const formatResults = (results: PackageResult[]): string => {
   const lines: string[] = [];
   for (const r of results) {
     lines.push(`[${r.packageName}]`);

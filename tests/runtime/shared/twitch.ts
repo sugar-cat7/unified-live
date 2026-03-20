@@ -1,5 +1,4 @@
-import type { VerifyResult } from "./types.ts";
-import { verify } from "./types.ts";
+import { type VerifyResult, verify } from "./types.ts";
 
 export const verifyTwitchPackage = async (): Promise<VerifyResult[]> => {
   const twitch = await import("@unified-live/twitch");

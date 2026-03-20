@@ -4,6 +4,11 @@ export type VerifyResult = {
   error?: string;
 };
 
+export type PackageResult = {
+  packageName: string;
+  checks: VerifyResult[];
+};
+
 export type PackageVerifier = {
   packageName: string;
   verify: () => Promise<VerifyResult[]>;

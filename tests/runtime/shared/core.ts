@@ -1,5 +1,4 @@
-import type { VerifyResult } from "./types.ts";
-import { verify } from "./types.ts";
+import { type VerifyResult, verify } from "./types.ts";
 
 export const verifyCorePackage = async (): Promise<VerifyResult[]> => {
   const core = await import("@unified-live/core");

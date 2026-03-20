@@ -50,7 +50,7 @@ describe("Twitch Integration", () => {
     client?.[Symbol.dispose]();
   });
 
-  it("full consumer flow: UnifiedClient.create -> getContent by URL", async () => {
+  it("full consumer flow: UnifiedClient.create -> resolve by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
     const plugin = createTwitchPlugin({
       clientId: "test-id",
@@ -59,14 +59,14 @@ describe("Twitch Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContent("https://www.twitch.tv/videos/12345");
+    const content = await client.resolve("https://www.twitch.tv/videos/12345");
 
     expect(content.id).toBe("12345");
     expect(content.platform).toBe("twitch");
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(content.title).toBe("Test Stream");
 
-    if (Content.isVideo(content)) {
+    if (Content.isArchive(content)) {
       expect(content.duration).toBe(7200);
       expect(content.viewCount).toBe(5000);
     }
@@ -86,7 +86,7 @@ describe("Twitch Integration", () => {
     expect(client.match("https://youtube.com/watch?v=abc")).toBeNull();
   });
 
-  it("getContentById bypasses URL matching", async () => {
+  it("getContent bypasses URL matching", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
     const plugin = createTwitchPlugin({
       clientId: "test-id",
@@ -95,7 +95,7 @@ describe("Twitch Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContentById("twitch", "12345");
+    const content = await client.getContent("twitch", "12345");
     expect(content.id).toBe("12345");
   });
 
@@ -118,7 +118,7 @@ describe("Twitch Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.getContent("https://www.twitch.tv/videos/99999")).rejects.toThrow(
+    await expect(client.resolve("https://www.twitch.tv/videos/99999")).rejects.toThrow(
       NotFoundError,
     );
   });

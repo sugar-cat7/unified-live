@@ -73,7 +73,7 @@ describe("toLive", () => {
   it("converts a Twitch stream to LiveStream", () => {
     const result = toLive(mockStream);
 
-    expect(result.type).toBe("live");
+    expect(result.type).toBe("broadcast");
     expect(result.id).toBe("stream123");
     expect(result.platform).toBe("twitch");
     expect(result.title).toBe("Test Stream");
@@ -104,7 +104,7 @@ describe("toVideo", () => {
   it("converts a Twitch video to Video", () => {
     const result = toVideo(mockVideo);
 
-    expect(result.type).toBe("video");
+    expect(result.type).toBe("archive");
     expect(result.id).toBe("v789");
     expect(result.platform).toBe("twitch");
     expect(result.title).toBe("Past Stream");
@@ -178,7 +178,7 @@ describe("toSearchLive", () => {
 
   it("maps search channel to LiveStream", () => {
     const result = toSearchLive(mockSearchChannel);
-    expect(result.type).toBe("live");
+    expect(result.type).toBe("broadcast");
     expect(result.id).toBe("livecaster");
     expect(result.description).toBe("");
     expect(result.tags).toEqual([]);

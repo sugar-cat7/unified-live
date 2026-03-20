@@ -11,12 +11,12 @@ describe("createTwitchPlugin", () => {
       fetch: createMockFetch([]),
     });
     expect(plugin.capabilities).toEqual({
-      supportsLiveStreams: true,
+      supportsBroadcasts: true,
       supportsArchiveResolution: true,
       authModel: "oauth2",
       rateLimitModel: "tokenBucket",
       supportsBatchContent: true,
-      supportsBatchLiveStreams: true,
+      supportsBatchBroadcasts: true,
       supportsSearch: true,
       supportsClips: true,
     });
@@ -95,7 +95,7 @@ describe("createTwitchPlugin", () => {
     });
 
     const content = await plugin.getContent("v123");
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(content.id).toBe("v123");
     expect(content.platform).toBe("twitch");
 
@@ -125,7 +125,7 @@ describe("createTwitchPlugin", () => {
     plugin[Symbol.dispose]();
   });
 
-  it("getLiveStreams returns live streams", async () => {
+  it("listBroadcasts returns live streams", async () => {
     const mockStream = {
       id: "s1",
       user_id: "u1",
@@ -146,15 +146,15 @@ describe("createTwitchPlugin", () => {
       fetch: createMockFetch([{ status: 200, body: { data: [mockStream] } }]),
     });
 
-    const streams = await plugin.getLiveStreams("u1");
+    const streams = await plugin.listBroadcasts("u1");
     expect(streams).toHaveLength(1);
-    expect(streams[0]!.type).toBe("live");
+    expect(streams[0]!.type).toBe("broadcast");
     expect(streams[0]!.viewerCount).toBe(500);
 
     plugin[Symbol.dispose]();
   });
 
-  it("getVideos returns paginated videos", async () => {
+  it("listArchives returns paginated archives", async () => {
     const mockVideo = {
       id: "v1",
       stream_id: "s1",
@@ -185,9 +185,9 @@ describe("createTwitchPlugin", () => {
       ]),
     });
 
-    const page = await plugin.getVideos("u1");
+    const page = await plugin.listArchives("u1");
     expect(page.items).toHaveLength(1);
-    expect(page.items[0]!.type).toBe("video");
+    expect(page.items[0]!.type).toBe("archive");
     expect(page.cursor).toBe("next-page");
     expect(page.hasMore).toBe(true);
 
@@ -203,7 +203,7 @@ describe("createTwitchPlugin", () => {
       fetch: fetchFn,
     });
 
-    await plugin.getLiveStreams("u1");
+    await plugin.listBroadcasts("u1");
 
     // Find the API call (not the token call)
     const calls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls;
@@ -247,7 +247,7 @@ describe("createTwitchPlugin", () => {
       thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
       channel: { id: "u1", name: "User", url: "https://www.twitch.tv/user" },
       sessionId: "s1",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 100,
       startedAt: new Date("2026-01-01T00:00:00Z"),
       raw: {},
@@ -255,7 +255,7 @@ describe("createTwitchPlugin", () => {
 
     const archive = await plugin.resolveArchive!(live);
     expect(archive).not.toBeNull();
-    expect(archive!.type).toBe("video");
+    expect(archive!.type).toBe("archive");
 
     plugin[Symbol.dispose]();
   });
@@ -277,7 +277,7 @@ describe("createTwitchPlugin", () => {
       thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
       channel: { id: "u1", name: "User", url: "https://www.twitch.tv/user" },
       sessionId: "s1",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 100,
       startedAt: new Date("2026-01-01T00:00:00Z"),
       raw: {},

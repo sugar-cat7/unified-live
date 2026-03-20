@@ -36,13 +36,19 @@ for i in $(seq 1 30); do
 done
 
 if [ "$READY" -eq 0 ]; then
-  echo "Timeout waiting for wrangler dev (${i}s). Wrangler log:"
+  echo "Timeout waiting for wrangler dev after 30s"
+  echo "--- wrangler log ---"
   cat "$WRANGLER_LOG"
+  echo "--- end of wrangler log ---"
   exit 1
 fi
 
 BODY=$(echo "$RESPONSE" | head -n -1)
-echo "$BODY" | jq .
+if command -v jq &>/dev/null; then
+  echo "$BODY" | jq .
+else
+  echo "$BODY"
+fi
 
 if [ "$HTTP_STATUS" != "200" ]; then
   echo "Runtime compat test failed (HTTP $HTTP_STATUS)"

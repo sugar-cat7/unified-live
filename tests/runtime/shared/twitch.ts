@@ -35,7 +35,7 @@ export const verifyTwitchPackage = async (): Promise<VerifyResult[]> => {
         name: "testuser",
         url: "https://twitch.tv/testuser",
       });
-      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
 
       const invalid = core.channelSchema.safeParse({ id: 123 });
       if (invalid.success) throw new Error("Zod should reject invalid input");

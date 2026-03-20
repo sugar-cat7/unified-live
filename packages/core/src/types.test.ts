@@ -696,8 +696,6 @@ describe("searchOptionsSchema extensions", () => {
     expect(searchOptionsSchema.safeParse({ query: "test", safeSearch: s }).success).toBe(true);
   });
   it("accepts languageCode", () => {
-    expect(searchOptionsSchema.safeParse({ query: "test", languageCode: "ja" }).success).toBe(
-      true,
-    );
+    expect(searchOptionsSchema.safeParse({ query: "test", languageCode: "ja" }).success).toBe(true);
   });
 });

@@ -281,9 +281,7 @@ export const PlatformPlugin = {
       getClips: methods.getClips
         ? (channelId, options) => methods.getClips!(rest, channelId, options)
         : undefined,
-      getClipsByIds: methods.getClipsByIds
-        ? (ids) => methods.getClipsByIds!(rest, ids)
-        : undefined,
+      getClipsByIds: methods.getClipsByIds ? (ids) => methods.getClipsByIds!(rest, ids) : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 

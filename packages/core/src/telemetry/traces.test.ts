@@ -89,7 +89,12 @@ describe("withSpan", () => {
   it("creates a span, runs callback, and ends span", async () => {
     const endSpy = vi.fn();
     const setAttributeSpy = vi.fn();
-    const mockSpan = { setAttribute: setAttributeSpy, end: endSpy, setStatus: vi.fn(), recordException: vi.fn() };
+    const mockSpan = {
+      setAttribute: setAttributeSpy,
+      end: endSpy,
+      setStatus: vi.fn(),
+      recordException: vi.fn(),
+    };
     const mockTracer = { startActiveSpan: vi.fn((_name, fn) => fn(mockSpan)) };
     const result = await withSpan(mockTracer as any, "test-span", { key: "val" }, async () => 42);
     expect(result).toBe(42);
@@ -98,7 +103,12 @@ describe("withSpan", () => {
   });
 
   it("records exception, sets error status, and re-throws on error", async () => {
-    const mockSpan = { setAttribute: vi.fn(), end: vi.fn(), setStatus: vi.fn(), recordException: vi.fn() };
+    const mockSpan = {
+      setAttribute: vi.fn(),
+      end: vi.fn(),
+      setStatus: vi.fn(),
+      recordException: vi.fn(),
+    };
     const mockTracer = { startActiveSpan: vi.fn((_name, fn) => fn(mockSpan)) };
     await expect(
       withSpan(mockTracer as any, "fail", {}, async () => {

@@ -319,10 +319,15 @@ export const UnifiedClient = {
       attrs: Record<string, string | number>,
       fn: () => Promise<T>,
     ): Promise<T> => {
-      return withSpan(tracer, `unified-live.client ${operationName}`, {
-        [SpanAttributes.OPERATION]: operationName,
-        ...attrs,
-      }, fn);
+      return withSpan(
+        tracer,
+        `unified-live.client ${operationName}`,
+        {
+          [SpanAttributes.OPERATION]: operationName,
+          ...attrs,
+        },
+        fn,
+      );
     };
 
     const client: UnifiedClient = {

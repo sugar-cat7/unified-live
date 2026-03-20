@@ -134,7 +134,7 @@ jobs:
           - runtime: node
             command: npx tsx tests/runtime/node/run.ts
           - runtime: deno
-            command: deno run --allow-read --allow-env --allow-net tests/runtime/deno/run.ts
+            command: deno run --allow-read --allow-env --allow-net --no-check tests/runtime/deno/run.ts
           - runtime: bun
             command: bun run tests/runtime/bun/run.ts
           - runtime: workerd

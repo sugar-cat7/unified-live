@@ -145,5 +145,28 @@ jobs:
         with:
           name: build-output
 
-      - name: Check bundle size
-        run: npx tsx scripts/check-bundle-size.ts | tee "$GITHUB_STEP_SUMMARY"
+      - name: Download baseline from main
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: bundle-size-main.yaml
+          branch: main
+          name: bundle-size-baseline
+          path: .
+          if_no_artifact_found: warn
+
+      - name: Compare bundle size
+        id: bundle
+        run: |
+          REPORT=$(npx tsx scripts/compare-bundle-size.ts bundle-size-baseline.json)
+          echo "$REPORT" | tee "$GITHUB_STEP_SUMMARY"
+          {
+            echo "report<<EOF"
+            echo "$REPORT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: bundle-size
+          message: ${{ steps.bundle.outputs.report }}

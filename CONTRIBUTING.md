@@ -42,8 +42,33 @@ apps/
 2. Create a feature branch: `git checkout -b feat/your-feature`
 3. Make your changes
 4. Run quality checks: `./scripts/post-edit-check.sh`
-5. Commit using [Angular commit convention](#commit-messages)
-6. Open a pull request
+5. Create a changeset if needed: `pnpm changeset`
+6. Commit using [Angular commit convention](#commit-messages)
+7. Open a pull request
+
+## Creating a Changeset
+
+When your PR includes user-facing changes (new features, bug fixes, breaking changes), create a changeset:
+
+```bash
+pnpm changeset
+```
+
+Select the change type:
+
+- **patch** — Bug fixes, internal refactors, documentation updates
+- **minor** — New features, new exports, new optional parameters
+- **major** — Breaking changes (removed exports, renamed types/methods, changed signatures)
+
+Write a concise summary (this appears in CHANGELOG). The changeset file is committed with your PR.
+
+> **Note:** Not every PR needs a changeset. Skip it for CI config, test-only changes, or dev tooling updates.
+
+### How Releases Work
+
+1. PRs with changesets merge to `main`
+2. A "Version Packages" PR is automatically created/updated
+3. Merging that PR publishes all packages to npm and creates a GitHub Release
 
 ## Quality Checks
 

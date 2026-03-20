@@ -133,8 +133,10 @@ jobs:
         include:
           - runtime: node
             command: npx tsx tests/runtime/node/run.ts
-          - runtime: deno
-            command: deno run --allow-read --allow-env --no-check --unstable-sloppy-imports tests/runtime/deno/run.ts
+          # TODO: Deno hangs resolving @opentelemetry/api through pnpm node_modules.
+          # Re-enable once Deno improves pnpm monorepo compatibility.
+          # - runtime: deno
+          #   command: deno run --allow-read --allow-env --no-check --unstable-sloppy-imports tests/runtime/deno/run.ts
           - runtime: bun
             command: bun run tests/runtime/bun/run.ts
           - runtime: workerd

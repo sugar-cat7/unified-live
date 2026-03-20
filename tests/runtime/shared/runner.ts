@@ -1,4 +1,4 @@
-import type { PackageResult, PackageVerifier, VerifyResult } from "./types.ts";
+import type { PackageResult, PackageVerifier } from "./types.ts";
 import { verifyCorePackage } from "./core.ts";
 import { verifyTwitchPackage } from "./twitch.ts";
 import { verifyYouTubePackage } from "./youtube.ts";

@@ -15,7 +15,8 @@ export const verifyCorePackage = async (): Promise<VerifyResult[]> => {
 
     await verify("Client creation", () => {
       const client = core.UnifiedClient.create();
-      if (!client) throw new Error("UnifiedClient.create() returned falsy");
+      if (typeof client?.listBroadcasts !== "function")
+        throw new Error("UnifiedClient.create() did not return a valid client");
     }),
 
     await verify("Error instanceof", () => {

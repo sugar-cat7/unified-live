@@ -21,6 +21,8 @@ export const verifyYouTubePackage = async (): Promise<VerifyResult[]> => {
 
     await verify("Error instanceof", () => {
       const err = new core.RateLimitError("youtube");
+      if (!(err instanceof core.RateLimitError))
+        throw new Error("RateLimitError is not instanceof RateLimitError");
       if (!(err instanceof core.UnifiedLiveError))
         throw new Error("RateLimitError is not instanceof UnifiedLiveError");
     }),
@@ -33,6 +35,9 @@ export const verifyYouTubePackage = async (): Promise<VerifyResult[]> => {
         url: "https://youtube.com/channel/UC12345",
       });
       if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+
+      const invalid = core.channelSchema.safeParse({ id: 123 });
+      if (invalid.success) throw new Error("Zod should reject invalid input");
     }),
   ];
 };

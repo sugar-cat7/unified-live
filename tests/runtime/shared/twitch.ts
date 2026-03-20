@@ -22,6 +22,8 @@ export const verifyTwitchPackage = async (): Promise<VerifyResult[]> => {
 
     await verify("Error instanceof", () => {
       const err = new core.AuthenticationError("twitch");
+      if (!(err instanceof core.AuthenticationError))
+        throw new Error("AuthenticationError is not instanceof AuthenticationError");
       if (!(err instanceof core.UnifiedLiveError))
         throw new Error("AuthenticationError is not instanceof UnifiedLiveError");
     }),
@@ -34,6 +36,9 @@ export const verifyTwitchPackage = async (): Promise<VerifyResult[]> => {
         url: "https://twitch.tv/testuser",
       });
       if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+
+      const invalid = core.channelSchema.safeParse({ id: 123 });
+      if (invalid.success) throw new Error("Zod should reject invalid input");
     }),
   ];
 };

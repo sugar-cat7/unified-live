@@ -18,8 +18,16 @@ export const collectResults = async (): Promise<{
   const results: PackageResult[] = [];
 
   for (const v of verifiers) {
-    const checks = await v.verify();
-    results.push({ packageName: v.packageName, checks });
+    try {
+      const checks = await v.verify();
+      results.push({ packageName: v.packageName, checks });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      results.push({
+        packageName: v.packageName,
+        checks: [{ name: "Package load", success: false, error: msg }],
+      });
+    }
   }
 
   const ok = results.every((r) => r.checks.every((c) => c.success));

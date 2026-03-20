@@ -22,6 +22,8 @@ export const verifyTwitCastingPackage = async (): Promise<VerifyResult[]> => {
 
     await verify("Error instanceof", () => {
       const err = new core.NetworkError("twitcasting", "NETWORK_TIMEOUT");
+      if (!(err instanceof core.NetworkError))
+        throw new Error("NetworkError is not instanceof NetworkError");
       if (!(err instanceof core.UnifiedLiveError))
         throw new Error("NetworkError is not instanceof UnifiedLiveError");
     }),
@@ -34,6 +36,9 @@ export const verifyTwitCastingPackage = async (): Promise<VerifyResult[]> => {
         url: "https://twitcasting.tv/tc-user",
       });
       if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+
+      const invalid = core.channelSchema.safeParse({ id: 123 });
+      if (invalid.success) throw new Error("Zod should reject invalid input");
     }),
   ];
 };

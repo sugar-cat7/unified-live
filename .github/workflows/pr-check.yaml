@@ -123,6 +123,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   runtime-compat:
+    name: "Runtime compat (${{ matrix.runtime }})"
     needs: [setup]
     strategy:
       fail-fast: false
@@ -131,7 +132,7 @@ jobs:
           - runtime: node
             command: npx tsx tests/runtime/node/run.ts
           - runtime: deno
-            command: deno run --allow-all --node-modules-dir tests/runtime/deno/run.ts
+            command: deno run --allow-all tests/runtime/deno/run.ts
           - runtime: bun
             command: bun run tests/runtime/bun/run.ts
           - runtime: workerd
@@ -167,7 +168,7 @@ jobs:
         if: matrix.runtime == 'bun'
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: "1.2"
 
       - name: Run ${{ matrix.runtime }} runtime compat test
         run: ${{ matrix.command }}

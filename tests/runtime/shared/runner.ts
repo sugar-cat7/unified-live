@@ -26,7 +26,9 @@ export const collectResults = async (): Promise<{
   return { ok, results };
 };
 
-const formatResults = (results: PackageResult[]): string => {
+export const runAll = async (): Promise<boolean> => {
+  const { ok, results } = await collectResults();
+
   const lines: string[] = [];
   for (const r of results) {
     lines.push(`[${r.packageName}]`);
@@ -36,11 +38,7 @@ const formatResults = (results: PackageResult[]): string => {
       lines.push(`  [${status}] ${c.name}${detail}`);
     }
   }
-  return lines.join("\n");
-};
+  console.log(lines.join("\n"));
 
-export const runAll = async (): Promise<boolean> => {
-  const { ok, results } = await collectResults();
-  console.log(formatResults(results));
   return ok;
 };

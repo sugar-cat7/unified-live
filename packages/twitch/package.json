@@ -1,10 +1,6 @@
 {
   "name": "@unified-live/twitch",
   "version": "0.1.0",
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
   "files": [
     "dist"
   ],
@@ -22,6 +18,10 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown",

@@ -18,7 +18,7 @@ import type {
 
 /** @category Plugins */
 export type PluginCapabilities = {
-  /** Whether the plugin supports broadcast (live stream) detection */
+  /** Whether the plugin supports broadcast detection */
   supportsBroadcasts: boolean;
   /** Whether the plugin supports archive resolution (broadcast -> archive) */
   supportsArchiveResolution: boolean;

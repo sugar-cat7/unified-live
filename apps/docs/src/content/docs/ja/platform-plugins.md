@@ -47,12 +47,12 @@ const youtube = createYouTubePlugin({
 
 YouTube はコストベースの日次クォータを使用します（デフォルト: 10,000 ユニット）。操作ごとにコストが異なります:
 
-| 操作                                                            | コスト       |
-| --------------------------------------------------------------- | ------------ |
-| `getContent`（videos.list）                                     | 1 ユニット   |
-| `getChannel`（channels.list）                                   | 1 ユニット   |
-| `getVideos`（channels.list + playlistItems.list + videos.list） | 3 ユニット   |
-| `getLiveStreams`（search.list + videos.list）                   | 101 ユニット |
+| 操作                                                                 | コスト       |
+| -------------------------------------------------------------------- | ------------ |
+| `getContent`（videos.list）                                          | 1 ユニット   |
+| `getChannel`（channels.list）                                        | 1 ユニット   |
+| `listArchives`（channels.list + playlistItems.list + videos.list）   | 3 ユニット   |
+| `listBroadcasts`（search.list + videos.list）                        | 101 ユニット |
 
 SDK はクォータ消費をローカルで追跡し、上限に達すると `QuotaExhaustedError` をスローします。
 
@@ -163,5 +163,5 @@ using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: ".
 ## 次のステップ
 
 - [エラーハンドリング](../error-handling/) — API エラーの処理
-- [ページネーション](../pagination/) — 動画リストの取得
+- [ページネーション](../pagination/) — アーカイブリストの取得
 - [プラグインの作成](../creating-a-plugin/) — 独自プラグインの構築

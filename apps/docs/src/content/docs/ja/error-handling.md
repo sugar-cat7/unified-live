@@ -36,7 +36,7 @@ import {
 
 ```ts
 try {
-  const content = await client.getContent(url);
+  const content = await client.resolve(url);
   console.log(content.title);
 } catch (error) {
   if (error instanceof NotFoundError) {
@@ -134,7 +134,7 @@ YouTube のクォータエラーは特別です。日次クォータ（デフォ
 
 ```ts
 try {
-  const streams = await client.getLiveStreams("youtube", channelId);
+  const streams = await client.listBroadcasts("youtube", channelId);
 } catch (error) {
   if (error instanceof QuotaExhaustedError) {
     const { consumed, limit, resetsAt } = error.details;
@@ -145,5 +145,5 @@ try {
 
 ## 次のステップ
 
-- [ページネーション](../pagination/) — 動画リストのページング
+- [ページネーション](../pagination/) — アーカイブリストのページング
 - [応用](../advanced/) — OpenTelemetry やプラグインの直接アクセス

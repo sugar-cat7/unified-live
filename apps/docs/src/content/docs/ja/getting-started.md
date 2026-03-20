@@ -34,11 +34,11 @@ using client = UnifiedClient.create({
 });
 
 // 2. URL からコンテンツを取得 — プラットフォームは自動判別
-const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
 console.log(content.title); // 動画タイトル
 console.log(content.platform); // "youtube"
-console.log(content.type); // "live" または "video"
+console.log(content.type); // "broadcast" または "archive"
 ```
 
 :::tip[`using` について]

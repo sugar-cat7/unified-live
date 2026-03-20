@@ -45,14 +45,14 @@ const client = UnifiedClient.create({
 });
 
 // 1つのインターフェース — SDKが認証、レート制限、データ正規化を処理
-const yt = await client.getContent("https://www.youtube.com/watch?v=abc123");
-const tw = await client.getContent("https://www.twitch.tv/videos/123456");
-const tc = await client.getContent("https://twitcasting.tv/user/movie/789");
+const yt = await client.resolve("https://www.youtube.com/watch?v=abc123");
+const tw = await client.resolve("https://www.twitch.tv/videos/123456");
+const tc = await client.resolve("https://twitcasting.tv/user/movie/789");
 
 // すべて同じ Content 型で返される
 console.log(yt.title); // string
 console.log(tw.platform); // "twitch"
-console.log(tc.type); // "live" | "video"
+console.log(tc.type); // "broadcast" | "archive"
 ```
 
 ### SDK が処理すること
@@ -62,7 +62,7 @@ console.log(tc.type); // "live" | "video"
 | **認証**               | APIキー注入（YouTube）、OAuth2自動リフレッシュ（Twitch）、Basic Auth エンコード（TwitCasting）                                             |
 | **レート制限**         | `QuotaExhaustedError` 付きローカルクォータ追跡（YouTube）、ヘッダー解析付きトークンバケット（Twitch）、固定トークンバケット（TwitCasting） |
 | **リトライ**           | 429/5xx に対する指数バックオフ、401 でのトークンリフレッシュ                                                                               |
-| **データ正規化**       | すべてのプラットフォームを統一された `Content`、`Channel`、`LiveStream`、`Video` 型にマッピング                                            |
+| **データ正規化**       | すべてのプラットフォームを統一された `Content`、`Channel`、`Broadcast`、`Archive` 型にマッピング                                           |
 | **URL解決**            | URLからプラットフォームを自動検出、プラットフォーム毎に複数のURL形式をサポート                                                             |
 | **オブザーバビリティ** | すべてのAPIコールに対するOpenTelemetryスパンとメトリクス（OTel未設定時はオーバーヘッドゼロ）                                               |
 
@@ -73,7 +73,7 @@ console.log(tc.type); // "live" | "video"
 | URL からコンテンツ取得              |   ✅    |   ✅   |     ✅      |
 | ID からコンテンツ取得               |   ✅    |   ✅   |     ✅      |
 | ライブ配信一覧                      |   ✅    |   ✅   |     ✅      |
-| 動画一覧（ページネーション）        |   ✅    |   ✅   |     ✅      |
+| アーカイブ一覧（ページネーション）  |   ✅    |   ✅   |     ✅      |
 | チャンネル情報取得                  |   ✅    |   ✅   |     ✅      |
 | アーカイブ解決                      |   ✅    |   ✅   |     ✅      |
 | OpenTelemetry トレース & メトリクス |   ✅    |   ✅   |     ✅      |

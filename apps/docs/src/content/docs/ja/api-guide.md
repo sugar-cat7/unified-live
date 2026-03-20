@@ -26,15 +26,15 @@ SDK のメインエントリーポイント。
 
 すべてのプラットフォームで共通のデータ型。
 
-| シンボル           | 日本語名       | 説明                                               |
-| ------------------ | -------------- | -------------------------------------------------- |
-| `Content`          | コンテンツ     | ライブ配信または動画の判別共用体                   |
-| `LiveStream`       | ライブ配信     | 現在配信中のストリーム (`type: "live"`)            |
-| `Video`            | 動画           | アーカイブまたはアップロード動画 (`type: "video"`) |
-| `Channel`          | チャンネル     | 配信チャンネルまたはユーザーアカウント             |
-| `Page<T>`          | ページ         | カーソルベースのページネーションラッパー           |
-| `ResolvedUrl`      | 解決済み URL   | URL からプラットフォームとリソースを特定した結果   |
-| `BroadcastSession` | 配信セッション | ライブ配信とアーカイブ動画を関連付ける             |
+| シンボル             | 日本語名           | 説明                                                     |
+| -------------------- | ------------------ | -------------------------------------------------------- |
+| `Content`            | コンテンツ         | 配信またはアーカイブの判別共用体                         |
+| `Broadcast`          | ライブ配信         | 現在配信中のストリーム (`type: "broadcast"`)             |
+| `Archive`            | アーカイブ         | アーカイブまたはアップロード動画 (`type: "archive"`)     |
+| `Channel`            | チャンネル         | 配信チャンネルまたはユーザーアカウント                   |
+| `Page<T>`            | ページ             | カーソルベースのページネーションラッパー                 |
+| `ResolvedUrl`        | 解決済み URL       | URL からプラットフォームとリソースを特定した結果         |
+| `BroadcastSession`   | 配信セッション     | ライブ配信とアーカイブ動画を関連付ける                   |
 
 ### Errors
 
@@ -95,8 +95,8 @@ SDK が投げるエラー階層。
 ```ts
 import { Content } from "@unified-live/core";
 
-if (Content.isLive(content)) {
-  // content は LiveStream 型に絞り込まれる
+if (Content.isBroadcast(content)) {
+  // content は Broadcast 型に絞り込まれる
 }
 ```
 
@@ -106,7 +106,7 @@ if (Content.isLive(content)) {
 import { UnifiedLiveError, RateLimitError } from "@unified-live/core";
 
 try {
-  const content = await client.getContent(url);
+  const content = await client.resolve(url);
 } catch (error) {
   if (error instanceof RateLimitError) {
     // レート制限に対応

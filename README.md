@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/sugar-cat7/unified-live/actions/workflows/pr-check.yaml"><img src="https://github.com/sugar-cat7/unified-live/actions/workflows/pr-check.yaml/badge.svg" alt="CI" /></a>
+  <a href="https://app.codecov.io/github/sugar-cat7/unified-live"><img src="https://codecov.io/github/sugar-cat7/unified-live/graph/badge.svg" alt="codecov" /></a>
   <a href="https://github.com/sugar-cat7/unified-live/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue.svg" alt="TypeScript" /></a>
 </p>

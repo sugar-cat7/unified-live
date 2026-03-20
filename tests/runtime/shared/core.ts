@@ -34,7 +34,8 @@ export const verifyCorePackage = async (): Promise<VerifyResult[]> => {
         width: 320,
         height: 180,
       });
-      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
+      if (!result.success)
+        throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
 
       const invalid = core.thumbnailSchema.safeParse({ url: 123 });
       if (invalid.success) throw new Error("Zod should reject invalid input");

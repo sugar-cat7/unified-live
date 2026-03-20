@@ -35,7 +35,8 @@ export const verifyTwitCastingPackage = async (): Promise<VerifyResult[]> => {
         name: "Test User",
         url: "https://twitcasting.tv/tc-user",
       });
-      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
+      if (!result.success)
+        throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
 
       const invalid = core.channelSchema.safeParse({ id: 123 });
       if (invalid.success) throw new Error("Zod should reject invalid input");

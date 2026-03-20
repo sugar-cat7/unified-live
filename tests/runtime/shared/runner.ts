@@ -34,9 +34,7 @@ export const collectResults = async (): Promise<{
     } catch (e: unknown) {
       // Catches module-level import failures (before any verify() calls).
       // verify() itself never rejects — it converts errors to VerifyResult.
-      const msg = e instanceof Error
-        ? `${e.message}${e.stack ? `\n${e.stack}` : ""}`
-        : String(e);
+      const msg = e instanceof Error ? `${e.message}${e.stack ? `\n${e.stack}` : ""}` : String(e);
       results.push({
         packageName: v.packageName,
         checks: [{ name: "Package load", success: false, error: msg }],

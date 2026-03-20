@@ -34,7 +34,8 @@ export const verifyYouTubePackage = async (): Promise<VerifyResult[]> => {
         name: "Test Channel",
         url: "https://youtube.com/channel/UC12345",
       });
-      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
+      if (!result.success)
+        throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
 
       const invalid = core.channelSchema.safeParse({ id: 123 });
       if (invalid.success) throw new Error("Zod should reject invalid input");

@@ -131,7 +131,7 @@ describe("toContent", () => {
     expect(content.languageCode).toBe("en");
   });
 
-  it("maps upcoming broadcast to ScheduledStream", () => {
+  it("maps upcoming broadcast to ScheduledBroadcast", () => {
     const result = toContent(upcomingVideoResource);
     expect(result.type).toBe("scheduled");
     expect(result.description).toBe("A test video description");

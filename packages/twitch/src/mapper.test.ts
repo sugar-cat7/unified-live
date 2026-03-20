@@ -70,7 +70,7 @@ const mockClip: TwitchClip = {
 };
 
 describe("toLive", () => {
-  it("converts a Twitch stream to LiveStream", () => {
+  it("converts a Twitch stream to Broadcast", () => {
     const result = toLive(mockStream);
 
     expect(result.type).toBe("broadcast");
@@ -176,7 +176,7 @@ describe("toSearchLive", () => {
     thumbnail_url: "https://img.tv/ch1.jpg",
   };
 
-  it("maps search channel to LiveStream", () => {
+  it("maps search channel to Broadcast", () => {
     const result = toSearchLive(mockSearchChannel);
     expect(result.type).toBe("broadcast");
     expect(result.id).toBe("livecaster");

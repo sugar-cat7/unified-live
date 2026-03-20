@@ -50,7 +50,7 @@ const mockArchiveMovie: TCMovie = {
 };
 
 describe("toLive", () => {
-  it("converts a live TwitCasting movie to LiveStream", () => {
+  it("converts a live TwitCasting movie to Broadcast", () => {
     const result = toLive(mockLiveMovie, mockUser);
 
     expect(result.type).toBe("broadcast");
@@ -153,7 +153,7 @@ describe("toVideo", () => {
 });
 
 describe("toContent", () => {
-  it("returns LiveStream for live movies", () => {
+  it("returns Broadcast for live movies", () => {
     const result = toContent(mockLiveMovie, mockUser);
     expect(result.type).toBe("broadcast");
   });

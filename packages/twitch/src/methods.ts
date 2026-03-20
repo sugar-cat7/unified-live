@@ -293,7 +293,7 @@ export const twitchBatchGetBroadcasts = async (
  *
  * @param rest - REST manager for API requests
  * @param options - search options (query, status, limit, cursor)
- * @returns paginated list of Content items (LiveStream for live searches, empty for other statuses)
+ * @returns paginated list of Content items (Broadcast for live searches, empty for other statuses)
  * @precondition options.query should be provided for meaningful results
  * @postcondition returns Page with items mapped from Twitch search channel resources
  * @idempotency Safe — read-only API calls

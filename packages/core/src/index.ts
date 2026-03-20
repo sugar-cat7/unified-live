@@ -47,18 +47,24 @@ export type { ErrResult, OkResult, Result } from "./result";
 export { Err, Ok, unwrap, wrap } from "./result";
 
 // --- Telemetry ---
-export { getTracer, SpanAttributes } from "./telemetry/traces";
+export { getTracer, SpanAttributes, withSpan } from "./telemetry/traces";
 export { getMeter, MetricNames } from "./telemetry/metrics";
+export type { Logger, LoggerProvider, LogLevel } from "./telemetry/logger";
+export { getLogger, setLoggerProvider } from "./telemetry/logger";
 
 // --- Types ---
-export type { ResolvedUrl, SearchOptions } from "./types";
+export type { ClipOptions, KnownPlatform, ResolvedUrl, SearchOptions } from "./types";
 export {
   BatchResult,
   Channel,
   channelRefSchema,
   channelSchema,
+  Clip,
+  clipOptionsSchema,
+  clipSchema,
   Content,
   contentSchema,
+  knownPlatforms,
   LiveStream,
   liveStreamSchema,
   Page,

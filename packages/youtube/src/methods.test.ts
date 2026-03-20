@@ -98,6 +98,22 @@ describe("youtubeGetContent", () => {
 });
 
 describe("youtubeGetChannel", () => {
+  it("requests snippet,contentDetails,statistics parts", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [sampleChannelItem] },
+    });
+
+    await youtubeGetChannel(rest, "UCtest");
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ part: "snippet,contentDetails,statistics" }),
+      }),
+    );
+  });
+
   it.each([
     { id: "UCtest", expectedKey: "id", desc: "channel ID (UC prefix)" },
     { id: "@handle", expectedKey: "forHandle", desc: "handle (@ prefix)" },
@@ -454,6 +470,36 @@ describe("youtubeSearch", () => {
     expect(rest.request).toHaveBeenCalledWith(
       expect.objectContaining({
         query: expect.objectContaining({ channelId: "UC123", eventType: "live" }),
+      }),
+    );
+  });
+
+  it("passes safeSearch to YouTube search API", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [] },
+    });
+    await youtubeSearch(rest, { query: "test", safeSearch: "strict" });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ q: "test", safeSearch: "strict" }),
+      }),
+    );
+  });
+
+  it("passes languageCode as relevanceLanguage to YouTube search API", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [] },
+    });
+    await youtubeSearch(rest, { query: "test", languageCode: "ja" });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ q: "test", relevanceLanguage: "ja" }),
       }),
     );
   });

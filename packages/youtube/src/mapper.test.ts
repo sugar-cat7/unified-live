@@ -107,12 +107,82 @@ describe("toContent", () => {
     }
   });
 
+  it("maps languageCode from defaultAudioLanguage on live stream", () => {
+    const resource: YTVideoResource = {
+      ...liveVideoResource,
+      snippet: {
+        ...liveVideoResource.snippet,
+        defaultAudioLanguage: "ja",
+      },
+    };
+    const content = toContent(resource);
+    expect(content.languageCode).toBe("ja");
+  });
+
+  it("maps languageCode from defaultAudioLanguage on scheduled stream", () => {
+    const resource: YTVideoResource = {
+      ...upcomingVideoResource,
+      snippet: {
+        ...upcomingVideoResource.snippet,
+        defaultAudioLanguage: "en",
+      },
+    };
+    const content = toContent(resource);
+    expect(content.languageCode).toBe("en");
+  });
+
   it("maps upcoming broadcast to ScheduledStream", () => {
     const result = toContent(upcomingVideoResource);
     expect(result.type).toBe("scheduled");
     expect(result.description).toBe("A test video description");
     expect(result.tags).toEqual(["test", "video"]);
     expect((result as ScheduledStream).scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
+  });
+
+  it("maps startedAt/endedAt on video from liveStreamingDetails", () => {
+    const resource: YTVideoResource = {
+      ...baseVideoResource,
+      liveStreamingDetails: {
+        actualStartTime: "2024-01-01T10:00:00Z",
+        actualEndTime: "2024-01-01T12:00:00Z",
+      },
+    };
+    const content = toContent(resource);
+
+    if (content.type === "video") {
+      expect(content.startedAt).toEqual(new Date("2024-01-01T10:00:00Z"));
+      expect(content.endedAt).toEqual(new Date("2024-01-01T12:00:00Z"));
+    } else {
+      expect.unreachable("Should be video");
+    }
+  });
+
+  it("leaves startedAt/endedAt undefined on video without liveStreamingDetails", () => {
+    const content = toContent(baseVideoResource);
+
+    if (content.type === "video") {
+      expect(content.startedAt).toBeUndefined();
+      expect(content.endedAt).toBeUndefined();
+    } else {
+      expect.unreachable("Should be video");
+    }
+  });
+
+  it("maps languageCode from defaultAudioLanguage on video", () => {
+    const resource: YTVideoResource = {
+      ...baseVideoResource,
+      snippet: {
+        ...baseVideoResource.snippet,
+        defaultAudioLanguage: "ja",
+      },
+    };
+    const content = toContent(resource);
+    expect(content.languageCode).toBe("ja");
+  });
+
+  it("leaves languageCode undefined when defaultAudioLanguage is missing", () => {
+    const content = toContent(baseVideoResource);
+    expect(content.languageCode).toBeUndefined();
   });
 
   it("defaults description to empty string and tags to empty array when missing", () => {
@@ -239,6 +309,30 @@ describe("toChannel", () => {
       width: 800,
       height: 800,
     });
+  });
+
+  it("maps description, subscriberCount, and publishedAt from statistics and snippet", () => {
+    const resource: YTChannelResource = {
+      ...channelResource,
+      snippet: {
+        ...channelResource.snippet,
+        description: "A great channel",
+        publishedAt: "2020-06-15T00:00:00Z",
+      },
+      statistics: {
+        subscriberCount: "123456",
+      },
+    };
+    const channel = toChannel(resource);
+    expect(channel.description).toBe("A great channel");
+    expect(channel.subscriberCount).toBe(123456);
+    expect(channel.publishedAt).toEqual(new Date("2020-06-15T00:00:00Z"));
+  });
+
+  it("leaves subscriberCount/publishedAt undefined when not present", () => {
+    const channel = toChannel(channelResource);
+    expect(channel.subscriberCount).toBeUndefined();
+    expect(channel.publishedAt).toBeUndefined();
   });
 
   it.each([

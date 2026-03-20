@@ -35,3 +35,14 @@ jobs:
 
       - name: Check bundle size
         run: npx tsx scripts/check-bundle-size.ts | tee "$GITHUB_STEP_SUMMARY"
+
+      - name: Save baseline JSON
+        run: npx tsx scripts/check-bundle-size.ts --json > bundle-size-baseline.json
+
+      - name: Upload baseline artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-size-baseline
+          path: bundle-size-baseline.json
+          retention-days: 90
+          overwrite: true

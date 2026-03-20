@@ -1,5 +1,5 @@
 import type { Tracer, TracerProvider } from "@opentelemetry/api";
-import { trace } from "@opentelemetry/api";
+import { SpanStatusCode, trace } from "@opentelemetry/api";
 
 declare const __SDK_VERSION__: string;
 
@@ -59,3 +59,39 @@ export const SpanAttributes = {
   OPERATION: "unified_live.operation",
   BATCH_SIZE: "unified_live.batch.size",
 } as const;
+
+/**
+ * Wrap an async operation in an OTel span with attributes and automatic error recording.
+ * @param tracer - a valid OTel Tracer instance
+ * @param name - the span name
+ * @param attrs - key-value attributes to set on the span
+ * @param fn - async function to execute within the span
+ * @returns the result of fn
+ * @precondition tracer is a valid OTel Tracer instance
+ * @postcondition span is ended after fn completes or throws
+ * @idempotency Safe — creates a new span per call
+ * @category Observability
+ */
+export const withSpan = async <T>(
+  tracer: Tracer,
+  name: string,
+  attrs: Record<string, string | number | boolean>,
+  fn: () => Promise<T>,
+): Promise<T> => {
+  return tracer.startActiveSpan(name, async (span) => {
+    for (const [k, v] of Object.entries(attrs)) span.setAttribute(k, v);
+    try {
+      const result = await fn();
+      span.end();
+      return result;
+    } catch (error) {
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      span.recordException(error instanceof Error ? error : new Error(String(error)));
+      span.end();
+      throw error;
+    }
+  });
+};

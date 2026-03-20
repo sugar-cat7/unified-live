@@ -35,6 +35,7 @@ const contentBaseSchema = z.object({
   channel: channelRefSchema,
   sessionId: z.string().optional(),
   raw: z.unknown(),
+  languageCode: z.string().optional(),
 });
 
 /**
@@ -69,6 +70,8 @@ export const videoSchema = contentBaseSchema.extend({
   duration: z.number().check(z.nonnegative()),
   viewCount: z.int().check(z.nonnegative()),
   publishedAt: z.date(),
+  startedAt: z.date().optional(),
+  endedAt: z.date().optional(),
 });
 
 /**
@@ -99,7 +102,34 @@ export const scheduledStreamSchema = contentBaseSchema.extend({
 export type ScheduledStream = z.infer<typeof scheduledStreamSchema>;
 
 /**
+ * Zod schema for a short clip extracted from a stream or video.
+ * Validates duration (non-negative), view count, and creation date.
+ *
+ * @category Types
+ */
+export const clipSchema = contentBaseSchema.extend({
+  type: z.literal("clip"),
+  duration: z.number().check(z.nonnegative()),
+  viewCount: z.int().check(z.nonnegative()),
+  createdAt: z.date(),
+  clipCreator: z.object({ id: z.string(), name: z.string() }).optional(),
+  embedUrl: z.url().optional(),
+  vodOffset: z.int().optional(),
+  isFeatured: z.boolean().optional(),
+  gameId: z.string().optional(),
+});
+
+/**
+ * A short clip extracted from a stream or video on any supported platform.
+ * Discriminated by `type: "clip"`. Use `Content.isClip()` to narrow from Content.
+ *
+ * @category Types
+ */
+export type Clip = z.infer<typeof clipSchema>;
+
+/**
  * Discriminated union schema for content. Discriminates on `type` field.
+ * Covers live streams, videos, scheduled streams, and clips.
  *
  * @category Types
  */
@@ -107,11 +137,12 @@ export const contentSchema = z.discriminatedUnion("type", [
   liveStreamSchema,
   videoSchema,
   scheduledStreamSchema,
+  clipSchema,
 ]);
 
 /**
- * A piece of content (live stream, video, or scheduled stream) on any supported platform.
- * Use `Content.isLive()` / `Content.isVideo()` / `Content.isScheduled()` to narrow.
+ * A piece of content (live stream, video, scheduled stream, or clip) on any supported platform.
+ * Use `Content.isLive()` / `Content.isVideo()` / `Content.isScheduled()` / `Content.isClip()` to narrow.
  *
  * @category Types
  */
@@ -128,6 +159,9 @@ export const channelSchema = z.object({
   name: z.string(),
   url: z.url(),
   thumbnail: thumbnailSchema.optional(),
+  description: z.string().optional(),
+  subscriberCount: z.int().check(z.nonnegative()).optional(),
+  publishedAt: z.date().optional(),
 });
 
 /**
@@ -256,9 +290,11 @@ export const searchOptionsSchema = z.object({
   query: z.string().optional(),
   status: z.enum(["live", "upcoming", "ended"]).optional(),
   channelId: z.string().check(z.minLength(1)).optional(),
-  order: z.enum(["relevance", "date"]).optional(),
+  order: z.enum(["relevance", "date", "rating", "title", "videoCount", "viewCount"]).optional(),
   limit: z.int().check(z.positive(), z.lte(100)).optional(),
   cursor: z.string().optional(),
+  safeSearch: z.enum(["moderate", "none", "strict"]).optional(),
+  languageCode: z.string().optional(),
 });
 
 /**
@@ -269,6 +305,41 @@ export const searchOptionsSchema = z.object({
  * @category Types
  */
 export type SearchOptions = z.infer<typeof searchOptionsSchema>;
+
+/**
+ * Zod schema for clip query options.
+ * All fields are optional. `limit` is capped at 100.
+ *
+ * @category Types
+ */
+export const clipOptionsSchema = z.object({
+  startedAt: z.date().optional(),
+  endedAt: z.date().optional(),
+  limit: z.int().check(z.positive(), z.lte(100)).optional(),
+  cursor: z.string().optional(),
+  isFeatured: z.boolean().optional(),
+});
+
+/**
+ * Options for clip retrieval operations.
+ *
+ * @category Types
+ */
+export type ClipOptions = z.infer<typeof clipOptionsSchema>;
+
+/**
+ * Enum schema for known supported platforms.
+ *
+ * @category Types
+ */
+export const knownPlatforms = z.enum(["youtube", "twitch", "twitcasting"]);
+
+/**
+ * A known supported platform identifier.
+ *
+ * @category Types
+ */
+export type KnownPlatform = z.infer<typeof knownPlatforms>;
 
 /**
  * Zod schema for a resolved platform URL.
@@ -390,6 +461,30 @@ export const Channel = {
 } as const;
 
 /**
+ * Companion object for the Clip type.
+ * Provides lightweight structural type guard.
+ *
+ * @example
+ * ```ts
+ * if (Clip.is(value)) { ... }
+ * ```
+ * @category Types
+ */
+export const Clip = {
+  /**
+   * Structural type guard for Clip.
+   *
+   * @param value - the value to check
+   * @returns true if value has the Clip shape (type === "clip")
+   */
+  is: (value: unknown): value is Clip => {
+    if (typeof value !== "object" || value === null) return false;
+    const obj = value as Record<string, unknown>;
+    return obj.type === "clip" && typeof obj.id === "string" && typeof obj.platform === "string";
+  },
+} as const;
+
+/**
  * Companion object for the BroadcastSession type.
  * Provides lightweight structural type guard.
  *
@@ -417,11 +512,12 @@ export const BroadcastSession = {
  * Type guard namespace for Content discriminated union.
  *
  * @precondition content must be a valid Content value
- * @postcondition narrows to LiveStream, Video, or ScheduledStream
+ * @postcondition narrows to LiveStream, Video, ScheduledStream, or Clip
  * @category Types
  */
 export const Content = {
   isLive: (content: Content): content is LiveStream => content.type === "live",
   isScheduled: (content: Content): content is ScheduledStream => content.type === "scheduled",
   isVideo: (content: Content): content is Video => content.type === "video",
+  isClip: (content: Content): content is Clip => content.type === "clip",
 } as const;

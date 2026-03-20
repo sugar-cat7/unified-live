@@ -1,7 +1,13 @@
 import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
-import type { TwitchSearchChannel, TwitchStream, TwitchUser, TwitchVideo } from "./mapper";
-import { parseDuration, toLive, toChannel, toSearchLive, toVideo } from "./mapper";
+import type {
+  TwitchClip,
+  TwitchSearchChannel,
+  TwitchStream,
+  TwitchUser,
+  TwitchVideo,
+} from "./mapper";
+import { parseDuration, toClip, toLive, toChannel, toSearchLive, toVideo } from "./mapper";
 
 const mockStream: TwitchStream = {
   id: "stream123",
@@ -15,6 +21,7 @@ const mockStream: TwitchStream = {
   thumbnail_url:
     "https://static-cdn.jtvnw.net/previews-ttv/live_user_testuser-{width}x{height}.jpg",
   type: "live",
+  language: "en",
 };
 
 const mockVideo: TwitchVideo = {
@@ -38,6 +45,28 @@ const mockUser: TwitchUser = {
   login: "testuser",
   display_name: "TestUser",
   profile_image_url: "https://static-cdn.jtvnw.net/user-default.png",
+  description: "I am a test user",
+  created_at: "2020-01-15T10:00:00Z",
+};
+
+const mockClip: TwitchClip = {
+  id: "clip123",
+  url: "https://clips.twitch.tv/AwesomeClip",
+  embed_url: "https://clips.twitch.tv/embed?clip=clip123",
+  broadcaster_id: "user456",
+  broadcaster_name: "TestUser",
+  creator_id: "creator789",
+  creator_name: "ClipCreator",
+  video_id: "v789",
+  game_id: "game001",
+  language: "en",
+  title: "Amazing Clip",
+  view_count: 9999,
+  created_at: "2026-03-08T14:30:00Z",
+  thumbnail_url: "https://clips-media.twitch.tv/clip123-preview.jpg",
+  duration: 30.5,
+  vod_offset: 3600,
+  is_featured: false,
 };
 
 describe("toLive", () => {
@@ -55,6 +84,7 @@ describe("toLive", () => {
     expect(result.sessionId).toBe("stream123");
     expect(result.channel.id).toBe("user456");
     expect(result.url).toBe("https://www.twitch.tv/testuser");
+    expect(result.languageCode).toBe("en");
   });
 
   it("preserves raw data", () => {
@@ -83,6 +113,7 @@ describe("toVideo", () => {
     expect(result.duration).toBe(10921); // 3*3600 + 2*60 + 1
     expect(result.viewCount).toBe(5678);
     expect(result.sessionId).toBe("stream123");
+    expect(result.startedAt).toEqual(new Date("2026-03-07T12:00:00Z"));
   });
 
   it("uses video id as sessionId when stream_id is null", () => {
@@ -121,6 +152,8 @@ describe("toChannel", () => {
     expect(result.name).toBe("TestUser");
     expect(result.url).toBe("https://www.twitch.tv/testuser");
     expect(result.thumbnail?.url).toBe("https://static-cdn.jtvnw.net/user-default.png");
+    expect(result.description).toBe("I am a test user");
+    expect(result.publishedAt).toEqual(new Date("2020-01-15T10:00:00Z"));
   });
 
   it.each([
@@ -169,6 +202,86 @@ describe("toSearchLive", () => {
     expect(() =>
       toSearchLive({ ...mockSearchChannel, ...override } as TwitchSearchChannel),
     ).toThrow(ParseError);
+  });
+});
+
+describe("toClip", () => {
+  it.each([
+    {
+      desc: "basic clip",
+      clip: mockClip,
+      expected: {
+        id: "clip123",
+        platform: "twitch",
+        type: "clip",
+        title: "Amazing Clip",
+        duration: 30.5,
+        viewCount: 9999,
+        vodOffset: 3600,
+        isFeatured: false,
+        languageCode: "en",
+        gameId: "game001",
+      },
+    },
+    {
+      desc: "null vod_offset maps to undefined",
+      clip: { ...mockClip, vod_offset: null },
+      expected: { vodOffset: undefined },
+    },
+    {
+      desc: "featured clip",
+      clip: { ...mockClip, is_featured: true },
+      expected: { isFeatured: true },
+    },
+    {
+      desc: "different language",
+      clip: { ...mockClip, language: "ja" },
+      expected: { languageCode: "ja" },
+    },
+  ])("converts $desc", ({ clip, expected }) => {
+    const result = toClip(clip);
+    for (const [key, value] of Object.entries(expected)) {
+      expect(result[key as keyof typeof result]).toEqual(value);
+    }
+  });
+
+  it("maps channel from broadcaster fields", () => {
+    const result = toClip(mockClip);
+    expect(result.channel.id).toBe("user456");
+    expect(result.channel.name).toBe("TestUser");
+    expect(result.channel.url).toBe("https://www.twitch.tv/TestUser");
+  });
+
+  it("maps clipCreator from creator fields", () => {
+    const result = toClip(mockClip);
+    expect(result.clipCreator).toEqual({ id: "creator789", name: "ClipCreator" });
+  });
+
+  it("maps thumbnail with clip dimensions", () => {
+    const result = toClip(mockClip);
+    expect(result.thumbnail).toEqual({
+      url: "https://clips-media.twitch.tv/clip123-preview.jpg",
+      width: 480,
+      height: 272,
+    });
+  });
+
+  it("maps createdAt and embedUrl", () => {
+    const result = toClip(mockClip);
+    expect(result.createdAt).toEqual(new Date("2026-03-08T14:30:00Z"));
+    expect(result.embedUrl).toBe("https://clips.twitch.tv/embed?clip=clip123");
+  });
+
+  it("preserves raw data", () => {
+    const result = toClip(mockClip);
+    expect(result.raw).toBe(mockClip);
+  });
+
+  it.each([
+    { desc: "missing clip.id", override: { id: "" } },
+    { desc: "missing clip.broadcaster_id", override: { broadcaster_id: "" } },
+  ])("throws ParseError when $desc", ({ override }) => {
+    expect(() => toClip({ ...mockClip, ...override } as TwitchClip)).toThrow(ParseError);
   });
 });
 

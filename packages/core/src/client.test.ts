@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { UnifiedClient } from "./client";
 import { NotFoundError, PlatformNotFoundError, RateLimitError, ValidationError } from "./errors";
 import type { PlatformPlugin } from "./plugin";
-import type { BatchResult, Channel, Content, Page } from "./types";
+import type { BatchResult, Channel, Clip, Content, Page } from "./types";
 
 const mockContent: Content = {
   id: "test-id",
@@ -29,6 +29,7 @@ const mockCapabilities = {
   supportsBatchContent: false,
   supportsBatchLiveStreams: false,
   supportsSearch: false,
+  supportsClips: false,
 };
 
 const createMockPlugin = (name: string): PlatformPlugin => {
@@ -604,6 +605,266 @@ describe("UnifiedClient OTel integration", () => {
 
     expect(spans[0]!.status?.code).toBe(2); // SpanStatusCode.ERROR
     expect(spans[0]!.ended).toBe(true);
+
+    client[Symbol.dispose]();
+  });
+});
+
+const mockClip: Clip = {
+  id: "clip-1",
+  platform: "test",
+  title: "Test Clip",
+  description: "A clip",
+  tags: [],
+  url: "https://test.com/clip/clip-1",
+  thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
+  channel: { id: "ch1", name: "Channel", url: "https://test.com/channel/ch1" },
+  type: "clip",
+  duration: 30,
+  viewCount: 500,
+  createdAt: new Date("2024-06-01"),
+  raw: {},
+};
+
+describe("UnifiedClient getClips", () => {
+  it("delegates to plugin when supported", async () => {
+    const plugin = createMockPlugin("test");
+    const clipPage: Page<Clip> = { items: [mockClip], hasMore: false };
+    plugin.getClips = vi.fn(async () => clipPage);
+    (plugin as { capabilities: typeof mockCapabilities }).capabilities = {
+      ...mockCapabilities,
+      supportsClips: true,
+    };
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.getClips("test", "ch1", { limit: 10 });
+
+    expect(plugin.getClips).toHaveBeenCalledWith("ch1", { limit: 10 });
+    expect(result).toBe(clipPage);
+
+    client[Symbol.dispose]();
+  });
+
+  it("throws ValidationError when plugin does not support clips", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await expect(client.getClips("test", "ch1")).rejects.toThrow(ValidationError);
+    await expect(client.getClips("test", "ch1")).rejects.toThrow("does not support clips");
+
+    client[Symbol.dispose]();
+  });
+
+  it("throws PlatformNotFoundError for unknown platform", async () => {
+    const client = UnifiedClient.create();
+
+    await expect(client.getClips("unknown", "ch1")).rejects.toThrow(PlatformNotFoundError);
+
+    client[Symbol.dispose]();
+  });
+});
+
+describe("UnifiedClient getClipsByIds", () => {
+  it("delegates to plugin when supported", async () => {
+    const plugin = createMockPlugin("test");
+    const batchResult: BatchResult<Clip> = {
+      values: new Map([["clip-1", mockClip]]),
+      errors: new Map(),
+    };
+    plugin.getClipsByIds = vi.fn(async () => batchResult);
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.getClipsByIds("test", ["clip-1"]);
+
+    expect(plugin.getClipsByIds).toHaveBeenCalledWith(["clip-1"]);
+    expect(result).toBe(batchResult);
+
+    client[Symbol.dispose]();
+  });
+
+  it("returns empty BatchResult for empty array", async () => {
+    const plugin = createMockPlugin("test");
+    plugin.getClipsByIds = vi.fn(async () => ({ values: new Map(), errors: new Map() }));
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.getClipsByIds("test", []);
+
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+    expect(plugin.getClipsByIds).not.toHaveBeenCalled();
+
+    client[Symbol.dispose]();
+  });
+
+  it("throws ValidationError when plugin does not support getClipsByIds", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await expect(client.getClipsByIds("test", ["clip-1"])).rejects.toThrow(ValidationError);
+    await expect(client.getClipsByIds("test", ["clip-1"])).rejects.toThrow(
+      "does not support clip retrieval by IDs",
+    );
+
+    client[Symbol.dispose]();
+  });
+
+  it("deduplicates IDs", async () => {
+    const plugin = createMockPlugin("test");
+    plugin.getClipsByIds = vi.fn(async () => ({ values: new Map(), errors: new Map() }));
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await client.getClipsByIds("test", ["clip-1", "clip-1", "clip-1"]);
+
+    expect(plugin.getClipsByIds).toHaveBeenCalledWith(["clip-1"]);
+
+    client[Symbol.dispose]();
+  });
+});
+
+describe("UnifiedClient getAllLiveStreams", () => {
+  it("fetches from multiple platforms in parallel", async () => {
+    const yt = createMockPlugin("youtube");
+    const tw = createMockPlugin("twitch");
+    const client = UnifiedClient.create({ plugins: [yt, tw] });
+
+    const result = await client.getAllLiveStreams({
+      youtube: ["yt-ch1", "yt-ch2"],
+      twitch: ["tw-ch1"],
+    });
+
+    expect(Object.keys(result)).toHaveLength(2);
+    expect(result.youtube).toBeDefined();
+    expect(result.twitch).toBeDefined();
+    expect(result.youtube!.values.size).toBe(2);
+    expect(result.twitch!.values.size).toBe(1);
+
+    client[Symbol.dispose]();
+  });
+
+  it("returns empty BatchResult for failed platforms", async () => {
+    const yt = createMockPlugin("youtube");
+    // twitch is not registered, so getLiveStreamsBatch will throw PlatformNotFoundError
+    const client = UnifiedClient.create({ plugins: [yt] });
+
+    const result = await client.getAllLiveStreams({
+      youtube: ["yt-ch1"],
+      twitch: ["tw-ch1"],
+    });
+
+    expect(result.youtube).toBeDefined();
+    expect(result.youtube!.values.size).toBe(1);
+    // twitch is not registered, so Promise.allSettled catches the PlatformNotFoundError
+    expect(result.twitch).toBeDefined();
+    expect(result.twitch!.values.size).toBe(0);
+    expect(result.twitch!.errors.size).toBe(0);
+
+    client[Symbol.dispose]();
+  });
+
+  it("returns empty result for empty input", async () => {
+    const client = UnifiedClient.create();
+
+    const result = await client.getAllLiveStreams({});
+
+    expect(Object.keys(result)).toHaveLength(0);
+
+    client[Symbol.dispose]();
+  });
+});
+
+describe("UnifiedClient searchAll", () => {
+  it("searches all searchable plugins", async () => {
+    const yt = createMockPlugin("youtube");
+    const tw = createMockPlugin("twitch");
+    const ytResult: Page<Content> = {
+      items: [{ ...mockContent, platform: "youtube" }],
+      hasMore: false,
+    };
+    const twResult: Page<Content> = {
+      items: [{ ...mockContent, platform: "twitch" }],
+      hasMore: true,
+      cursor: "next",
+    };
+    yt.search = vi.fn(async () => ytResult);
+    tw.search = vi.fn(async () => twResult);
+    (yt as { capabilities: typeof mockCapabilities }).capabilities = {
+      ...mockCapabilities,
+      supportsSearch: true,
+    };
+    (tw as { capabilities: typeof mockCapabilities }).capabilities = {
+      ...mockCapabilities,
+      supportsSearch: true,
+    };
+    const client = UnifiedClient.create({ plugins: [yt, tw] });
+
+    const result = await client.searchAll({ query: "test" });
+
+    expect(Object.keys(result)).toHaveLength(2);
+    expect(result.youtube).toBe(ytResult);
+    expect(result.twitch).toBe(twResult);
+
+    client[Symbol.dispose]();
+  });
+
+  it("returns empty Page for failed platforms", async () => {
+    const yt = createMockPlugin("youtube");
+    const tw = createMockPlugin("twitch");
+    const ytResult: Page<Content> = {
+      items: [{ ...mockContent, platform: "youtube" }],
+      hasMore: false,
+    };
+    yt.search = vi.fn(async () => ytResult);
+    tw.search = vi.fn(async () => {
+      throw new Error("search failed");
+    });
+    (yt as { capabilities: typeof mockCapabilities }).capabilities = {
+      ...mockCapabilities,
+      supportsSearch: true,
+    };
+    (tw as { capabilities: typeof mockCapabilities }).capabilities = {
+      ...mockCapabilities,
+      supportsSearch: true,
+    };
+    const client = UnifiedClient.create({ plugins: [yt, tw] });
+
+    const result = await client.searchAll({ query: "test" });
+
+    expect(result.youtube).toBe(ytResult);
+    expect(result.twitch).toBeDefined();
+    expect(result.twitch!.items).toEqual([]);
+    expect(result.twitch!.hasMore).toBe(false);
+
+    client[Symbol.dispose]();
+  });
+
+  it("skips plugins that do not support search", async () => {
+    const yt = createMockPlugin("youtube");
+    const tw = createMockPlugin("twitch");
+    const ytResult: Page<Content> = { items: [], hasMore: false };
+    yt.search = vi.fn(async () => ytResult);
+    (yt as { capabilities: typeof mockCapabilities }).capabilities = {
+      ...mockCapabilities,
+      supportsSearch: true,
+    };
+    // twitch has no search and supportsSearch=false (default)
+    const client = UnifiedClient.create({ plugins: [yt, tw] });
+
+    const result = await client.searchAll({ query: "test" });
+
+    expect(Object.keys(result)).toHaveLength(1);
+    expect(result.youtube).toBeDefined();
+    expect(result.twitch).toBeUndefined();
+
+    client[Symbol.dispose]();
+  });
+
+  it("returns empty result when no plugins support search", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.searchAll({ query: "test" });
+
+    expect(Object.keys(result)).toHaveLength(0);
 
     client[Symbol.dispose]();
   });

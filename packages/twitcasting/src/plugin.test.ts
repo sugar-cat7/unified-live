@@ -28,6 +28,7 @@ describe("createTwitCastingPlugin", () => {
       supportsBatchContent: false,
       supportsBatchLiveStreams: false,
       supportsSearch: true,
+      supportsClips: false,
     });
     plugin[Symbol.dispose]();
   });

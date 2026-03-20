@@ -1,5 +1,5 @@
 import { ParseError } from "@unified-live/core";
-import type { Channel, LiveStream, Video } from "@unified-live/core";
+import type { Channel, Clip, LiveStream, Video } from "@unified-live/core";
 
 /** Subset of Twitch Helix Stream resource fields actually used. */
 export type TwitchStream = {
@@ -13,6 +13,7 @@ export type TwitchStream = {
   started_at: string;
   thumbnail_url: string;
   type: "live" | "";
+  language: string;
 };
 
 /** Subset of Twitch Helix Video resource fields actually used. */
@@ -38,6 +39,8 @@ export type TwitchUser = {
   login: string;
   display_name: string;
   profile_image_url: string;
+  description: string;
+  created_at: string;
 };
 
 /** Subset of Twitch Helix Search Channel resource fields actually used. */
@@ -50,6 +53,27 @@ export type TwitchSearchChannel = {
   is_live: boolean;
   started_at: string;
   thumbnail_url: string;
+};
+
+/** Subset of Twitch Helix Clip resource fields actually used. */
+export type TwitchClip = {
+  id: string;
+  url: string;
+  embed_url: string;
+  broadcaster_id: string;
+  broadcaster_name: string;
+  creator_id: string;
+  creator_name: string;
+  video_id: string;
+  game_id: string;
+  language: string;
+  title: string;
+  view_count: number;
+  created_at: string;
+  thumbnail_url: string;
+  duration: number;
+  vod_offset: number | null;
+  is_featured: boolean;
 };
 
 /**
@@ -84,6 +108,7 @@ export const toLive = (stream: TwitchStream): LiveStream => {
     type: "live",
     viewerCount: stream.viewer_count,
     startedAt: new Date(stream.started_at),
+    languageCode: stream.language,
     raw: stream,
   } satisfies LiveStream;
 };
@@ -121,6 +146,7 @@ export const toVideo = (video: TwitchVideo): Video => {
     duration: parseDuration(video.duration),
     viewCount: video.view_count,
     publishedAt: new Date(video.published_at),
+    startedAt: new Date(video.created_at),
     raw: video,
   } satisfies Video;
 };
@@ -148,7 +174,51 @@ export const toChannel = (user: TwitchUser): Channel => {
       width: 300,
       height: 300,
     },
+    description: user.description,
+    publishedAt: new Date(user.created_at),
   } satisfies Channel;
+};
+
+/**
+ * Convert a Twitch Clip to a unified Clip.
+ *
+ * @param clip - Twitch clip resource from Helix API
+ * @returns unified Clip
+ * @precondition clip has all required fields (id, broadcaster_id)
+ * @postcondition returns Clip with channel set to broadcaster info
+ */
+export const toClip = (clip: TwitchClip): Clip => {
+  if (!clip.id || !clip.broadcaster_id) {
+    throw new ParseError("twitch", "PARSE_RESPONSE", {
+      message: `Twitch clip resource missing required fields (id, broadcaster_id)${clip.id ? ` for clip ${clip.id}` : ""}`,
+      path: "/clips",
+    });
+  }
+  return {
+    id: clip.id,
+    platform: "twitch",
+    title: clip.title,
+    description: "",
+    tags: [],
+    url: clip.url,
+    thumbnail: { url: clip.thumbnail_url, width: 480, height: 272 },
+    channel: {
+      id: clip.broadcaster_id,
+      name: clip.broadcaster_name,
+      url: `https://www.twitch.tv/${clip.broadcaster_name}`,
+    },
+    type: "clip",
+    duration: clip.duration,
+    viewCount: clip.view_count,
+    createdAt: new Date(clip.created_at),
+    clipCreator: { id: clip.creator_id, name: clip.creator_name },
+    embedUrl: clip.embed_url,
+    vodOffset: clip.vod_offset ?? undefined,
+    isFeatured: clip.is_featured,
+    gameId: clip.game_id,
+    languageCode: clip.language,
+    raw: clip,
+  } satisfies Clip;
 };
 
 /**

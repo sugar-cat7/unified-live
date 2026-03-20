@@ -17,6 +17,8 @@ type TCMovieResponse = {
 
 type TCUserResponse = {
   user: TCUser;
+  supporter_count: number;
+  supporting_count: number;
 };
 
 type TCMoviesResponse = {
@@ -72,7 +74,8 @@ export const twitcastingGetChannel = async (rest: RestManager, id: string): Prom
     throw new NotFoundError("twitcasting", id);
   }
 
-  return toChannel(res.data.user);
+  const channel = toChannel(res.data.user);
+  return { ...channel, subscriberCount: res.data.supporter_count };
 };
 
 /**
@@ -257,7 +260,7 @@ export const twitcastingSearch = async (
 
   const query: Record<string, string> = {
     words: options.query,
-    lang: "ja",
+    lang: options.languageCode ?? "ja",
   };
   if (options.limit) query.limit = String(options.limit);
 

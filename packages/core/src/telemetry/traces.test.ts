@@ -10,7 +10,7 @@ import {
   ATTR_URL_SCHEME,
 } from "@opentelemetry/semantic-conventions";
 import { describe, expect, it, vi } from "vitest";
-import { getTracer, SpanAttributes } from "./traces.js";
+import { getTracer, SpanAttributes, withSpan } from "./traces.js";
 
 describe("getTracer", () => {
   it("returns a tracer object", () => {
@@ -82,6 +82,42 @@ describe("SpanAttributes", () => {
 
   it("has exactly 16 attribute keys", () => {
     expect(Object.keys(SpanAttributes)).toHaveLength(16);
+  });
+});
+
+describe("withSpan", () => {
+  it("creates a span, runs callback, and ends span", async () => {
+    const endSpy = vi.fn();
+    const setAttributeSpy = vi.fn();
+    const mockSpan = {
+      setAttribute: setAttributeSpy,
+      end: endSpy,
+      setStatus: vi.fn(),
+      recordException: vi.fn(),
+    };
+    const mockTracer = { startActiveSpan: vi.fn((_name, fn) => fn(mockSpan)) };
+    const result = await withSpan(mockTracer as any, "test-span", { key: "val" }, async () => 42);
+    expect(result).toBe(42);
+    expect(endSpy).toHaveBeenCalled();
+    expect(setAttributeSpy).toHaveBeenCalledWith("key", "val");
+  });
+
+  it("records exception, sets error status, and re-throws on error", async () => {
+    const mockSpan = {
+      setAttribute: vi.fn(),
+      end: vi.fn(),
+      setStatus: vi.fn(),
+      recordException: vi.fn(),
+    };
+    const mockTracer = { startActiveSpan: vi.fn((_name, fn) => fn(mockSpan)) };
+    await expect(
+      withSpan(mockTracer as any, "fail", {}, async () => {
+        throw new Error("boom");
+      }),
+    ).rejects.toThrow("boom");
+    expect(mockSpan.setStatus).toHaveBeenCalledWith(expect.objectContaining({ code: 2 }));
+    expect(mockSpan.recordException).toHaveBeenCalled();
+    expect(mockSpan.end).toHaveBeenCalled();
   });
 });
 

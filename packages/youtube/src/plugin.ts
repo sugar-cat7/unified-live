@@ -61,6 +61,7 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
         supportsBatchContent: true,
         supportsBatchLiveStreams: false,
         supportsSearch: true,
+        supportsClips: false,
       },
       transformRequest: (req) => ({
         ...req,

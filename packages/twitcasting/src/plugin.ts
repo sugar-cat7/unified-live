@@ -8,8 +8,8 @@ import { createBasicAuthTokenManager } from "./auth";
 import {
   twitcastingGetChannel,
   twitcastingGetContent,
-  twitcastingGetLiveStreams,
-  twitcastingGetVideos,
+  twitcastingListArchives,
+  twitcastingListBroadcasts,
   twitcastingResolveArchive,
   twitcastingSearch,
 } from "./methods";
@@ -63,12 +63,12 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
       }),
       matchUrl: matchTwitCastingUrl,
       capabilities: {
-        supportsLiveStreams: true,
+        supportsBroadcasts: true,
         supportsArchiveResolution: true,
         authModel: "basic",
         rateLimitModel: "tokenBucket",
         supportsBatchContent: false,
-        supportsBatchLiveStreams: false,
+        supportsBatchBroadcasts: false,
         supportsSearch: true,
         supportsClips: false,
       },
@@ -79,8 +79,8 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
     {
       getContent: twitcastingGetContent,
       getChannel: twitcastingGetChannel,
-      getLiveStreams: twitcastingGetLiveStreams,
-      getVideos: twitcastingGetVideos,
+      listBroadcasts: twitcastingListBroadcasts,
+      listArchives: twitcastingListArchives,
       resolveArchive: twitcastingResolveArchive,
       search: twitcastingSearch,
     },

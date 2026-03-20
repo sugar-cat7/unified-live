@@ -107,7 +107,7 @@ export const twitchGetChannel = async (rest: RestManager, id: string): Promise<C
  * @param channelId - Twitch user ID
  * @returns array of active Broadcast objects (empty if not live)
  * @precondition channelId is a valid Twitch user ID
- * @postcondition returns only streams with type "live"
+ * @postcondition returns Broadcast objects (type === "broadcast"); Twitch API is filtered on stream.type === "live"
  */
 export const twitchListBroadcasts = async (
   rest: RestManager,

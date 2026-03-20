@@ -38,7 +38,7 @@ const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXc
 
 console.log(content.title); // Video title
 console.log(content.platform); // "youtube"
-console.log(content.type); // "broadcast" or "archive"
+console.log(content.type); // "broadcast", "scheduled", "archive", or "clip"
 ```
 
 :::tip[About `using`]

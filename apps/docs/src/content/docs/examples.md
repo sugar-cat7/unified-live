@@ -18,7 +18,7 @@ const client = UnifiedClient.create({
 });
 
 const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-console.log(content.title, content.type); // "broadcast" or "archive"
+console.log(content.title, content.type); // e.g. "broadcast", "scheduled", "archive", or "clip"
 
 client[Symbol.dispose]();
 ```

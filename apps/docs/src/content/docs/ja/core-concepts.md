@@ -5,7 +5,7 @@ description: "Content、Channel、URL解決、統一型システム"
 
 ## Content
 
-`Content` はライブ配信とアーカイブ動画を統一的に扱う型です。`type: "broadcast" | "archive"` の Discriminated Union として定義されています。
+`Content` はライブ配信やアーカイブ動画などを統一的に扱う型です。`type: "broadcast" | "archive" | "scheduled" | "clip"` の Discriminated Union として定義されています。
 
 ```ts
 const content = await client.resolve(url);

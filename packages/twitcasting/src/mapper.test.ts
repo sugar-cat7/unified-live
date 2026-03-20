@@ -95,7 +95,7 @@ describe("toLive", () => {
 });
 
 describe("toVideo", () => {
-  it("converts an archive TwitCasting movie to Video", () => {
+  it("converts an archive TwitCasting movie to Archive", () => {
     const result = toVideo(mockArchiveMovie, mockUser);
 
     expect(result.type).toBe("archive");

@@ -5,7 +5,7 @@ description: "Content, Channel, URL resolution, and the unified type system"
 
 ## Content
 
-`Content` is the unified abstraction over broadcasts and archives. It is a discriminated union with `type: "broadcast" | "archive"`.
+`Content` is the unified abstraction over live and recorded content (broadcasts, archives, scheduled broadcasts, and clips). It is modeled as a discriminated union with a `type` field.
 
 ```ts
 const content = await client.resolve(url);

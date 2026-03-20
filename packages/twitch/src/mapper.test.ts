@@ -101,7 +101,7 @@ describe("toLive", () => {
 });
 
 describe("toVideo", () => {
-  it("converts a Twitch video to Video", () => {
+  it("converts a Twitch video to Archive", () => {
     const result = toVideo(mockVideo);
 
     expect(result.type).toBe("archive");

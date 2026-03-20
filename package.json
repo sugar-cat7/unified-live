@@ -34,7 +34,8 @@
     "tsx": "^4.19.0",
     "turbo": "2.6.3",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "wrangler": "^4.76.0"
   },
   "packageManager": "pnpm@10.24.0"
 }

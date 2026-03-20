@@ -14,7 +14,8 @@
         "@unified-live/twitcasting",
         "@unified-live/twitch",
         "@unified-live/youtube",
-        "textlint-rule-preset-ja-technical-writing"
+        "textlint-rule-preset-ja-technical-writing",
+        "wrangler"
       ]
     },
     "packages/core": {

@@ -33,8 +33,7 @@ export const verifyTwitCastingPackage = async (): Promise<VerifyResult[]> => {
         name: "Test User",
         url: "https://twitcasting.tv/tc-user",
       });
-      if (!result.success)
-        throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
     }),
   ];
 };

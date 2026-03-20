@@ -32,8 +32,7 @@ export const verifyYouTubePackage = async (): Promise<VerifyResult[]> => {
         name: "Test Channel",
         url: "https://youtube.com/channel/UC12345",
       });
-      if (!result.success)
-        throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
     }),
   ];
 };

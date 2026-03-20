@@ -3,5 +3,5 @@
   "name": "unified-live-runtime-test",
   "main": "run.ts",
   "compatibility_date": "2026-03-01",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
 }

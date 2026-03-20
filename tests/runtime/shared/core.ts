@@ -24,8 +24,7 @@ export const verifyCorePackage = async (): Promise<VerifyResult[]> => {
         throw new Error("NotFoundError is not instanceof UnifiedLiveError");
       if (!(err instanceof core.NotFoundError))
         throw new Error("NotFoundError is not instanceof NotFoundError");
-      if (!(err instanceof Error))
-        throw new Error("NotFoundError is not instanceof Error");
+      if (!(err instanceof Error)) throw new Error("NotFoundError is not instanceof Error");
     }),
 
     await verify("Zod validation", () => {
@@ -34,8 +33,7 @@ export const verifyCorePackage = async (): Promise<VerifyResult[]> => {
         width: 320,
         height: 180,
       });
-      if (!result.success)
-        throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
 
       const invalid = core.thumbnailSchema.safeParse({ url: 123 });
       if (invalid.success) throw new Error("Zod should reject invalid input");

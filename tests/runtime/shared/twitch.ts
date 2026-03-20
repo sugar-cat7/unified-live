@@ -33,8 +33,7 @@ export const verifyTwitchPackage = async (): Promise<VerifyResult[]> => {
         name: "testuser",
         url: "https://twitch.tv/testuser",
       });
-      if (!result.success)
-        throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
+      if (!result.success) throw new Error(`Zod parse failed: ${JSON.stringify(result.error)}`);
     }),
   ];
 };

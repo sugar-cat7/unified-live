@@ -33,11 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `UnifiedClient.resolve(url)` — resolve URL to content (renamed from `getContent(url)`)
 - `UnifiedClient.getContent(platform, id)` — renamed from `getContentById(platform, id)`
 - `PluginMethods.batchGetBroadcasts?` — optional batch method for plugins
-- `PluginMethods.listClips?` / `batchGetClips?` — optional clip methods for plugins
-- `PluginMethods.batchGetContents?` / `search?` — optional batch and search for plugins
+- `PluginMethods.listClips?` / `PluginMethods.batchGetClips?` — optional clip methods for plugins
+- `PluginMethods.batchGetContents?` / `PluginMethods.search?` — optional batch and search for plugins
 - `PluginCapabilities.supportsBatchBroadcasts`
-- `PluginCapabilities.supportsBatchContent` / `supportsSearch`
-- `PluginCapabilities.supportsClips` — whether plugin supports clips
+- `PluginCapabilities.supportsBatchContent` / `PluginCapabilities.supportsSearch`
 - Twitch: native `batchGetBroadcasts` (max 100 channel IDs per request via repeated user_id params)
 - Twitch: native `listClips` and `batchGetClips` support
 - YouTube/Twitch/TwitCasting: `channelId` support in search
@@ -71,17 +70,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **BREAKING:** API naming revision — all types and methods renamed per Google AIP conventions (see `docs/superpowers/specs/2026-03-20-api-naming-revision-design.md`)
+- **BREAKING:** API naming revision — all types and methods renamed per Google AIP conventions (see [docs/superpowers/specs/2026-03-20-api-naming-revision-design.md](docs/superpowers/specs/2026-03-20-api-naming-revision-design.md))
 - **BREAKING:** `contentBaseSchema` now requires `description` (string) and `tags` (string[])
 - **BREAKING:** `Content` discriminated union now includes `"clip"` variant
-- **BREAKING:** `PluginCapabilities` has new required field: `supportsClips`
+- **BREAKING:** `PluginCapabilities` has new required fields: `supportsClips`, `supportsBatchContent`, `supportsSearch`
 - `contentSchema` discriminant literals updated: `"live"` → `"broadcast"`, `"video"` → `"archive"`
 - `broadcastSchema` now has optional `endedAt` (Date)
 - `searchOptionsSchema` includes `channelId` and `order`
 - `RestRequest.query` now accepts `string | string[]` values (string arrays produce repeated query params)
 - Search validation: now accepts `channelId` as alternative to `query`/`status`
 - **BREAKING:** `Content` discriminated union now includes `"scheduled"` variant (was `"live" | "video"`)
-- **BREAKING:** `PluginCapabilities` has new required fields: `supportsBatchContent`, `supportsSearch`
 - **BREAKING:** Twitch mapper renames: `streamToLive` → `toLive`, `videoToVideo` → `toVideo`, `userToChannel` → `toChannel`, `parseTwitchDuration` → `parseDuration`
 - **BREAKING:** TwitCasting mapper renames: `movieToContent` → `toContent`, `movieToLive` → `toLive`, `movieToVideo` → `toVideo`, `userToChannel` → `toChannel`
 - **BREAKING:** `Page<T>` now requires `hasMore: boolean` field

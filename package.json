@@ -19,7 +19,7 @@
     "security-scan": "./scripts/security-scan.sh",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "turbo build && changeset publish"
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",

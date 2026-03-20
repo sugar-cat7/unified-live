@@ -1,6 +1,6 @@
 import {
   Content,
-  type LiveStream,
+  type Broadcast,
   NotFoundError,
   QuotaExhaustedError,
   ValidationError,
@@ -69,12 +69,12 @@ describe("createYouTubePlugin", () => {
   it("reports correct capabilities", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: createMockFetch([]) });
     expect(plugin.capabilities).toEqual({
-      supportsLiveStreams: true,
+      supportsBroadcasts: true,
       supportsArchiveResolution: true,
       authModel: "apiKey",
       rateLimitModel: "quota",
       supportsBatchContent: true,
-      supportsBatchLiveStreams: false,
+      supportsBatchBroadcasts: false,
       supportsSearch: true,
       supportsClips: false,
     });
@@ -92,7 +92,7 @@ describe("createYouTubePlugin", () => {
     );
   });
 
-  it("getContent returns a Video for a regular video", async () => {
+  it("getContent returns an Archive for a regular video", async () => {
     const fetchFn = createMockFetch([
       {
         body: {
@@ -105,17 +105,17 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     const content = await plugin.getContent("dQw4w9WgXcQ");
 
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");
-    expect(Content.isVideo(content)).toBe(true);
+    expect(Content.isArchive(content)).toBe(true);
 
     // Verify API key was injected as query param
     const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
     expect(calledUrl).toContain("key=test-key");
   });
 
-  it("getContent returns a LiveStream for a live broadcast", async () => {
+  it("getContent returns a Broadcast for a live broadcast", async () => {
     const fetchFn = createMockFetch([
       {
         body: {
@@ -128,9 +128,9 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     const content = await plugin.getContent("dQw4w9WgXcQ");
 
-    expect(content.type).toBe("live");
-    expect(Content.isLive(content)).toBe(true);
-    if (Content.isLive(content)) {
+    expect(content.type).toBe("broadcast");
+    expect(Content.isBroadcast(content)).toBe(true);
+    if (Content.isBroadcast(content)) {
       expect(content.viewerCount).toBe(1500);
     }
   });
@@ -159,7 +159,7 @@ describe("createYouTubePlugin", () => {
     expect(resolved).toBeNull();
   });
 
-  it("getLiveStreams returns empty array when no live streams", async () => {
+  it("listBroadcasts returns empty array when no live streams", async () => {
     const fetchFn = createMockFetch([
       {
         body: {
@@ -170,7 +170,7 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    const streams = await plugin.getLiveStreams("UC123");
+    const streams = await plugin.listBroadcasts("UC123");
     expect(streams).toEqual([]);
   });
 
@@ -240,7 +240,7 @@ describe("createYouTubePlugin", () => {
     await expect(plugin.getChannel("@nonexistent")).rejects.toThrow(NotFoundError);
   });
 
-  it("getLiveStreams returns live streams from search + video pipeline", async () => {
+  it("listBroadcasts returns live streams from search + video pipeline", async () => {
     const fetchFn = createMockFetch([
       // search.list response
       {
@@ -259,13 +259,13 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    const streams = await plugin.getLiveStreams("UC123");
+    const streams = await plugin.listBroadcasts("UC123");
 
     expect(streams).toHaveLength(1);
-    expect(streams[0]?.type).toBe("live");
+    expect(streams[0]?.type).toBe("broadcast");
   });
 
-  it("getVideos returns paginated video list", async () => {
+  it("listArchives returns paginated archive list", async () => {
     const fetchFn = createMockFetch([
       // channels.list response (for uploads playlist ID)
       {
@@ -292,16 +292,16 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    const page = await plugin.getVideos("UC123");
+    const page = await plugin.listArchives("UC123");
 
     expect(page.items).toHaveLength(1);
-    expect(page.items[0]?.type).toBe("video");
+    expect(page.items[0]?.type).toBe("archive");
     expect(page.cursor).toBe("CDIQAA");
     expect(page.total).toBe(100);
     expect(page.hasMore).toBe(true);
   });
 
-  it("getVideos throws NotFoundError when channel not found", async () => {
+  it("listArchives throws NotFoundError when channel not found", async () => {
     const fetchFn = createMockFetch([
       {
         body: {
@@ -312,10 +312,10 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    await expect(plugin.getVideos("UC_nonexistent")).rejects.toThrow(NotFoundError);
+    await expect(plugin.listArchives("UC_nonexistent")).rejects.toThrow(NotFoundError);
   });
 
-  it("resolveArchive returns Video when broadcast has ended", async () => {
+  it("resolveArchive returns Archive when broadcast has ended", async () => {
     const fetchFn = createMockFetch([
       {
         body: {
@@ -326,10 +326,10 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    const live: LiveStream = {
+    const live: Broadcast = {
       id: "dQw4w9WgXcQ",
       platform: "youtube",
-      type: "live",
+      type: "broadcast",
       title: "Live Stream",
       description: "",
       tags: [],
@@ -351,7 +351,7 @@ describe("createYouTubePlugin", () => {
     const archive = await plugin.resolveArchive?.(live);
 
     expect(archive).not.toBeNull();
-    expect(archive?.type).toBe("video");
+    expect(archive?.type).toBe("archive");
     expect(archive?.id).toBe("dQw4w9WgXcQ");
   });
 
@@ -366,10 +366,10 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    const live: LiveStream = {
+    const live: Broadcast = {
       id: "dQw4w9WgXcQ",
       platform: "youtube",
-      type: "live",
+      type: "broadcast",
       title: "Live Stream",
       description: "",
       tags: [],
@@ -393,7 +393,7 @@ describe("createYouTubePlugin", () => {
     expect(archive).toBeNull();
   });
 
-  it("getVideos returns empty page for channel with no uploads", async () => {
+  it("listArchives returns empty page for channel with no uploads", async () => {
     const fetchFn = createMockFetch([
       // channels.list response
       {
@@ -412,7 +412,7 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    const page = await plugin.getVideos("UC123");
+    const page = await plugin.listArchives("UC123");
 
     expect(page.items).toEqual([]);
     expect(page.cursor).toBeUndefined();
@@ -441,7 +441,7 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     const content = await plugin.getContent("dQw4w9WgXcQ");
 
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
@@ -480,7 +480,7 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     const content = await plugin.getContent("dQw4w9WgXcQ");
 
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 

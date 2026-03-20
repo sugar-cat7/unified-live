@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import {
   youtubeGetChannel,
   youtubeGetContent,
-  youtubeGetContents,
-  youtubeGetLiveStreams,
-  youtubeGetVideos,
+  youtubeBatchGetContents,
+  youtubeListBroadcasts,
+  youtubeListArchives,
   youtubeResolveArchive,
   youtubeSearch,
 } from "./methods";
@@ -63,7 +63,7 @@ describe("youtubeGetContent", () => {
     });
 
     const result = await youtubeGetContent(rest, "dQw4w9WgXcQ");
-    expect(result.type).toBe("video");
+    expect(result.type).toBe("archive");
     expect(result.id).toBe("dQw4w9WgXcQ");
     expect(rest.request).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -146,7 +146,7 @@ describe("youtubeGetChannel", () => {
   });
 });
 
-describe("youtubeGetLiveStreams", () => {
+describe("youtubeListBroadcasts", () => {
   it("returns empty array when no live streams", async () => {
     const rest = createMockRest();
     (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -155,7 +155,7 @@ describe("youtubeGetLiveStreams", () => {
       data: { items: [] },
     });
 
-    const result = await youtubeGetLiveStreams(rest, "UCtest");
+    const result = await youtubeListBroadcasts(rest, "UCtest");
     expect(result).toEqual([]);
     expect(rest.request).toHaveBeenCalledTimes(1); // Only search, no videos fetch
   });
@@ -181,13 +181,13 @@ describe("youtubeGetLiveStreams", () => {
       };
     });
 
-    const result = await youtubeGetLiveStreams(rest, "UCtest");
+    const result = await youtubeListBroadcasts(rest, "UCtest");
     expect(result).toHaveLength(1);
-    expect(result[0]!.type).toBe("live");
+    expect(result[0]!.type).toBe("broadcast");
     expect(rest.request).toHaveBeenCalledTimes(2);
   });
 
-  it("filters out non-live items from video details", async () => {
+  it("filters out non-broadcast items from video details", async () => {
     const rest = createMockRest();
     let callCount = 0;
     (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
@@ -199,7 +199,7 @@ describe("youtubeGetLiveStreams", () => {
           data: { items: [{ id: { videoId: "v1" } }, { id: { videoId: "v2" } }] },
         };
       }
-      // Return one live and one regular video — only live should pass the filter
+      // Return one broadcast and one regular archive — only broadcast should pass the filter
       return {
         status: 200,
         headers: new Headers(),
@@ -207,9 +207,9 @@ describe("youtubeGetLiveStreams", () => {
       };
     });
 
-    const result = await youtubeGetLiveStreams(rest, "UCtest");
+    const result = await youtubeListBroadcasts(rest, "UCtest");
     expect(result).toHaveLength(1);
-    expect(result[0]!.type).toBe("live");
+    expect(result[0]!.type).toBe("broadcast");
   });
 
   it("returns empty when items is undefined", async () => {
@@ -220,12 +220,12 @@ describe("youtubeGetLiveStreams", () => {
       data: {},
     });
 
-    const result = await youtubeGetLiveStreams(rest, "UCtest");
+    const result = await youtubeListBroadcasts(rest, "UCtest");
     expect(result).toEqual([]);
   });
 });
 
-describe("youtubeGetVideos", () => {
+describe("youtubeListArchives", () => {
   it("throws NotFoundError when channel doesn't exist", async () => {
     const rest = createMockRest();
     (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -234,7 +234,7 @@ describe("youtubeGetVideos", () => {
       data: { items: [] },
     });
 
-    await expect(youtubeGetVideos(rest, "UCmissing")).rejects.toThrow(NotFoundError);
+    await expect(youtubeListArchives(rest, "UCmissing")).rejects.toThrow(NotFoundError);
   });
 
   it("throws NotFoundError when no uploads playlist", async () => {
@@ -245,7 +245,7 @@ describe("youtubeGetVideos", () => {
       data: { items: [{ id: "UCtest", contentDetails: { relatedPlaylists: {} } }] },
     });
 
-    await expect(youtubeGetVideos(rest, "UCtest")).rejects.toThrow(NotFoundError);
+    await expect(youtubeListArchives(rest, "UCtest")).rejects.toThrow(NotFoundError);
   });
 
   it("returns paginated videos", async () => {
@@ -273,7 +273,7 @@ describe("youtubeGetVideos", () => {
       return { status: 200, headers: new Headers(), data: { items: [sampleVideoItem] } };
     });
 
-    const result = await youtubeGetVideos(rest, "UCtest");
+    const result = await youtubeListArchives(rest, "UCtest");
     expect(result.items).toHaveLength(1);
     expect(result.cursor).toBe("next123");
     expect(result.hasMore).toBe(true);
@@ -294,7 +294,7 @@ describe("youtubeGetVideos", () => {
       return { status: 200, headers: new Headers(), data: { items: [] } };
     });
 
-    await youtubeGetVideos(rest, "UCtest", "cursorABC");
+    await youtubeListArchives(rest, "UCtest", "cursorABC");
     const secondCall = (rest.request as ReturnType<typeof vi.fn>).mock.calls[1]?.[0];
     expect(secondCall.query.pageToken).toBe("cursorABC");
   });
@@ -321,12 +321,12 @@ describe("youtubeGetVideos", () => {
       return { status: 200, headers: new Headers(), data: { items: [sampleVideoItem] } };
     });
 
-    const result = await youtubeGetVideos(rest, "UCtest");
+    const result = await youtubeListArchives(rest, "UCtest");
     expect(result.hasMore).toBe(false);
     expect(result.cursor).toBeUndefined();
   });
 
-  it("filters out non-video (live) items from video details", async () => {
+  it("filters out non-archive (broadcast) items from video details", async () => {
     const rest = createMockRest();
     let callCount = 0;
     (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
@@ -346,7 +346,7 @@ describe("youtubeGetVideos", () => {
           },
         };
       }
-      // Return one regular video and one live — only video should pass the filter
+      // Return one regular archive and one broadcast — only archive should pass the filter
       return {
         status: 200,
         headers: new Headers(),
@@ -354,9 +354,9 @@ describe("youtubeGetVideos", () => {
       };
     });
 
-    const result = await youtubeGetVideos(rest, "UCtest");
+    const result = await youtubeListArchives(rest, "UCtest");
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.type).toBe("video");
+    expect(result.items[0]!.type).toBe("archive");
     expect(result.total).toBe(0); // no pageInfo means fallback to 0
   });
 
@@ -371,7 +371,7 @@ describe("youtubeGetVideos", () => {
       return { status: 200, headers: new Headers(), data: { items: [] } };
     });
 
-    const result = await youtubeGetVideos(rest, "UCtest");
+    const result = await youtubeListArchives(rest, "UCtest");
     expect(result.items).toEqual([]);
     expect(result.hasMore).toBe(false);
   });
@@ -382,7 +382,7 @@ const createSampleVideoItem = (id: string) => ({
   id,
 });
 
-describe("youtubeGetContents", () => {
+describe("youtubeBatchGetContents", () => {
   it("fetches multiple videos in one API call", async () => {
     const rest = createMockRest();
     (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -390,7 +390,7 @@ describe("youtubeGetContents", () => {
       headers: new Headers(),
       data: { items: [createSampleVideoItem("v1"), createSampleVideoItem("v2")] },
     });
-    const result = await youtubeGetContents(rest, ["v1", "v2"]);
+    const result = await youtubeBatchGetContents(rest, ["v1", "v2"]);
     expect(result.values.size).toBe(2);
     expect(result.errors.size).toBe(0);
   });
@@ -402,7 +402,7 @@ describe("youtubeGetContents", () => {
       headers: new Headers(),
       data: { items: [createSampleVideoItem("v1")] },
     });
-    const result = await youtubeGetContents(rest, ["v1", "v2"]);
+    const result = await youtubeBatchGetContents(rest, ["v1", "v2"]);
     expect(result.values.size).toBe(1);
     expect(result.errors.size).toBe(1);
     expect(result.errors.get("v2")).toBeInstanceOf(NotFoundError);
@@ -423,7 +423,7 @@ describe("youtubeGetContents", () => {
       },
     );
     const ids = Array.from({ length: 60 }, (_, i) => `v${i}`);
-    const result = await youtubeGetContents(rest, ids);
+    const result = await youtubeBatchGetContents(rest, ids);
     expect(callCount).toBe(2);
     expect(result.values.size).toBe(60);
   });
@@ -521,7 +521,7 @@ describe("youtubeSearch", () => {
 });
 
 describe("youtubeResolveArchive", () => {
-  it("returns Video when stream has ended", async () => {
+  it("returns Archive when stream has ended", async () => {
     const rest = createMockRest();
     (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200,
@@ -539,7 +539,7 @@ describe("youtubeResolveArchive", () => {
       thumbnail: { url: "https://example.com/t.jpg", width: 480, height: 360 },
       channel: { id: "UCtest", name: "Test", url: "https://youtube.com/channel/UCtest" },
       sessionId: "dQw4w9WgXcQ",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 100,
       startedAt: new Date(),
       raw: {},
@@ -547,7 +547,7 @@ describe("youtubeResolveArchive", () => {
 
     const result = await youtubeResolveArchive(rest, live);
     expect(result).not.toBeNull();
-    expect(result!.type).toBe("video");
+    expect(result!.type).toBe("archive");
   });
 
   it("returns null when stream is still live", async () => {
@@ -568,7 +568,7 @@ describe("youtubeResolveArchive", () => {
       thumbnail: { url: "https://example.com/t.jpg", width: 480, height: 360 },
       channel: { id: "UCtest", name: "Test", url: "https://youtube.com/channel/UCtest" },
       sessionId: "live123",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 5000,
       startedAt: new Date(),
       raw: {},

@@ -36,15 +36,15 @@ using client = UnifiedClient.create({
 });
 
 // 3. Fetch content by URL (auto-detects platform)
-const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 console.log(`[${content.platform}] ${content.title}`);
 
 // 4. Use type guards to narrow content type
-if (Content.isVideo(content)) {
+if (Content.isArchive(content)) {
   console.log(`Duration: ${content.duration}s, Views: ${content.viewCount}`);
 }
 
-if (Content.isLive(content)) {
+if (Content.isBroadcast(content)) {
   console.log(`Viewers: ${content.viewerCount}, Started: ${content.startedAt}`);
 }
 
@@ -52,13 +52,13 @@ if (Content.isLive(content)) {
 const channel = await client.getChannel("twitch", "shroud");
 console.log(`Channel: ${channel.name} (${channel.platform})`);
 
-// 6. Paginate through videos
+// 6. Paginate through archives
 let cursor: string | undefined;
 do {
-  const page = await client.getVideos("youtube", "UCuAXFkgsw1L7xaCfnd5JJOw", cursor);
+  const page = await client.listArchives("youtube", "UCuAXFkgsw1L7xaCfnd5JJOw", cursor);
 
-  for (const video of page.items) {
-    console.log(`  ${video.title} (${video.duration}s)`);
+  for (const archive of page.items) {
+    console.log(`  ${archive.title} (${archive.duration}s)`);
   }
 
   cursor = page.cursor;
@@ -66,7 +66,7 @@ do {
 
 // 7. Error handling with structured errors and category helpers
 try {
-  await client.getContent("https://www.youtube.com/watch?v=nonexistent");
+  await client.resolve("https://www.youtube.com/watch?v=nonexistent");
 } catch (error) {
   if (error instanceof UnifiedLiveError) {
     // Structured error with code, context, and retryability

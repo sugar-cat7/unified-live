@@ -29,6 +29,13 @@
 - Implementation order is bottom-up: Types -> Infrastructure -> Plugins -> Client API.
 - Skills: `/plan-feature` (spec drafting), `/init-impl` (checklist generation).
 
+## Releasing
+
+- All 4 packages use **fixed (lockstep) versioning** via `@changesets/cli`.
+- Run `pnpm changeset` for user-facing changes in PRs. Not needed for CI/test/tooling-only changes.
+- On merge to `main`, `changesets/action` creates a "Version Packages" PR or publishes to npm.
+- Release spec: `docs/superpowers/specs/2026-03-21-release-pipeline-design.md`
+
 ## Claude Code Operations
 
 - Permission policies and hooks are managed in `.claude/settings.json`.

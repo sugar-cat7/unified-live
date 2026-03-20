@@ -152,7 +152,7 @@ describe("createQuotaBudgetStrategy", () => {
     expect(strategy.getStatus().remaining).toBe(10); // Clamped at 0 consumed
   });
 
-  it("resetsAt is a future Date", () => {
+  it("resetsAt is within 24 hours from now", () => {
     strategy = createQuotaBudgetStrategy({
       dailyLimit: 100,
       costMap: {},
@@ -160,7 +160,10 @@ describe("createQuotaBudgetStrategy", () => {
     });
 
     const status = strategy.getStatus();
-    expect(status.resetsAt.getTime()).toBeGreaterThan(Date.now());
+    const msUntilReset = status.resetsAt.getTime() - Date.now();
+    // resetsAt should be within 24h (86_400_000ms), allowing small clock drift
+    expect(msUntilReset).toBeGreaterThan(-5000);
+    expect(msUntilReset).toBeLessThanOrEqual(86_400_000);
   });
 
   it("throws on negative cost map values", () => {

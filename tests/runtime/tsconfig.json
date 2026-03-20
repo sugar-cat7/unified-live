@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@unified-live/core": ["../../packages/core/dist/index.d.mts"],
+      "@unified-live/twitch": ["../../packages/twitch/dist/index.d.mts"],
+      "@unified-live/youtube": ["../../packages/youtube/dist/index.d.mts"],
+      "@unified-live/twitcasting": ["../../packages/twitcasting/dist/index.d.mts"]
+    }
+  },
+  "include": ["./**/*.ts"]
+}

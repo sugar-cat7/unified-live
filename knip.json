@@ -7,10 +7,15 @@
   "tags": ["-lintignore"],
   "workspaces": {
     ".": {
-      "ignore": ["examples/**"],
+      "ignore": ["examples/**", "tests/runtime/**"],
       "ignoreDependencies": [
         "@textlint/textlint-plugin-markdown",
-        "textlint-rule-preset-ja-technical-writing"
+        "@unified-live/core",
+        "@unified-live/twitcasting",
+        "@unified-live/twitch",
+        "@unified-live/youtube",
+        "textlint-rule-preset-ja-technical-writing",
+        "wrangler"
       ]
     },
     "packages/core": {

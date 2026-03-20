@@ -122,6 +122,57 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  runtime-compat:
+    name: "Runtime compat (${{ matrix.runtime }})"
+    needs: [setup]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: node
+            command: npx tsx tests/runtime/node/run.ts
+          - runtime: deno
+            command: deno run --allow-read --allow-env tests/runtime/deno/run.ts
+          - runtime: bun
+            command: bun run tests/runtime/bun/run.ts
+          - runtime: workerd
+            command: bash tests/runtime/workerd/test.sh
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+
+      - name: Set up Deno
+        if: matrix.runtime == 'deno'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Set up Bun
+        if: matrix.runtime == 'bun'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2"
+
+      - name: Run ${{ matrix.runtime }} runtime compat test
+        run: ${{ matrix.command }}
+
   bundle-size:
     needs: setup
     runs-on: ubuntu-latest

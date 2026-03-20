@@ -21,12 +21,12 @@ describe("createTwitCastingPlugin", () => {
       fetch: createMockFetch([]),
     });
     expect(plugin.capabilities).toEqual({
-      supportsLiveStreams: true,
+      supportsBroadcasts: true,
       supportsArchiveResolution: true,
       authModel: "basic",
       rateLimitModel: "tokenBucket",
       supportsBatchContent: false,
-      supportsBatchLiveStreams: false,
+      supportsBatchBroadcasts: false,
       supportsSearch: true,
       supportsClips: false,
     });
@@ -116,7 +116,7 @@ describe("createTwitCastingPlugin", () => {
     });
 
     const content = await plugin.getContent("m123");
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(content.id).toBe("m123");
     expect(content.platform).toBe("twitcasting");
 
@@ -137,7 +137,7 @@ describe("createTwitCastingPlugin", () => {
     plugin[Symbol.dispose]();
   });
 
-  it("getLiveStreams returns empty when not live", async () => {
+  it("listBroadcasts returns empty when not live", async () => {
     const plugin = createTwitCastingPlugin({
       clientId: "test-id",
       clientSecret: "test-secret",
@@ -149,13 +149,13 @@ describe("createTwitCastingPlugin", () => {
       ]),
     });
 
-    const streams = await plugin.getLiveStreams("u1");
+    const streams = await plugin.listBroadcasts("u1");
     expect(streams).toHaveLength(0);
 
     plugin[Symbol.dispose]();
   });
 
-  it("getLiveStreams returns stream when live", async () => {
+  it("listBroadcasts returns stream when live", async () => {
     const liveMovie = {
       id: "m456",
       user_id: "u1",
@@ -186,9 +186,9 @@ describe("createTwitCastingPlugin", () => {
       ]),
     });
 
-    const streams = await plugin.getLiveStreams("u1");
+    const streams = await plugin.listBroadcasts("u1");
     expect(streams).toHaveLength(1);
-    expect(streams[0]!.type).toBe("live");
+    expect(streams[0]!.type).toBe("broadcast");
     expect(streams[0]!.viewerCount).toBe(300);
 
     plugin[Symbol.dispose]();
@@ -249,7 +249,7 @@ describe("createTwitCastingPlugin", () => {
       thumbnail: { url: "https://img.tv/thumb.jpg", width: 640, height: 360 },
       channel: { id: "u1", name: "TestUser", url: "https://twitcasting.tv/testuser" },
       sessionId: "m123",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 100,
       startedAt: new Date(1741420800 * 1000),
       raw: {},
@@ -257,7 +257,7 @@ describe("createTwitCastingPlugin", () => {
 
     const archive = await plugin.resolveArchive!(live);
     expect(archive).not.toBeNull();
-    expect(archive!.type).toBe("video");
+    expect(archive!.type).toBe("archive");
     expect(archive!.id).toBe("m123");
 
     plugin[Symbol.dispose]();
@@ -298,7 +298,7 @@ describe("createTwitCastingPlugin", () => {
       thumbnail: { url: "https://img.tv/live.jpg", width: 640, height: 360 },
       channel: { id: "u1", name: "TestUser", url: "https://twitcasting.tv/testuser" },
       sessionId: "m456",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 300,
       startedAt: new Date(1741420800 * 1000),
       raw: {},

@@ -53,7 +53,7 @@ describe("toLive", () => {
   it("converts a live TwitCasting movie to LiveStream", () => {
     const result = toLive(mockLiveMovie, mockUser);
 
-    expect(result.type).toBe("live");
+    expect(result.type).toBe("broadcast");
     expect(result.id).toBe("movie123");
     expect(result.platform).toBe("twitcasting");
     expect(result.title).toBe("Live Stream!");
@@ -98,7 +98,7 @@ describe("toVideo", () => {
   it("converts an archive TwitCasting movie to Video", () => {
     const result = toVideo(mockArchiveMovie, mockUser);
 
-    expect(result.type).toBe("video");
+    expect(result.type).toBe("archive");
     expect(result.id).toBe("movie789");
     expect(result.platform).toBe("twitcasting");
     expect(result.title).toBe("Past Broadcast");
@@ -155,12 +155,12 @@ describe("toVideo", () => {
 describe("toContent", () => {
   it("returns LiveStream for live movies", () => {
     const result = toContent(mockLiveMovie, mockUser);
-    expect(result.type).toBe("live");
+    expect(result.type).toBe("broadcast");
   });
 
   it("returns Video for archived movies", () => {
     const result = toContent(mockArchiveMovie, mockUser);
-    expect(result.type).toBe("video");
+    expect(result.type).toBe("archive");
   });
 });
 

@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   twitcastingGetContent,
   twitcastingGetChannel,
-  twitcastingGetLiveStreams,
-  twitcastingGetVideos,
+  twitcastingListBroadcasts,
+  twitcastingListArchives,
   twitcastingResolveArchive,
   twitcastingSearch,
 } from "./methods";
@@ -54,7 +54,7 @@ describe("twitcastingGetContent", () => {
   it("returns content for a valid movie ID", async () => {
     const rest = createMockRest({ movie: mockArchiveMovie, broadcaster: mockUser });
     const result = await twitcastingGetContent(rest, "m2");
-    expect(result.type).toBe("video");
+    expect(result.type).toBe("archive");
     expect(result.id).toBe("m2");
     expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ path: "/movies/m2" }));
   });
@@ -62,7 +62,7 @@ describe("twitcastingGetContent", () => {
   it("returns live content for a live movie", async () => {
     const rest = createMockRest({ movie: mockLiveMovie, broadcaster: mockUser });
     const result = await twitcastingGetContent(rest, "m1");
-    expect(result.type).toBe("live");
+    expect(result.type).toBe("broadcast");
   });
 
   it.each([
@@ -90,7 +90,7 @@ describe("twitcastingGetChannel", () => {
   });
 });
 
-describe("twitcastingGetLiveStreams", () => {
+describe("twitcastingListBroadcasts", () => {
   it("returns live stream when user is live", async () => {
     const liveUser = { ...mockUser, is_live: true };
     const rest = createMockRest({ user: liveUser });
@@ -102,14 +102,14 @@ describe("twitcastingGetLiveStreams", () => {
       return { status: 200, headers: new Headers(), data: { movie: mockLiveMovie } };
     });
 
-    const result = await twitcastingGetLiveStreams(rest, "u1");
+    const result = await twitcastingListBroadcasts(rest, "u1");
     expect(result).toHaveLength(1);
-    expect(result[0]!.type).toBe("live");
+    expect(result[0]!.type).toBe("broadcast");
   });
 
   it("returns empty array when user is not live", async () => {
     const rest = createMockRest({ user: mockUser });
-    const result = await twitcastingGetLiveStreams(rest, "u1");
+    const result = await twitcastingListBroadcasts(rest, "u1");
     expect(result).toEqual([]);
   });
 
@@ -123,12 +123,12 @@ describe("twitcastingGetLiveStreams", () => {
       return { status: 200, headers: new Headers(), data: { movie: null } };
     });
 
-    const result = await twitcastingGetLiveStreams(rest, "u1");
+    const result = await twitcastingListBroadcasts(rest, "u1");
     expect(result).toEqual([]);
   });
 });
 
-describe("twitcastingGetVideos", () => {
+describe("twitcastingListArchives", () => {
   it("returns paginated videos excluding live movies", async () => {
     const movies = [mockArchiveMovie, mockLiveMovie]; // one archive, one live
     let callCount = 0;
@@ -141,10 +141,10 @@ describe("twitcastingGetVideos", () => {
       return { status: 200, headers: new Headers(), data: { user: mockUser } };
     });
 
-    const result = await twitcastingGetVideos(rest, "u1");
+    const result = await twitcastingListArchives(rest, "u1");
     // Only archive movies should be returned as videos
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.type).toBe("video");
+    expect(result.items[0]!.type).toBe("archive");
     expect(result.total).toBe(10);
   });
 
@@ -164,7 +164,7 @@ describe("twitcastingGetVideos", () => {
       return { status: 200, headers: new Headers(), data: { user: mockUser } };
     });
 
-    const result = await twitcastingGetVideos(rest, "u1");
+    const result = await twitcastingListArchives(rest, "u1");
     expect(result.hasMore).toBe(false);
     expect(result.cursor).toBeUndefined();
   });
@@ -183,7 +183,7 @@ describe("twitcastingGetVideos", () => {
       },
     );
 
-    await twitcastingGetVideos(rest, "u1", "cursor123");
+    await twitcastingListArchives(rest, "u1", "cursor123");
   });
 });
 
@@ -200,7 +200,7 @@ describe("twitcastingResolveArchive", () => {
       thumbnail: { url: "", width: 1, height: 1 },
       channel: { id: "u1", name: "", url: "" },
       sessionId: "m1",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 0,
       startedAt: new Date(),
       raw: {},
@@ -209,7 +209,7 @@ describe("twitcastingResolveArchive", () => {
     expect(result).toBeNull();
   });
 
-  it("returns Video when movie has ended", async () => {
+  it("returns Archive when movie has ended", async () => {
     const rest = createMockRest({ movie: mockArchiveMovie, broadcaster: mockUser });
     const live = {
       id: "m2",
@@ -221,14 +221,14 @@ describe("twitcastingResolveArchive", () => {
       thumbnail: { url: "", width: 1, height: 1 },
       channel: { id: "u1", name: "", url: "" },
       sessionId: "m2",
-      type: "live" as const,
+      type: "broadcast" as const,
       viewerCount: 0,
       startedAt: new Date(),
       raw: {},
     };
     const result = await twitcastingResolveArchive(rest, live);
     expect(result).not.toBeNull();
-    expect(result!.type).toBe("video");
+    expect(result!.type).toBe("archive");
   });
 });
 
@@ -249,7 +249,7 @@ describe("twitcastingSearch", () => {
 
     const result = await twitcastingSearch(rest, { query: "test", status: "live" });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.type).toBe("live");
+    expect(result.items[0]!.type).toBe("broadcast");
     expect(result.hasMore).toBe(false);
   });
 
@@ -296,7 +296,7 @@ describe("twitcastingSearch", () => {
 
     const result = await twitcastingSearch(rest, { query: "test" });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.type).toBe("video");
+    expect(result.items[0]!.type).toBe("archive");
   });
 
   it("fetches recent movies when status=ended", async () => {
@@ -316,7 +316,7 @@ describe("twitcastingSearch", () => {
 
     const result = await twitcastingSearch(rest, { query: "test", status: "ended" });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.type).toBe("video");
+    expect(result.items[0]!.type).toBe("archive");
   });
 
   it("passes query params correctly", async () => {
@@ -341,7 +341,7 @@ describe("twitcastingSearch", () => {
     });
     const result = await twitcastingSearch(rest, { channelId: "user1", status: "live" });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.type).toBe("live");
+    expect(result.items[0]!.type).toBe("broadcast");
   });
 
   it("returns empty when channelId user is not live and status=live", async () => {
@@ -366,6 +366,6 @@ describe("twitcastingSearch", () => {
     });
     const result = await twitcastingSearch(rest, { channelId: "user1" });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]!.type).toBe("video");
+    expect(result.items[0]!.type).toBe("archive");
   });
 });

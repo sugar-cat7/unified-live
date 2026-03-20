@@ -25,22 +25,25 @@ export const collectResults = async (): Promise<{
   ok: boolean;
   results: PackageResult[];
 }> => {
-  const results: PackageResult[] = [];
+  // Run all verifiers concurrently — they are independent with no shared state.
+  // Promise.allSettled ensures one package failure doesn't abort the rest.
+  const settled = await Promise.allSettled(verifiers.map((v) => v.verify()));
 
-  for (const v of verifiers) {
-    try {
-      const checks = await v.verify();
-      results.push({ packageName: v.packageName, checks });
-    } catch (e: unknown) {
-      // Catches module-level import failures (before any verify() calls).
-      // verify() itself never rejects — it converts errors to VerifyResult.
-      const msg = e instanceof Error ? `${e.message}${e.stack ? `\n${e.stack}` : ""}` : String(e);
-      results.push({
-        packageName: v.packageName,
-        checks: [{ name: "Package load", success: false, error: msg }],
-      });
+  const results: PackageResult[] = settled.map((outcome, i) => {
+    if (outcome.status === "fulfilled") {
+      return { packageName: verifiers[i].packageName, checks: outcome.value };
     }
-  }
+    // Module-level import failure (before any verify() calls).
+    // verify() itself never rejects — it converts errors to VerifyResult.
+    const e = outcome.reason;
+    const msg = e instanceof Error
+      ? `${e.message}${e.stack ? `\n${e.stack}` : ""}`
+      : String(e);
+    return {
+      packageName: verifiers[i].packageName,
+      checks: [{ name: "Package load", success: false, error: msg }],
+    };
+  });
 
   const ok = results.every((r) => r.checks.every((c) => c.success));
   return { ok, results };

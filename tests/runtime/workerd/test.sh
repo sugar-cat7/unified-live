@@ -16,6 +16,7 @@ WRANGLER_PID=$!
 trap "kill $WRANGLER_PID 2>/dev/null; pkill -P $WRANGLER_PID 2>/dev/null || true; rm -f $WRANGLER_LOG" EXIT
 
 # Poll until ready, capturing the first successful response
+RESPONSE=""
 READY=0
 for i in $(seq 1 30); do
   # Check wrangler is still alive

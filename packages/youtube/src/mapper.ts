@@ -1,4 +1,4 @@
-import type { Channel, Content, LiveStream, ScheduledStream, Video } from "@unified-live/core";
+import type { Archive, Broadcast, Channel, Content, ScheduledBroadcast } from "@unified-live/core";
 import { ParseError } from "@unified-live/core";
 import type { components } from "./generated/youtube-api";
 
@@ -28,10 +28,10 @@ const pickThumbnail = (
  * Convert a YouTube Video resource to a unified Content type.
  *
  * @param item - YouTube video resource from the API
- * @returns unified Content (LiveStream if live, ScheduledStream if upcoming, Video otherwise)
+ * @returns unified Content (Broadcast if live, ScheduledBroadcast if upcoming, Archive otherwise)
  * @throws ParseError if required fields (id, snippet, contentDetails, statistics) are missing
  * @precondition item was fetched with part=snippet,contentDetails,statistics,liveStreamingDetails
- * @postcondition returns LiveStream if currently live, ScheduledStream if upcoming, Video otherwise
+ * @postcondition returns Broadcast if currently live, ScheduledBroadcast if upcoming, Archive otherwise
  */
 export const toContent = (item: YTVideoResource): Content => {
   const { id, snippet, contentDetails, statistics, liveStreamingDetails } = item;
@@ -85,7 +85,7 @@ export const toContent = (item: YTVideoResource): Content => {
       thumbnail,
       channel,
       sessionId: id,
-      type: "live",
+      type: "broadcast",
       viewerCount: Number.parseInt(liveStreamingDetails.concurrentViewers ?? "0", 10),
       startedAt: new Date(liveStreamingDetails.actualStartTime),
       endedAt: liveStreamingDetails.actualEndTime
@@ -93,7 +93,7 @@ export const toContent = (item: YTVideoResource): Content => {
         : undefined,
       languageCode: snippet.defaultAudioLanguage ?? undefined,
       raw: item,
-    } satisfies LiveStream;
+    } satisfies Broadcast;
   }
 
   if (isUpcoming) {
@@ -113,7 +113,7 @@ export const toContent = (item: YTVideoResource): Content => {
         : new Date(publishedAt),
       languageCode: snippet.defaultAudioLanguage ?? undefined,
       raw: item,
-    } satisfies ScheduledStream;
+    } satisfies ScheduledBroadcast;
   }
 
   return {
@@ -126,7 +126,7 @@ export const toContent = (item: YTVideoResource): Content => {
     thumbnail,
     channel,
     sessionId: id,
-    type: "video",
+    type: "archive",
     duration: parseDuration(contentDetails.duration ?? ""),
     viewCount: Number.parseInt(statistics.viewCount ?? "0", 10),
     publishedAt: new Date(publishedAt),
@@ -138,7 +138,7 @@ export const toContent = (item: YTVideoResource): Content => {
       : undefined,
     languageCode: snippet.defaultAudioLanguage ?? undefined,
     raw: item,
-  } satisfies Video;
+  } satisfies Archive;
 };
 
 /**

@@ -70,10 +70,10 @@ const mockClip: TwitchClip = {
 };
 
 describe("toLive", () => {
-  it("converts a Twitch stream to LiveStream", () => {
+  it("converts a Twitch stream to Broadcast", () => {
     const result = toLive(mockStream);
 
-    expect(result.type).toBe("live");
+    expect(result.type).toBe("broadcast");
     expect(result.id).toBe("stream123");
     expect(result.platform).toBe("twitch");
     expect(result.title).toBe("Test Stream");
@@ -101,10 +101,10 @@ describe("toLive", () => {
 });
 
 describe("toVideo", () => {
-  it("converts a Twitch video to Video", () => {
+  it("converts a Twitch video to Archive", () => {
     const result = toVideo(mockVideo);
 
-    expect(result.type).toBe("video");
+    expect(result.type).toBe("archive");
     expect(result.id).toBe("v789");
     expect(result.platform).toBe("twitch");
     expect(result.title).toBe("Past Stream");
@@ -176,9 +176,9 @@ describe("toSearchLive", () => {
     thumbnail_url: "https://img.tv/ch1.jpg",
   };
 
-  it("maps search channel to LiveStream", () => {
+  it("maps search channel to Broadcast", () => {
     const result = toSearchLive(mockSearchChannel);
-    expect(result.type).toBe("live");
+    expect(result.type).toBe("broadcast");
     expect(result.id).toBe("livecaster");
     expect(result.description).toBe("");
     expect(result.tags).toEqual([]);

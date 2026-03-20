@@ -5,11 +5,11 @@ import {
   ValidationError,
 } from "@unified-live/core";
 import {
+  youtubeBatchGetContents,
   youtubeGetChannel,
   youtubeGetContent,
-  youtubeGetContents,
-  youtubeGetLiveStreams,
-  youtubeGetVideos,
+  youtubeListArchives,
+  youtubeListBroadcasts,
   youtubeResolveArchive,
   youtubeSearch,
 } from "./methods";
@@ -54,12 +54,12 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
       matchUrl: matchYouTubeUrl,
       fetch: config.fetch,
       capabilities: {
-        supportsLiveStreams: true,
+        supportsBroadcasts: true,
         supportsArchiveResolution: true,
         authModel: "apiKey",
         rateLimitModel: "quota",
         supportsBatchContent: true,
-        supportsBatchLiveStreams: false,
+        supportsBatchBroadcasts: false,
         supportsSearch: true,
         supportsClips: false,
       },
@@ -105,11 +105,11 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
     },
     {
       getContent: youtubeGetContent,
-      getContents: youtubeGetContents,
       getChannel: youtubeGetChannel,
-      getLiveStreams: youtubeGetLiveStreams,
-      getVideos: youtubeGetVideos,
+      listBroadcasts: youtubeListBroadcasts,
+      listArchives: youtubeListArchives,
       resolveArchive: youtubeResolveArchive,
+      batchGetContents: youtubeBatchGetContents,
       search: youtubeSearch,
     },
   );

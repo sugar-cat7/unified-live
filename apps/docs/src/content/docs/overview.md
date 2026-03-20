@@ -45,14 +45,14 @@ const client = UnifiedClient.create({
 });
 
 // One interface — the SDK handles auth, rate limits, and data normalization
-const yt = await client.getContent("https://www.youtube.com/watch?v=abc123");
-const tw = await client.getContent("https://www.twitch.tv/videos/123456");
-const tc = await client.getContent("https://twitcasting.tv/user/movie/789");
+const yt = await client.resolve("https://www.youtube.com/watch?v=abc123");
+const tw = await client.resolve("https://www.twitch.tv/videos/123456");
+const tc = await client.resolve("https://twitcasting.tv/user/movie/789");
 
 // All return the same Content type
 console.log(yt.title); // string
 console.log(tw.platform); // "twitch"
-console.log(tc.type); // "live" | "video"
+console.log(tc.type); // "broadcast" | "archive"
 ```
 
 ### What the SDK Handles for You
@@ -62,7 +62,7 @@ console.log(tc.type); // "live" | "video"
 | **Authentication**     | API key injection (YouTube), OAuth2 auto-refresh (Twitch), Basic auth encoding (TwitCasting)                                           |
 | **Rate Limiting**      | Local quota tracking with `QuotaExhaustedError` (YouTube), token bucket with header parsing (Twitch), fixed token bucket (TwitCasting) |
 | **Retries**            | Exponential backoff for 429/5xx, token refresh on 401                                                                                  |
-| **Data Normalization** | All platforms map to unified `Content`, `Channel`, `LiveStream`, `Video` types                                                         |
+| **Data Normalization** | All platforms map to unified `Content`, `Channel`, `Broadcast`, `Archive` types                                                        |
 | **URL Resolution**     | Auto-detects platform from URL, supports multiple URL formats per platform                                                             |
 | **Observability**      | OpenTelemetry spans and metrics for every API call (zero overhead when OTel is not configured)                                         |
 
@@ -72,8 +72,8 @@ console.log(tc.type); // "live" | "video"
 | :----------------------------- | :-----: | :----: | :---------: |
 | Get content by URL             |   ✅    |   ✅   |     ✅      |
 | Get content by ID              |   ✅    |   ✅   |     ✅      |
-| List live streams              |   ✅    |   ✅   |     ✅      |
-| List videos (pagination)       |   ✅    |   ✅   |     ✅      |
+| List broadcasts                |   ✅    |   ✅   |     ✅      |
+| List archives (pagination)     |   ✅    |   ✅   |     ✅      |
 | Get channel info               |   ✅    |   ✅   |     ✅      |
 | Archive resolution             |   ✅    |   ✅   |     ✅      |
 | OpenTelemetry traces & metrics |   ✅    |   ✅   |     ✅      |

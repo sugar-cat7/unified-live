@@ -55,7 +55,11 @@ export { getLogger, setLoggerProvider } from "./telemetry/logger";
 // --- Types ---
 export type { ClipOptions, KnownPlatform, ResolvedUrl, SearchOptions } from "./types";
 export {
+  Archive,
+  archiveSchema,
   BatchResult,
+  Broadcast,
+  broadcastSchema,
   Channel,
   channelRefSchema,
   channelSchema,
@@ -65,14 +69,10 @@ export {
   Content,
   contentSchema,
   knownPlatforms,
-  LiveStream,
-  liveStreamSchema,
   Page,
   resolvedUrlSchema,
-  ScheduledStream,
-  scheduledStreamSchema,
+  ScheduledBroadcast,
+  scheduledBroadcastSchema,
   searchOptionsSchema,
   thumbnailSchema,
-  Video,
-  videoSchema,
 } from "./types";

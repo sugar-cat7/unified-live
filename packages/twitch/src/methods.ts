@@ -1,16 +1,16 @@
 import {
+  type Archive,
   type BatchResult,
+  type Broadcast,
   type Channel,
   type Clip,
   type ClipOptions,
   type Content,
-  type LiveStream,
   NotFoundError,
   Page,
   type RestManager,
   type SearchOptions,
   UnifiedLiveError,
-  type Video,
 } from "@unified-live/core";
 import {
   toClip,
@@ -101,18 +101,18 @@ export const twitchGetChannel = async (rest: RestManager, id: string): Promise<C
 };
 
 /**
- * Fetch active live streams for a Twitch channel.
+ * Fetch active broadcasts for a Twitch channel.
  *
  * @param rest - REST manager for API requests
  * @param channelId - Twitch user ID
- * @returns array of active LiveStream objects (empty if not live)
+ * @returns array of active Broadcast objects (empty if not live)
  * @precondition channelId is a valid Twitch user ID
- * @postcondition returns only streams with type "live"
+ * @postcondition returns Broadcast objects (type === "broadcast"); Twitch API is filtered on stream.type === "live"
  */
-export const twitchGetLiveStreams = async (
+export const twitchListBroadcasts = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> => {
+): Promise<Broadcast[]> => {
   const res = await rest.request<TwitchResponse<TwitchStream>>({
     method: "GET",
     path: "/streams",
@@ -131,17 +131,17 @@ export const twitchGetLiveStreams = async (
  * @param cursor - optional pagination cursor
  * @param pageSize - number of items per page (default 20)
  * @param options - optional Twitch-specific video query options (period, sort, videoType)
- * @returns paginated list of Video objects
+ * @returns paginated list of Archive objects
  * @precondition channelId is a valid Twitch user ID
- * @postcondition returns videos with cursor for next page; defaults to archive type when no videoType specified
+ * @postcondition returns archives with cursor for next page; defaults to archive type when no videoType specified
  */
-export const twitchGetVideos = async (
+export const twitchListArchives = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize = 20,
   options?: TwitchVideoOptions,
-): Promise<Page<Video>> => {
+): Promise<Page<Archive>> => {
   const query: Record<string, string> = {
     user_id: channelId,
     type: options?.videoType ?? "archive",
@@ -172,17 +172,17 @@ export const twitchGetVideos = async (
 };
 
 /**
- * Resolve a live stream to its archived video by matching stream_id.
+ * Resolve a broadcast to its archived video by matching stream_id.
  *
  * @param rest - REST manager for API requests
- * @param live - live stream to check for archive
- * @returns archived Video, or null if no archive found or no sessionId
- * @postcondition returns Video if a matching archive exists, null otherwise
+ * @param live - broadcast to check for archive
+ * @returns archived Archive, or null if no archive found or no sessionId
+ * @postcondition returns Archive if a matching archive exists, null otherwise
  */
 export const twitchResolveArchive = async (
   rest: RestManager,
-  live: LiveStream,
-): Promise<Video | null> => {
+  live: Broadcast,
+): Promise<Archive | null> => {
   if (!live.sessionId) return null;
 
   const res = await rest.request<TwitchResponse<TwitchVideo>>({
@@ -212,7 +212,7 @@ const TWITCH_CHUNK_SIZE = 100;
  * @postcondition values contains Content for each found video; errors contains NotFoundError for each missing ID
  * @idempotency Safe — read-only API calls
  */
-export const twitchGetContents = async (
+export const twitchBatchGetContents = async (
   rest: RestManager,
   ids: string[],
 ): Promise<BatchResult<Content>> => {
@@ -247,20 +247,20 @@ export const twitchGetContents = async (
 };
 
 /**
- * Batch-fetch live streams for multiple Twitch channels in a single API call.
+ * Batch-fetch broadcasts for multiple Twitch channels in a single API call.
  *
  * @param rest - REST manager for API requests
  * @param channelIds - array of Twitch user IDs
- * @returns BatchResult with LiveStream[] per channel (empty array if not live); errors map is empty (API-level errors throw)
+ * @returns BatchResult with Broadcast[] per channel (empty array if not live); errors map is empty (API-level errors throw)
  * @precondition each channelId is a valid Twitch user ID
- * @postcondition values contains LiveStream[] for every requested channelId (empty if offline)
+ * @postcondition values contains Broadcast[] for every requested channelId (empty if offline)
  * @idempotency Safe — read-only API calls
  */
-export const twitchGetLiveStreamsBatch = async (
+export const twitchBatchGetBroadcasts = async (
   rest: RestManager,
   channelIds: string[],
-): Promise<BatchResult<LiveStream[]>> => {
-  const values = new Map<string, LiveStream[]>();
+): Promise<BatchResult<Broadcast[]>> => {
+  const values = new Map<string, Broadcast[]>();
   const errors = new Map<string, UnifiedLiveError>();
 
   // Initialize all channels as empty (no live streams)
@@ -293,7 +293,7 @@ export const twitchGetLiveStreamsBatch = async (
  *
  * @param rest - REST manager for API requests
  * @param options - search options (query, status, limit, cursor)
- * @returns paginated list of Content items (LiveStream for live searches, empty for other statuses)
+ * @returns paginated list of Content items (Broadcast for live searches, empty for other statuses)
  * @precondition options.query should be provided for meaningful results
  * @postcondition returns Page with items mapped from Twitch search channel resources
  * @idempotency Safe — read-only API calls
@@ -368,7 +368,7 @@ export const twitchSearch = async (
  * @postcondition returns clips with cursor for next page
  * @idempotency Safe — read-only API calls
  */
-export const twitchGetClips = async (
+export const twitchListClips = async (
   rest: RestManager,
   channelId: string,
   options?: ClipOptions,
@@ -404,7 +404,7 @@ export const twitchGetClips = async (
  * @postcondition values contains Clip for each found clip; errors contains NotFoundError for each missing ID
  * @idempotency Safe — read-only API calls
  */
-export const twitchGetClipsByIds = async (
+export const twitchBatchGetClips = async (
   rest: RestManager,
   ids: string[],
 ): Promise<BatchResult<Clip>> => {

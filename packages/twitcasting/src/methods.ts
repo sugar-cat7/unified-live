@@ -1,12 +1,12 @@
 import {
+  type Archive,
+  type Broadcast,
   type Channel,
   type Content,
-  type LiveStream,
   NotFoundError,
   Page,
   type RestManager,
   type SearchOptions,
-  type Video,
 } from "@unified-live/core";
 import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
 
@@ -35,9 +35,9 @@ type TCSearchUsersResponse = {
  *
  * @param rest - REST manager for API requests
  * @param id - TwitCasting movie ID
- * @returns unified Content (live or video) for the movie
+ * @returns unified Content (broadcast or archive) for the movie
  * @precondition id is a valid TwitCasting movie ID
- * @postcondition returns Content (live or video) for the movie
+ * @postcondition returns Content (broadcast or archive) for the movie
  */
 export const twitcastingGetContent = async (rest: RestManager, id: string): Promise<Content> => {
   const res = await rest.request<TCMovieResponse>({
@@ -79,18 +79,18 @@ export const twitcastingGetChannel = async (rest: RestManager, id: string): Prom
 };
 
 /**
- * Fetch active live streams for a TwitCasting channel.
+ * Fetch active broadcasts for a TwitCasting channel.
  *
  * @param rest - REST manager for API requests
  * @param channelId - TwitCasting user_id or screen_id
- * @returns array of live streams (0 or 1 items)
+ * @returns array of broadcasts (0 or 1 items)
  * @precondition channelId is a valid TwitCasting user_id or screen_id
- * @postcondition returns live streams (0 or 1 for TwitCasting, since a user can only have one live)
+ * @postcondition returns broadcasts (0 or 1 for TwitCasting, since a user can only have one live)
  */
-export const twitcastingGetLiveStreams = async (
+export const twitcastingListBroadcasts = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> => {
+): Promise<Broadcast[]> => {
   const encodedId = encodeURIComponent(channelId);
   const res = await rest.request<TCUserResponse>({
     method: "GET",
@@ -117,22 +117,22 @@ export const twitcastingGetLiveStreams = async (
 };
 
 /**
- * Fetch paginated videos for a TwitCasting channel.
+ * Fetch paginated archives for a TwitCasting channel.
  *
  * @param rest - REST manager for API requests
  * @param channelId - TwitCasting user_id or screen_id
  * @param cursor - optional pagination cursor (slice_id)
  * @param pageSize - number of items per page (default 50)
- * @returns paginated list of videos
+ * @returns paginated list of archives
  * @precondition channelId is a valid TwitCasting user_id or screen_id
- * @postcondition returns paginated videos using slice_id for deep pagination
+ * @postcondition returns paginated archives using slice_id for deep pagination
  */
-export const twitcastingGetVideos = async (
+export const twitcastingListArchives = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize = 50,
-): Promise<Page<Video>> => {
+): Promise<Page<Archive>> => {
   const query: Record<string, string> = { limit: String(pageSize) };
   if (cursor) {
     query.slice_id = cursor;
@@ -155,7 +155,7 @@ export const twitcastingGetVideos = async (
   ]);
 
   const movies = moviesRes.data.movies;
-  const videos: Video[] = [];
+  const videos: Archive[] = [];
   for (const m of movies) {
     if (!m.is_live) {
       videos.push(toVideo(m, userRes.data.user));
@@ -174,16 +174,16 @@ export const twitcastingGetVideos = async (
 
 /**
  * TwitCasting uses the same ID for live and archive.
- * resolveArchive checks if the movie has ended and returns the video.
+ * resolveArchive checks if the movie has ended and returns the archive.
  *
  * @param rest - REST manager for API requests
- * @param live - live stream to check for archive
- * @returns archived Video or null if still live
+ * @param live - broadcast to check for archive
+ * @returns Archive or null if still live
  */
 export const twitcastingResolveArchive = async (
   rest: RestManager,
-  live: LiveStream,
-): Promise<Video | null> => {
+  live: Broadcast,
+): Promise<Archive | null> => {
   const res = await rest.request<TCMovieResponse>({
     method: "GET",
     path: `/movies/${live.id}`,

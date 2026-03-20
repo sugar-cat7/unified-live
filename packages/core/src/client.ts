@@ -13,14 +13,14 @@ import { getLogger } from "./telemetry/logger";
 import { getTracer, SpanAttributes, withSpan } from "./telemetry/traces";
 import { BatchResult, Page } from "./types";
 import type {
+  Archive,
+  Broadcast,
   Channel,
   Clip,
   ClipOptions,
   Content,
-  LiveStream,
   ResolvedUrl,
   SearchOptions,
-  Video,
 } from "./types";
 
 /** @category Client */
@@ -42,55 +42,55 @@ export type UnifiedClient = {
   register(plugin: PlatformPlugin): void;
 
   /**
-   * Retrieve content by URL. Automatically routes to the correct plugin.
+   * Resolve a URL to content. Automatically routes to the correct plugin.
    *
    * @param url - content URL to resolve and fetch
-   * @returns the resolved content (LiveStream, ScheduledStream, or Video)
+   * @returns the resolved content (Broadcast, ScheduledBroadcast, or Archive)
    * @precondition url matches a registered plugin
-   * @postcondition returns Content (LiveStream, ScheduledStream, or Video)
+   * @postcondition returns Content (Broadcast, ScheduledBroadcast, or Archive)
    * @throws PlatformNotFoundError if no plugin matches the URL
    */
-  getContent(url: string): Promise<Content>;
+  resolve(url: string): Promise<Content>;
 
   /**
    * Retrieve content by platform name and ID.
    *
    * @param platform - platform name
    * @param id - content identifier
-   * @returns the resolved content (LiveStream, ScheduledStream, or Video)
+   * @returns the resolved content (Broadcast, ScheduledBroadcast, or Archive)
    * @precondition platform is registered
-   * @postcondition returns Content (LiveStream, ScheduledStream, or Video)
+   * @postcondition returns Content (Broadcast, ScheduledBroadcast, or Archive)
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getContentById(platform: string, id: string): Promise<Content>;
+  getContent(platform: string, id: string): Promise<Content>;
 
   /**
-   * List currently active live streams for a channel.
+   * List currently active broadcasts for a channel.
    *
    * @param platform - platform name
    * @param channelId - channel identifier
-   * @returns active live streams for the channel
+   * @returns active broadcasts for the channel
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getLiveStreams(platform: string, channelId: string): Promise<LiveStream[]>;
+  listBroadcasts(platform: string, channelId: string): Promise<Broadcast[]>;
 
   /**
-   * List videos for a channel with cursor-based pagination.
+   * List archives for a channel with cursor-based pagination.
    *
    * @param platform - platform name
    * @param channelId - channel identifier
    * @param cursor - pagination cursor
-   * @returns paginated list of videos
+   * @returns paginated list of archives
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getVideos(
+  listArchives(
     platform: string,
     channelId: string,
     cursor?: string,
     pageSize?: number,
-  ): Promise<Page<Video>>;
+  ): Promise<Page<Archive>>;
 
   /**
    * Retrieve channel information.
@@ -113,19 +113,19 @@ export type UnifiedClient = {
    * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getContents(platform: string, ids: string[]): Promise<BatchResult<Content>>;
+  batchGetContents(platform: string, ids: string[]): Promise<BatchResult<Content>>;
 
   /**
-   * Batch retrieve live streams by platform and channel IDs.
+   * Batch retrieve broadcasts by platform and channel IDs.
    *
    * @param platform - platform name
    * @param channelIds - channel identifiers
-   * @returns batch result with values (LiveStream[] per channel) and per-item errors
+   * @returns batch result with values (Broadcast[] per channel) and per-item errors
    * @precondition platform is registered
    * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
    * @throws PlatformNotFoundError if platform is not registered
    */
-  getLiveStreamsBatch(platform: string, channelIds: string[]): Promise<BatchResult<LiveStream[]>>;
+  batchGetBroadcasts(platform: string, channelIds: string[]): Promise<BatchResult<Broadcast[]>>;
 
   /**
    * Search content on a platform. At least one of query/status/channelId required.
@@ -151,7 +151,7 @@ export type UnifiedClient = {
    * @throws PlatformNotFoundError if platform is not registered
    * @throws ValidationError if platform doesn't support clips
    */
-  getClips(platform: string, channelId: string, options?: ClipOptions): Promise<Page<Clip>>;
+  listClips(platform: string, channelId: string, options?: ClipOptions): Promise<Page<Clip>>;
 
   /**
    * Batch retrieve clips by platform and IDs.
@@ -163,19 +163,19 @@ export type UnifiedClient = {
    * @throws PlatformNotFoundError if platform is not registered
    * @throws ValidationError if platform doesn't support clip retrieval by IDs
    */
-  getClipsByIds(platform: string, ids: string[]): Promise<BatchResult<Clip>>;
+  batchGetClips(platform: string, ids: string[]): Promise<BatchResult<Clip>>;
 
   /**
-   * Fetch live streams from all specified platforms in parallel.
+   * Fetch broadcasts from all specified platforms in parallel.
    *
-   * @param channelIds - mapping of platform name to channel ID arrays
-   * @returns mapping of platform name to batch result of live streams; failed platforms get empty BatchResult
+   * @param channels - mapping of platform name to channel ID arrays
+   * @returns mapping of platform name to batch result of broadcasts; failed platforms get empty BatchResult
    * @postcondition all platforms are represented in the result, even on failure
    * @idempotency Safe — read-only aggregation
    */
-  getAllLiveStreams(
-    channelIds: Record<string, string[]>,
-  ): Promise<Record<string, BatchResult<LiveStream[]>>>;
+  crossListBroadcasts(
+    channels: Record<string, string[]>,
+  ): Promise<Record<string, BatchResult<Broadcast[]>>>;
 
   /**
    * Search across all registered plugins that support search.
@@ -185,7 +185,7 @@ export type UnifiedClient = {
    * @postcondition all searchable platforms are represented in the result, even on failure
    * @idempotency Safe — read-only aggregation
    */
-  searchAll(options: SearchOptions): Promise<Record<string, Page<Content>>>;
+  crossSearch(options: SearchOptions): Promise<Record<string, Page<Content>>>;
 
   /**
    * Access a specific platform plugin.
@@ -335,7 +335,7 @@ export const UnifiedClient = {
         plugins.set(plugin.name, plugin);
       },
 
-      async getContent(url: string): Promise<Content> {
+      async resolve(url: string): Promise<Content> {
         if (!url) {
           throw new ValidationError("VALIDATION_INVALID_INPUT", "URL must be a non-empty string");
         }
@@ -346,39 +346,35 @@ export const UnifiedClient = {
             `No registered plugin matches URL: "${url}"`,
           );
         }
-        return withClientSpan(
-          "getContent",
-          { [SpanAttributes.PLATFORM]: resolved.platform },
-          () => {
-            const plugin = getPlugin(resolved.platform);
-            return plugin.getContent(resolved.id);
-          },
-        );
+        return withClientSpan("resolve", { [SpanAttributes.PLATFORM]: resolved.platform }, () => {
+          const plugin = getPlugin(resolved.platform);
+          return plugin.getContent(resolved.id);
+        });
       },
 
-      async getContentById(platform: string, id: string): Promise<Content> {
-        return withClientSpan("getContentById", { [SpanAttributes.PLATFORM]: platform }, () => {
+      async getContent(platform: string, id: string): Promise<Content> {
+        return withClientSpan("getContent", { [SpanAttributes.PLATFORM]: platform }, () => {
           const plugin = getPlugin(platform);
           return plugin.getContent(id);
         });
       },
 
-      async getLiveStreams(platform: string, channelId: string): Promise<LiveStream[]> {
-        return withClientSpan("getLiveStreams", { [SpanAttributes.PLATFORM]: platform }, () => {
+      async listBroadcasts(platform: string, channelId: string): Promise<Broadcast[]> {
+        return withClientSpan("listBroadcasts", { [SpanAttributes.PLATFORM]: platform }, () => {
           const plugin = getPlugin(platform);
-          return plugin.getLiveStreams(channelId);
+          return plugin.listBroadcasts(channelId);
         });
       },
 
-      async getVideos(
+      async listArchives(
         platform: string,
         channelId: string,
         cursor?: string,
         pageSize?: number,
-      ): Promise<Page<Video>> {
-        return withClientSpan("getVideos", { [SpanAttributes.PLATFORM]: platform }, () => {
+      ): Promise<Page<Archive>> {
+        return withClientSpan("listArchives", { [SpanAttributes.PLATFORM]: platform }, () => {
           const plugin = getPlugin(platform);
-          return plugin.getVideos(channelId, cursor, pageSize);
+          return plugin.listArchives(channelId, cursor, pageSize);
         });
       },
 
@@ -389,10 +385,10 @@ export const UnifiedClient = {
         });
       },
 
-      async getContents(platform: string, ids: string[]): Promise<BatchResult<Content>> {
+      async batchGetContents(platform: string, ids: string[]): Promise<BatchResult<Content>> {
         if (ids.length === 0) return BatchResult.empty();
         return withClientSpan(
-          "getContents",
+          "batchGetContents",
           {
             [SpanAttributes.PLATFORM]: platform,
             [SpanAttributes.BATCH_SIZE]: ids.length,
@@ -400,21 +396,21 @@ export const UnifiedClient = {
           () => {
             const plugin = getPlugin(platform);
             const uniqueIds = [...new Set(ids)];
-            if (plugin.getContents) {
-              return plugin.getContents(uniqueIds);
+            if (plugin.batchGetContents) {
+              return plugin.batchGetContents(uniqueIds);
             }
             return batchFallback((id) => plugin.getContent(id), uniqueIds, platform);
           },
         );
       },
 
-      async getLiveStreamsBatch(
+      async batchGetBroadcasts(
         platform: string,
         channelIds: string[],
-      ): Promise<BatchResult<LiveStream[]>> {
+      ): Promise<BatchResult<Broadcast[]>> {
         if (channelIds.length === 0) return BatchResult.empty();
         return withClientSpan(
-          "getLiveStreamsBatch",
+          "batchGetBroadcasts",
           {
             [SpanAttributes.PLATFORM]: platform,
             [SpanAttributes.BATCH_SIZE]: channelIds.length,
@@ -422,10 +418,10 @@ export const UnifiedClient = {
           () => {
             const plugin = getPlugin(platform);
             const uniqueIds = [...new Set(channelIds)];
-            if (plugin.getLiveStreamsBatch) {
-              return plugin.getLiveStreamsBatch(uniqueIds);
+            if (plugin.batchGetBroadcasts) {
+              return plugin.batchGetBroadcasts(uniqueIds);
             }
-            return batchFallback((id) => plugin.getLiveStreams(id), uniqueIds, platform);
+            return batchFallback((id) => plugin.listBroadcasts(id), uniqueIds, platform);
           },
         );
       },
@@ -449,57 +445,57 @@ export const UnifiedClient = {
         });
       },
 
-      async getClips(
+      async listClips(
         platform: string,
         channelId: string,
         options?: ClipOptions,
       ): Promise<Page<Clip>> {
-        return withClientSpan("getClips", { [SpanAttributes.PLATFORM]: platform }, () => {
+        return withClientSpan("listClips", { [SpanAttributes.PLATFORM]: platform }, () => {
           const plugin = getPlugin(platform);
-          if (!plugin.getClips) {
+          if (!plugin.listClips) {
             throw new ValidationError(
               "VALIDATION_INVALID_INPUT",
               `Platform '${platform}' does not support clips`,
             );
           }
-          return plugin.getClips(channelId, options);
+          return plugin.listClips(channelId, options);
         });
       },
 
-      async getClipsByIds(platform: string, ids: string[]): Promise<BatchResult<Clip>> {
+      async batchGetClips(platform: string, ids: string[]): Promise<BatchResult<Clip>> {
         if (ids.length === 0) return BatchResult.empty();
         return withClientSpan(
-          "getClipsByIds",
+          "batchGetClips",
           {
             [SpanAttributes.PLATFORM]: platform,
             [SpanAttributes.BATCH_SIZE]: ids.length,
           },
           () => {
             const plugin = getPlugin(platform);
-            if (!plugin.getClipsByIds) {
+            if (!plugin.batchGetClips) {
               throw new ValidationError(
                 "VALIDATION_INVALID_INPUT",
                 `Platform '${platform}' does not support clip retrieval by IDs`,
               );
             }
             const uniqueIds = [...new Set(ids)];
-            return plugin.getClipsByIds(uniqueIds);
+            return plugin.batchGetClips(uniqueIds);
           },
         );
       },
 
-      async getAllLiveStreams(
-        channelIds: Record<string, string[]>,
-      ): Promise<Record<string, BatchResult<LiveStream[]>>> {
-        return withClientSpan("getAllLiveStreams", {}, async () => {
-          const entries = Object.entries(channelIds);
+      async crossListBroadcasts(
+        channels: Record<string, string[]>,
+      ): Promise<Record<string, BatchResult<Broadcast[]>>> {
+        return withClientSpan("crossListBroadcasts", {}, async () => {
+          const entries = Object.entries(channels);
           const settled = await Promise.allSettled(
             entries.map(async ([platform, ids]) => ({
               platform,
-              result: await client.getLiveStreamsBatch(platform, ids),
+              result: await client.batchGetBroadcasts(platform, ids),
             })),
           );
-          const out: Record<string, BatchResult<LiveStream[]>> = {};
+          const out: Record<string, BatchResult<Broadcast[]>> = {};
           for (const [i, s] of settled.entries()) {
             if (s.status === "fulfilled") {
               out[s.value.platform] = s.value.result;
@@ -511,12 +507,12 @@ export const UnifiedClient = {
         });
       },
 
-      async searchAll(searchOptions: SearchOptions): Promise<Record<string, Page<Content>>> {
-        return withClientSpan("searchAll", {}, async () => {
+      async crossSearch(searchOptions: SearchOptions): Promise<Record<string, Page<Content>>> {
+        return withClientSpan("crossSearch", {}, async () => {
           if (!searchOptions.query && !searchOptions.status && !searchOptions.channelId) {
             throw new ValidationError(
               "VALIDATION_INVALID_INPUT",
-              "searchAll requires at least one of 'query', 'status', or 'channelId'",
+              "crossSearch requires at least one of 'query', 'status', or 'channelId'",
             );
           }
           const searchablePlugins = [...plugins.entries()].filter(
@@ -535,7 +531,7 @@ export const UnifiedClient = {
               out[s.value.name] = s.value.result;
             } else {
               const name = searchablePlugins[i]![0];
-              logger.log("warn", `searchAll failed for platform ${name}`, { error: s.reason });
+              logger.log("warn", `crossSearch failed for platform ${name}`, { error: s.reason });
               out[name] = Page.empty();
             }
           }
@@ -583,18 +579,18 @@ export const UnifiedClient = {
     const obj = value as Record<string | symbol, unknown>;
     return (
       typeof obj.register === "function" &&
+      typeof obj.resolve === "function" &&
       typeof obj.getContent === "function" &&
-      typeof obj.getContentById === "function" &&
-      typeof obj.getLiveStreams === "function" &&
-      typeof obj.getVideos === "function" &&
+      typeof obj.listBroadcasts === "function" &&
+      typeof obj.listArchives === "function" &&
       typeof obj.getChannel === "function" &&
-      typeof obj.getContents === "function" &&
-      typeof obj.getLiveStreamsBatch === "function" &&
+      typeof obj.batchGetContents === "function" &&
+      typeof obj.batchGetBroadcasts === "function" &&
       typeof obj.search === "function" &&
-      typeof obj.getClips === "function" &&
-      typeof obj.getClipsByIds === "function" &&
-      typeof obj.getAllLiveStreams === "function" &&
-      typeof obj.searchAll === "function" &&
+      typeof obj.listClips === "function" &&
+      typeof obj.batchGetClips === "function" &&
+      typeof obj.crossListBroadcasts === "function" &&
+      typeof obj.crossSearch === "function" &&
       typeof obj.platform === "function" &&
       typeof obj.match === "function" &&
       typeof obj.platforms === "function" &&

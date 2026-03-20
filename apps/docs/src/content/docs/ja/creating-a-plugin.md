@@ -7,7 +7,7 @@ description: "カスタムプラットフォームプラグインの作成ガイ
 
 ## プラグインを作成するタイミング
 
-新しい配信プラットフォーム（例: Kick、Bilibili、ニコニコ）のサポートを追加したい場合にプラグインを作成します。各プラグインは独立したパッケージで、1つのプラットフォームの API を統一された `Content`、`Channel`、`LiveStream` 型にマッピングします。
+新しい配信プラットフォーム（例: Kick、Bilibili、ニコニコ）のサポートを追加したい場合にプラグインを作成します。各プラグインは独立したパッケージで、1つのプラットフォームの API を統一された `Content`、`Channel`、`Broadcast` 型にマッピングします。
 
 ## アーキテクチャ概要
 
@@ -91,7 +91,7 @@ const createDefinition = (config: {
   matchUrl: matchExampleUrl,
   fetch: config.fetch,
   capabilities: {
-    supportsLiveStreams: true,
+    supportsBroadcasts: true,
     supportsArchiveResolution: false,
     authModel: "apiKey",
     rateLimitModel: "tokenBucket",
@@ -109,9 +109,9 @@ import type {
   PluginMethods,
   Content,
   Channel,
-  LiveStream,
+  Broadcast,
   Page,
-  Video,
+  Archive,
 } from "@unified-live/core";
 
 const exampleGetContent = async (rest: RestManager, id: string): Promise<Content> => {
@@ -132,24 +132,24 @@ const exampleGetChannel = async (rest: RestManager, id: string): Promise<Channel
   return mapToChannel(res.data.channel);
 };
 
-const exampleGetLiveStreams = async (
+const exampleListBroadcasts = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> => {
+): Promise<Broadcast[]> => {
   const res = await rest.request<{ streams: ExampleStream[] }>({
     method: "GET",
     path: `/channels/${channelId}/live`,
     bucketId: "streams:list",
   });
-  return res.data.streams.map(mapToLiveStream);
+  return res.data.streams.map(mapToBroadcast);
 };
 
-const exampleGetVideos = async (
+const exampleListArchives = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize?: number,
-): Promise<Page<Video>> => {
+): Promise<Page<Archive>> => {
   const res = await rest.request<{ videos: ExampleVideo[]; nextCursor?: string }>({
     method: "GET",
     path: `/channels/${channelId}/videos`,
@@ -160,7 +160,7 @@ const exampleGetVideos = async (
     bucketId: "videos:list",
   });
   return {
-    items: res.data.videos.map(mapToVideo),
+    items: res.data.videos.map(mapToArchive),
     cursor: res.data.nextCursor,
     hasMore: !!res.data.nextCursor,
   };
@@ -169,8 +169,8 @@ const exampleGetVideos = async (
 const methods: PluginMethods = {
   getContent: exampleGetContent,
   getChannel: exampleGetChannel,
-  getLiveStreams: exampleGetLiveStreams,
-  getVideos: exampleGetVideos,
+  listBroadcasts: exampleListBroadcasts,
+  listArchives: exampleListArchives,
 };
 ```
 
@@ -350,9 +350,9 @@ import {
   type RestManager,
   type Content,
   type Channel,
-  type LiveStream,
+  type Broadcast,
   type Page,
-  type Video,
+  type Archive,
   type ResolvedUrl,
 } from "@unified-live/core";
 
@@ -379,17 +379,17 @@ const getChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   return res.data as Channel; // プラットフォームレスポンスを Channel にマッピング
 };
 
-const getLiveStreams = async (rest: RestManager, channelId: string): Promise<LiveStream[]> => {
+const listBroadcasts = async (rest: RestManager, channelId: string): Promise<Broadcast[]> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/live` });
-  return []; // res.data を LiveStream[] にマッピング
+  return []; // res.data を Broadcast[] にマッピング
 };
 
-const getVideos = async (
+const listArchives = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize?: number,
-): Promise<Page<Video>> => {
+): Promise<Page<Archive>> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/videos` });
   return { items: [], hasMore: false }; // res.data をマッピング
 };
@@ -410,13 +410,13 @@ export const createExamplePlugin = (config: ExamplePluginConfig): PlatformPlugin
       matchUrl,
       fetch: config.fetch,
       capabilities: {
-        supportsLiveStreams: true,
+        supportsBroadcasts: true,
         supportsArchiveResolution: false,
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
       },
     },
-    { getContent, getChannel, getLiveStreams, getVideos },
+    { getContent, getChannel, listBroadcasts, listArchives },
   );
 };
 ```

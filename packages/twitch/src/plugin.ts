@@ -6,14 +6,14 @@ import {
 } from "@unified-live/core";
 import { createClientCredentialsTokenManager } from "./auth";
 import {
+  twitchBatchGetClips,
+  twitchBatchGetBroadcasts,
+  twitchBatchGetContents,
   twitchGetChannel,
-  twitchGetClips,
-  twitchGetClipsByIds,
   twitchGetContent,
-  twitchGetContents,
-  twitchGetLiveStreams,
-  twitchGetLiveStreamsBatch,
-  twitchGetVideos,
+  twitchListArchives,
+  twitchListBroadcasts,
+  twitchListClips,
   twitchResolveArchive,
   twitchSearch,
 } from "./methods";
@@ -68,12 +68,12 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
       }),
       matchUrl: matchTwitchUrl,
       capabilities: {
-        supportsLiveStreams: true,
+        supportsBroadcasts: true,
         supportsArchiveResolution: true,
         authModel: "oauth2",
         rateLimitModel: "tokenBucket",
         supportsBatchContent: true,
-        supportsBatchLiveStreams: true,
+        supportsBatchBroadcasts: true,
         supportsSearch: true,
         supportsClips: true,
       },
@@ -83,15 +83,15 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
     },
     {
       getContent: twitchGetContent,
-      getContents: twitchGetContents,
       getChannel: twitchGetChannel,
-      getLiveStreams: twitchGetLiveStreams,
-      getLiveStreamsBatch: twitchGetLiveStreamsBatch,
-      getVideos: twitchGetVideos,
+      listBroadcasts: twitchListBroadcasts,
+      listArchives: twitchListArchives,
       resolveArchive: twitchResolveArchive,
+      batchGetContents: twitchBatchGetContents,
+      batchGetBroadcasts: twitchBatchGetBroadcasts,
       search: twitchSearch,
-      getClips: twitchGetClips,
-      getClipsByIds: twitchGetClipsByIds,
+      listClips: twitchListClips,
+      batchGetClips: twitchBatchGetClips,
     },
   );
 };

@@ -5,17 +5,17 @@ description: "Content、Channel、URL解決、統一型システム"
 
 ## Content
 
-`Content` はライブ配信とアーカイブ動画を統一的に扱う型です。`type: "live" | "video"` の Discriminated Union として定義されています。
+`Content` はライブ配信やアーカイブ動画などを統一的に扱う型です。`type: "broadcast" | "archive" | "scheduled" | "clip"` の Discriminated Union として定義されています。
 
 ```ts
-const content = await client.getContent(url);
+const content = await client.resolve(url);
 
-if (content.type === "live") {
+if (content.type === "broadcast") {
   console.log(content.viewerCount); // 視聴者数
   console.log(content.startedAt); // 配信開始日時
 }
 
-if (content.type === "video") {
+if (content.type === "archive") {
   console.log(content.duration); // 再生時間（秒）
   console.log(content.viewCount); // 再生回数
   console.log(content.publishedAt); // 公開日時
@@ -29,20 +29,20 @@ if (content.type === "video") {
 ```ts
 import { Content } from "@unified-live/core";
 
-if (Content.isLive(content)) {
-  // content が LiveStream に絞り込まれる
+if (Content.isBroadcast(content)) {
+  // content が Broadcast に絞り込まれる
   console.log(content.viewerCount);
 }
 
-if (Content.isVideo(content)) {
-  // content が Video に絞り込まれる
+if (Content.isArchive(content)) {
+  // content が Archive に絞り込まれる
   console.log(content.duration);
 }
 ```
 
 ### 共通フィールド
 
-`LiveStream` と `Video` は以下のフィールドを共有します:
+`Broadcast` と `Archive` は以下のフィールドを共有します:
 
 | フィールド  | 型           | 説明                                       |
 | ----------- | ------------ | ------------------------------------------ |
@@ -75,17 +75,17 @@ console.log(channel.thumbnail); // サムネイル（任意）
 
 ```ts
 // YouTube
-const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
+const content = await client.resolve("https://www.youtube.com/watch?v=abc123");
 ```
 
 ```ts
 // Twitch
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
+const content = await client.resolve("https://www.twitch.tv/videos/123456");
 ```
 
 ```ts
 // TwitCasting
-const content = await client.getContent("https://twitcasting.tv/user/movie/123");
+const content = await client.resolve("https://twitcasting.tv/user/movie/123");
 ```
 
 ```ts
@@ -125,11 +125,11 @@ const resolved = client.match("https://www.twitch.tv/username");
 
 ```ts
 // ライブ配信中
-const live = await client.getContent("https://youtube.com/watch?v=abc123");
+const live = await client.resolve("https://youtube.com/watch?v=abc123");
 console.log(live.sessionId); // "abc123"
 
 // 配信終了後のアーカイブも同じ sessionId
-const archive = await client.getContent("https://youtube.com/watch?v=abc123");
+const archive = await client.resolve("https://youtube.com/watch?v=abc123");
 console.log(archive.sessionId); // "abc123"
 ```
 

@@ -1,5 +1,5 @@
 import { ParseError } from "@unified-live/core";
-import type { Channel, Clip, LiveStream, Video } from "@unified-live/core";
+import type { Archive, Broadcast, Channel, Clip } from "@unified-live/core";
 
 /** Subset of Twitch Helix Stream resource fields actually used. */
 export type TwitchStream = {
@@ -77,14 +77,14 @@ export type TwitchClip = {
 };
 
 /**
- * Convert a Twitch Stream to a unified LiveStream.
+ * Convert a Twitch Stream to a unified Broadcast.
  *
  * @param stream - Twitch stream resource from Helix API
- * @returns unified LiveStream
+ * @returns unified Broadcast
  * @precondition stream.type === "live"
- * @postcondition returns LiveStream with sessionId set to stream.id
+ * @postcondition returns Broadcast with sessionId set to stream.id
  */
-export const toLive = (stream: TwitchStream): LiveStream => {
+export const toLive = (stream: TwitchStream): Broadcast => {
   if (!stream.id || !stream.user_id) {
     throw new ParseError("twitch", "PARSE_RESPONSE", {
       message: `Twitch stream resource missing required fields (id, user_id)${stream.id ? ` for stream ${stream.id}` : ""}`,
@@ -105,23 +105,23 @@ export const toLive = (stream: TwitchStream): LiveStream => {
       url: `https://www.twitch.tv/${stream.user_login}`,
     },
     sessionId: stream.id,
-    type: "live",
+    type: "broadcast",
     viewerCount: stream.viewer_count,
     startedAt: new Date(stream.started_at),
     languageCode: stream.language,
     raw: stream,
-  } satisfies LiveStream;
+  } satisfies Broadcast;
 };
 
 /**
- * Convert a Twitch Video to a unified Video.
+ * Convert a Twitch Video to a unified Archive.
  *
  * @param video - Twitch video resource from Helix API
- * @returns unified Video
+ * @returns unified Archive
  * @precondition video has all required fields
- * @postcondition returns Video with sessionId set to stream_id (if available)
+ * @postcondition returns Archive with sessionId set to stream_id (if available)
  */
-export const toVideo = (video: TwitchVideo): Video => {
+export const toVideo = (video: TwitchVideo): Archive => {
   if (!video.id || !video.user_id) {
     throw new ParseError("twitch", "PARSE_RESPONSE", {
       message: `Twitch video resource missing required fields (id, user_id)${video.id ? ` for video ${video.id}` : ""}`,
@@ -142,13 +142,13 @@ export const toVideo = (video: TwitchVideo): Video => {
       url: `https://www.twitch.tv/${video.user_login}`,
     },
     sessionId: video.stream_id ?? video.id,
-    type: "video",
+    type: "archive",
     duration: parseDuration(video.duration),
     viewCount: video.view_count,
     publishedAt: new Date(video.published_at),
     startedAt: new Date(video.created_at),
     raw: video,
-  } satisfies Video;
+  } satisfies Archive;
 };
 
 /**
@@ -222,14 +222,14 @@ export const toClip = (clip: TwitchClip): Clip => {
 };
 
 /**
- * Convert a Twitch Search Channel result to a unified LiveStream.
+ * Convert a Twitch Search Channel result to a unified Broadcast.
  *
  * @param ch - Twitch search channel resource from Helix API
- * @returns unified LiveStream
+ * @returns unified Broadcast
  * @precondition ch.is_live is true and ch.started_at is a valid ISO date string
- * @postcondition returns LiveStream with viewerCount 0 (search endpoint does not return viewer count)
+ * @postcondition returns Broadcast with viewerCount 0 (search endpoint does not return viewer count)
  */
-export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
+export const toSearchLive = (ch: TwitchSearchChannel): Broadcast => {
   if (!ch.id || !ch.broadcaster_login) {
     throw new ParseError("twitch", "PARSE_RESPONSE", {
       message: `Twitch search channel resource missing required fields (id, broadcaster_login)${ch.id ? ` for channel ${ch.id}` : ""}`,
@@ -251,11 +251,11 @@ export const toSearchLive = (ch: TwitchSearchChannel): LiveStream => {
       name: ch.display_name,
       url: `https://www.twitch.tv/${ch.broadcaster_login}`,
     },
-    type: "live",
+    type: "broadcast",
     viewerCount: 0,
     startedAt: new Date(ch.started_at),
     raw: ch,
-  } satisfies LiveStream;
+  } satisfies Broadcast;
 };
 
 /**

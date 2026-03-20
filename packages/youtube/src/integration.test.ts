@@ -51,21 +51,21 @@ describe("YouTube Integration", () => {
     client?.[Symbol.dispose]();
   });
 
-  it("full consumer flow: UnifiedClient.create -> getContent by URL", async () => {
+  it("full consumer flow: UnifiedClient.create -> resolve by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
 
     const plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(content.title).toBe("Never Gonna Give You Up");
     expect(content.channel.name).toBe("Rick Astley");
 
-    if (Content.isVideo(content)) {
+    if (Content.isArchive(content)) {
       expect(content.duration).toBe(213); // 3*60 + 33
       expect(content.viewCount).toBe(1_500_000_000);
     }
@@ -88,13 +88,13 @@ describe("YouTube Integration", () => {
     expect(client.match("https://twitch.tv/shroud")).toBeNull();
   });
 
-  it("getContentById bypasses URL matching", async () => {
+  it("getContent bypasses URL matching", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
 
     const plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContentById("youtube", "dQw4w9WgXcQ");
+    const content = await client.getContent("youtube", "dQw4w9WgXcQ");
     expect(content.id).toBe("dQw4w9WgXcQ");
   });
 

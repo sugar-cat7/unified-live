@@ -39,25 +39,25 @@ const contentBaseSchema = z.object({
 });
 
 /**
- * Zod schema for a currently-active live stream.
+ * Zod schema for a currently-active broadcast.
  * Validates viewer count (non-negative) and start time.
  *
  * @category Types
  */
-export const liveStreamSchema = contentBaseSchema.extend({
-  type: z.literal("live"),
+export const broadcastSchema = contentBaseSchema.extend({
+  type: z.literal("broadcast"),
   viewerCount: z.int().check(z.nonnegative()),
   startedAt: z.date(),
   endedAt: z.date().optional(),
 });
 
 /**
- * A currently-active live stream on any supported platform.
- * Discriminated by `type: "live"`. Use `Content.isLive()` to narrow from Content.
+ * A currently-active broadcast on any supported platform.
+ * Discriminated by `type: "broadcast"`. Use `Content.isBroadcast()` to narrow from Content.
  *
  * @category Types
  */
-export type LiveStream = z.infer<typeof liveStreamSchema>;
+export type Broadcast = z.infer<typeof broadcastSchema>;
 
 /**
  * Zod schema for an archived or uploaded video.
@@ -65,8 +65,8 @@ export type LiveStream = z.infer<typeof liveStreamSchema>;
  *
  * @category Types
  */
-export const videoSchema = contentBaseSchema.extend({
-  type: z.literal("video"),
+export const archiveSchema = contentBaseSchema.extend({
+  type: z.literal("archive"),
   duration: z.number().check(z.nonnegative()),
   viewCount: z.int().check(z.nonnegative()),
   publishedAt: z.date(),
@@ -76,30 +76,30 @@ export const videoSchema = contentBaseSchema.extend({
 
 /**
  * An archived or uploaded video on any supported platform.
- * Discriminated by `type: "video"`. Use `Content.isVideo()` to narrow from Content.
+ * Discriminated by `type: "archive"`. Use `Content.isArchive()` to narrow from Content.
  *
  * @category Types
  */
-export type Video = z.infer<typeof videoSchema>;
+export type Archive = z.infer<typeof archiveSchema>;
 
 /**
- * Zod schema for a scheduled (upcoming) live stream.
+ * Zod schema for a scheduled (upcoming) broadcast.
  * Validates the scheduled start time.
  *
  * @category Types
  */
-export const scheduledStreamSchema = contentBaseSchema.extend({
+export const scheduledBroadcastSchema = contentBaseSchema.extend({
   type: z.literal("scheduled"),
   scheduledStartAt: z.date(),
 });
 
 /**
- * A scheduled (upcoming) live stream on any supported platform.
- * Discriminated by `type: "scheduled"`. Use `Content.isScheduled()` to narrow from Content.
+ * A scheduled (upcoming) broadcast on any supported platform.
+ * Discriminated by `type: "scheduled"`. Use `Content.isScheduledBroadcast()` to narrow from Content.
  *
  * @category Types
  */
-export type ScheduledStream = z.infer<typeof scheduledStreamSchema>;
+export type ScheduledBroadcast = z.infer<typeof scheduledBroadcastSchema>;
 
 /**
  * Zod schema for a short clip extracted from a stream or video.
@@ -129,20 +129,20 @@ export type Clip = z.infer<typeof clipSchema>;
 
 /**
  * Discriminated union schema for content. Discriminates on `type` field.
- * Covers live streams, videos, scheduled streams, and clips.
+ * Covers broadcasts, archives, scheduled broadcasts, and clips.
  *
  * @category Types
  */
 export const contentSchema = z.discriminatedUnion("type", [
-  liveStreamSchema,
-  videoSchema,
-  scheduledStreamSchema,
+  broadcastSchema,
+  archiveSchema,
+  scheduledBroadcastSchema,
   clipSchema,
 ]);
 
 /**
- * A piece of content (live stream, video, scheduled stream, or clip) on any supported platform.
- * Use `Content.isLive()` / `Content.isVideo()` / `Content.isScheduled()` / `Content.isClip()` to narrow.
+ * A piece of content (broadcast, archive, scheduled broadcast, or clip) on any supported platform.
+ * Use `Content.isBroadcast()` / `Content.isArchive()` / `Content.isScheduledBroadcast()` / `Content.isClip()` to narrow.
  *
  * @category Types
  */
@@ -183,14 +183,14 @@ export const broadcastSessionSchema = z.object({
   startedAt: z.date(),
   endedAt: z.date().optional(),
   contentIds: z.object({
-    liveId: z.string().optional(),
+    broadcastId: z.string().optional(),
     archiveId: z.string().optional(),
   }),
 });
 
 /**
- * Links a live broadcast to its eventual archive video.
- * `contentIds` maps between the live stream ID and archive video ID.
+ * Links a broadcast to its eventual archive.
+ * `contentIds` maps between the broadcast ID and archive ID.
  *
  * @category Types
  */
@@ -217,7 +217,7 @@ export type Page<T> = {
  * @example
  * ```ts
  * const mapped = Page.map(page, (item) => item.id);
- * const empty = Page.empty<Video>();
+ * const empty = Page.empty<Archive>();
  * ```
  * @category Types
  */
@@ -361,47 +361,49 @@ export const resolvedUrlSchema = z.object({
 export type ResolvedUrl = z.infer<typeof resolvedUrlSchema>;
 
 /**
- * Companion object for the LiveStream type.
+ * Companion object for the Broadcast type.
  * Provides lightweight structural type guard.
  *
  * @example
  * ```ts
- * if (LiveStream.is(value)) { ... }
+ * if (Broadcast.is(value)) { ... }
  * ```
  * @category Types
  */
-export const LiveStream = {
+export const Broadcast = {
   /**
-   * Structural type guard for LiveStream.
+   * Structural type guard for Broadcast.
    *
    * @param value - the value to check
-   * @returns true if value has the LiveStream shape (type === "live")
+   * @returns true if value has the Broadcast shape (type === "broadcast")
    */
-  is: (value: unknown): value is LiveStream => {
+  is: (value: unknown): value is Broadcast => {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string, unknown>;
-    return obj.type === "live" && typeof obj.id === "string" && typeof obj.platform === "string";
+    return (
+      obj.type === "broadcast" && typeof obj.id === "string" && typeof obj.platform === "string"
+    );
   },
 } as const;
 
 /**
- * Companion object for the ScheduledStream type.
+ * Companion object for the ScheduledBroadcast type.
  * Provides lightweight structural type guard.
  *
  * @example
  * ```ts
- * if (ScheduledStream.is(value)) { ... }
+ * if (ScheduledBroadcast.is(value)) { ... }
  * ```
  * @category Types
  */
-export const ScheduledStream = {
+export const ScheduledBroadcast = {
   /**
-   * Structural type guard for ScheduledStream.
+   * Structural type guard for ScheduledBroadcast.
    *
    * @param value - the value to check
-   * @returns true if value has the ScheduledStream shape (type === "scheduled")
+   * @returns true if value has the ScheduledBroadcast shape (type === "scheduled")
    */
-  is: (value: unknown): value is ScheduledStream => {
+  is: (value: unknown): value is ScheduledBroadcast => {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string, unknown>;
     return (
@@ -411,26 +413,26 @@ export const ScheduledStream = {
 } as const;
 
 /**
- * Companion object for the Video type.
+ * Companion object for the Archive type.
  * Provides lightweight structural type guard.
  *
  * @example
  * ```ts
- * if (Video.is(value)) { ... }
+ * if (Archive.is(value)) { ... }
  * ```
  * @category Types
  */
-export const Video = {
+export const Archive = {
   /**
-   * Structural type guard for Video.
+   * Structural type guard for Archive.
    *
    * @param value - the value to check
-   * @returns true if value has the Video shape (type === "video")
+   * @returns true if value has the Archive shape (type === "archive")
    */
-  is: (value: unknown): value is Video => {
+  is: (value: unknown): value is Archive => {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string, unknown>;
-    return obj.type === "video" && typeof obj.id === "string" && typeof obj.platform === "string";
+    return obj.type === "archive" && typeof obj.id === "string" && typeof obj.platform === "string";
   },
 } as const;
 
@@ -512,12 +514,13 @@ export const BroadcastSession = {
  * Type guard namespace for Content discriminated union.
  *
  * @precondition content must be a valid Content value
- * @postcondition narrows to LiveStream, Video, ScheduledStream, or Clip
+ * @postcondition narrows to Broadcast, Archive, ScheduledBroadcast, or Clip
  * @category Types
  */
 export const Content = {
-  isLive: (content: Content): content is LiveStream => content.type === "live",
-  isScheduled: (content: Content): content is ScheduledStream => content.type === "scheduled",
-  isVideo: (content: Content): content is Video => content.type === "video",
+  isBroadcast: (content: Content): content is Broadcast => content.type === "broadcast",
+  isScheduledBroadcast: (content: Content): content is ScheduledBroadcast =>
+    content.type === "scheduled",
+  isArchive: (content: Content): content is Archive => content.type === "archive",
   isClip: (content: Content): content is Clip => content.type === "clip",
 } as const;

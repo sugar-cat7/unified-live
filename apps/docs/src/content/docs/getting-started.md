@@ -34,11 +34,11 @@ using client = UnifiedClient.create({
 });
 
 // 2. Fetch content by URL — the client auto-detects the platform
-const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
 console.log(content.title); // Video title
 console.log(content.platform); // "youtube"
-console.log(content.type); // "live" or "video"
+console.log(content.type); // "broadcast", "scheduled", "archive", or "clip"
 ```
 
 :::tip[About `using`]

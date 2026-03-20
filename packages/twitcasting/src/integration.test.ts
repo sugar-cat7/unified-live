@@ -55,7 +55,7 @@ describe("TwitCasting Integration", () => {
     client?.[Symbol.dispose]();
   });
 
-  it("full consumer flow: UnifiedClient.create -> getContent by URL", async () => {
+  it("full consumer flow: UnifiedClient.create -> resolve by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleMovieResponse }));
     const plugin = createTwitCastingPlugin({
       clientId: "test-id",
@@ -64,14 +64,14 @@ describe("TwitCasting Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContent("https://twitcasting.tv/testuser/movie/123");
+    const content = await client.resolve("https://twitcasting.tv/testuser/movie/123");
 
     expect(content.id).toBe("123");
     expect(content.platform).toBe("twitcasting");
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(content.title).toBe("Test Stream");
 
-    if (Content.isVideo(content)) {
+    if (Content.isArchive(content)) {
       expect(content.duration).toBe(3600);
       expect(content.viewCount).toBe(1000);
     }
@@ -91,7 +91,7 @@ describe("TwitCasting Integration", () => {
     expect(client.match("https://youtube.com/watch?v=abc")).toBeNull();
   });
 
-  it("getContentById bypasses URL matching", async () => {
+  it("getContent bypasses URL matching", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleMovieResponse }));
     const plugin = createTwitCastingPlugin({
       clientId: "test-id",
@@ -100,7 +100,7 @@ describe("TwitCasting Integration", () => {
     });
     client = UnifiedClient.create({ plugins: [plugin] });
 
-    const content = await client.getContentById("twitcasting", "123");
+    const content = await client.getContent("twitcasting", "123");
     expect(content.id).toBe("123");
   });
 

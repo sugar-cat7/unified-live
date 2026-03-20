@@ -36,7 +36,7 @@ import {
 
 ```ts
 try {
-  const content = await client.getContent(url);
+  const content = await client.resolve(url);
   console.log(content.title);
 } catch (error) {
   if (error instanceof NotFoundError) {
@@ -134,7 +134,7 @@ YouTube quota errors are special. When the daily quota (default 10,000 units) is
 
 ```ts
 try {
-  const streams = await client.getLiveStreams("youtube", channelId);
+  const streams = await client.listBroadcasts("youtube", channelId);
 } catch (error) {
   if (error instanceof QuotaExhaustedError) {
     const { consumed, limit, resetsAt } = error.details;
@@ -145,5 +145,5 @@ try {
 
 ## Next Steps
 
-- [Pagination](../pagination/) — Fetching paginated video lists
+- [Pagination](../pagination/) — Fetching paginated archive lists
 - [Advanced](../advanced/) — OpenTelemetry and custom plugins

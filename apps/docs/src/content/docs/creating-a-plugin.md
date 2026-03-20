@@ -7,7 +7,7 @@ This guide walks you through building a platform plugin for unified-live. A plug
 
 ## When to Create a Plugin
 
-Create a plugin when you want to add support for a new streaming platform (e.g., Kick, Bilibili, Nico Nico). Each plugin is an independent package that maps one platform's API to the unified `Content`, `Channel`, and `LiveStream` types.
+Create a plugin when you want to add support for a new streaming platform (e.g., Kick, Bilibili, Nico Nico). Each plugin is an independent package that maps one platform's API to the unified `Content`, `Channel`, and `Broadcast` types.
 
 ## Architecture Overview
 
@@ -91,7 +91,7 @@ const createDefinition = (config: {
   matchUrl: matchExampleUrl,
   fetch: config.fetch,
   capabilities: {
-    supportsLiveStreams: true,
+    supportsBroadcasts: true,
     supportsArchiveResolution: false,
     authModel: "apiKey",
     rateLimitModel: "tokenBucket",
@@ -109,9 +109,9 @@ import type {
   PluginMethods,
   Content,
   Channel,
-  LiveStream,
+  Broadcast,
   Page,
-  Video,
+  Archive,
 } from "@unified-live/core";
 
 const exampleGetContent = async (rest: RestManager, id: string): Promise<Content> => {
@@ -132,24 +132,24 @@ const exampleGetChannel = async (rest: RestManager, id: string): Promise<Channel
   return mapToChannel(res.data.channel);
 };
 
-const exampleGetLiveStreams = async (
+const exampleListBroadcasts = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> => {
+): Promise<Broadcast[]> => {
   const res = await rest.request<{ streams: ExampleStream[] }>({
     method: "GET",
     path: `/channels/${channelId}/live`,
     bucketId: "streams:list",
   });
-  return res.data.streams.map(mapToLiveStream);
+  return res.data.streams.map(mapToBroadcast);
 };
 
-const exampleGetVideos = async (
+const exampleListArchives = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize?: number,
-): Promise<Page<Video>> => {
+): Promise<Page<Archive>> => {
   const res = await rest.request<{ videos: ExampleVideo[]; nextCursor?: string }>({
     method: "GET",
     path: `/channels/${channelId}/videos`,
@@ -160,7 +160,7 @@ const exampleGetVideos = async (
     bucketId: "videos:list",
   });
   return {
-    items: res.data.videos.map(mapToVideo),
+    items: res.data.videos.map(mapToArchive),
     cursor: res.data.nextCursor,
     hasMore: !!res.data.nextCursor,
   };
@@ -169,8 +169,8 @@ const exampleGetVideos = async (
 const methods: PluginMethods = {
   getContent: exampleGetContent,
   getChannel: exampleGetChannel,
-  getLiveStreams: exampleGetLiveStreams,
-  getVideos: exampleGetVideos,
+  listBroadcasts: exampleListBroadcasts,
+  listArchives: exampleListArchives,
 };
 ```
 
@@ -350,9 +350,9 @@ import {
   type RestManager,
   type Content,
   type Channel,
-  type LiveStream,
+  type Broadcast,
   type Page,
-  type Video,
+  type Archive,
   type ResolvedUrl,
 } from "@unified-live/core";
 
@@ -379,17 +379,17 @@ const getChannel = async (rest: RestManager, id: string): Promise<Channel> => {
   return res.data as Channel; // map platform response to Channel
 };
 
-const getLiveStreams = async (rest: RestManager, channelId: string): Promise<LiveStream[]> => {
+const listBroadcasts = async (rest: RestManager, channelId: string): Promise<Broadcast[]> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/live` });
-  return []; // map res.data to LiveStream[]
+  return []; // map res.data to Broadcast[]
 };
 
-const getVideos = async (
+const listArchives = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize?: number,
-): Promise<Page<Video>> => {
+): Promise<Page<Archive>> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/videos` });
   return { items: [], hasMore: false }; // map res.data
 };
@@ -410,13 +410,13 @@ export const createExamplePlugin = (config: ExamplePluginConfig): PlatformPlugin
       matchUrl,
       fetch: config.fetch,
       capabilities: {
-        supportsLiveStreams: true,
+        supportsBroadcasts: true,
         supportsArchiveResolution: false,
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
       },
     },
-    { getContent, getChannel, getLiveStreams, getVideos },
+    { getContent, getChannel, listBroadcasts, listArchives },
   );
 };
 ```

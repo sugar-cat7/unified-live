@@ -29,11 +29,11 @@ Pass a URL — the SDK auto-detects the platform, normalizes the response, and h
 
 ## Features
 
-- **Unified API** — One interface for YouTube, Twitch, and TwitCasting. `Content`, `Channel`, `LiveStream`, `Video` types work across all platforms.
+- **Unified API** — One interface for YouTube, Twitch, and TwitCasting. `Content`, `Channel`, `Broadcast`, `Archive` types work across all platforms.
 - **Plugin Architecture** — Install only the platforms you need. Each platform is a separate package with its own auth, rate limiting, and URL resolution.
 - **OpenTelemetry Compatible** — Built-in tracing with zero overhead when OTel SDK is not configured. Every API call emits spans with platform, HTTP, rate limit, and quota attributes.
 - **Automatic Rate Limiting** — Token bucket (Twitch, TwitCasting) and quota-based (YouTube) strategies handled transparently with exponential backoff retries.
-- **Type-Safe** — Zod-validated schemas with discriminated unions. `Content.isLive()` / `Content.isVideo()` type guards for safe narrowing.
+- **Type-Safe** — Zod-validated schemas with discriminated unions. `Content.isBroadcast()` / `Content.isArchive()` type guards for safe narrowing.
 - **Runtime Agnostic** — Works on Node.js 18+, Deno, Bun, Cloudflare Workers — any runtime with native `fetch`.
 
 ## Quick Start
@@ -58,11 +58,11 @@ using client = UnifiedClient.create({
 });
 
 // Auto-detects platform from URL
-const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
-console.log(content.title); // Video title
+console.log(content.title);
 console.log(content.platform); // "youtube"
-console.log(content.type); // "live" or "video"
+console.log(content.type); // "broadcast", "scheduled", "archive", or "clip"
 ```
 
 ## Packages

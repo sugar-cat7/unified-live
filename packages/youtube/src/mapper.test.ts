@@ -1,4 +1,4 @@
-import type { ScheduledStream } from "@unified-live/core";
+import type { ScheduledBroadcast } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
 import type { YTChannelResource, YTVideoResource } from "./mapper";
 import { parseDuration, toChannel, toContent } from "./mapper";
@@ -57,7 +57,7 @@ describe("toContent", () => {
   it("maps a regular video", () => {
     const content = toContent(baseVideoResource);
 
-    expect(content.type).toBe("video");
+    expect(content.type).toBe("archive");
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");
     expect(content.title).toBe("Test Video");
@@ -66,7 +66,7 @@ describe("toContent", () => {
     expect(content.sessionId).toBe("dQw4w9WgXcQ");
     expect(content.url).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
-    if (content.type === "video") {
+    if (content.type === "archive") {
       expect(content.duration).toBe(3723); // 1*3600 + 2*60 + 3
       expect(content.viewCount).toBe(50000);
       expect(content.publishedAt).toEqual(new Date("2024-01-01T00:00:00Z"));
@@ -76,14 +76,14 @@ describe("toContent", () => {
   it("maps a live stream", () => {
     const content = toContent(liveVideoResource);
 
-    expect(content.type).toBe("live");
+    expect(content.type).toBe("broadcast");
     expect(content.id).toBe("dQw4w9WgXcQ");
     expect(content.platform).toBe("youtube");
     expect(content.description).toBe("A test video description");
     expect(content.tags).toEqual(["test", "video"]);
     expect(content.sessionId).toBe("dQw4w9WgXcQ");
 
-    if (content.type === "live") {
+    if (content.type === "broadcast") {
       expect(content.viewerCount).toBe(1500);
       expect(content.startedAt).toEqual(new Date("2024-01-01T12:00:00Z"));
       expect(content.endedAt).toBeUndefined();
@@ -100,10 +100,10 @@ describe("toContent", () => {
     };
     const content = toContent(endedResource);
 
-    if (content.type === "live") {
+    if (content.type === "broadcast") {
       expect(content.endedAt).toEqual(new Date("2024-01-01T14:00:00Z"));
     } else {
-      expect.unreachable("Should be live");
+      expect.unreachable("Should be broadcast");
     }
   });
 
@@ -131,12 +131,14 @@ describe("toContent", () => {
     expect(content.languageCode).toBe("en");
   });
 
-  it("maps upcoming broadcast to ScheduledStream", () => {
+  it("maps upcoming broadcast to ScheduledBroadcast", () => {
     const result = toContent(upcomingVideoResource);
     expect(result.type).toBe("scheduled");
     expect(result.description).toBe("A test video description");
     expect(result.tags).toEqual(["test", "video"]);
-    expect((result as ScheduledStream).scheduledStartAt).toEqual(new Date("2024-06-01T18:00:00Z"));
+    expect((result as ScheduledBroadcast).scheduledStartAt).toEqual(
+      new Date("2024-06-01T18:00:00Z"),
+    );
   });
 
   it("maps startedAt/endedAt on video from liveStreamingDetails", () => {
@@ -149,22 +151,22 @@ describe("toContent", () => {
     };
     const content = toContent(resource);
 
-    if (content.type === "video") {
+    if (content.type === "archive") {
       expect(content.startedAt).toEqual(new Date("2024-01-01T10:00:00Z"));
       expect(content.endedAt).toEqual(new Date("2024-01-01T12:00:00Z"));
     } else {
-      expect.unreachable("Should be video");
+      expect.unreachable("Should be archive");
     }
   });
 
   it("leaves startedAt/endedAt undefined on video without liveStreamingDetails", () => {
     const content = toContent(baseVideoResource);
 
-    if (content.type === "video") {
+    if (content.type === "archive") {
       expect(content.startedAt).toBeUndefined();
       expect(content.endedAt).toBeUndefined();
     } else {
-      expect.unreachable("Should be video");
+      expect.unreachable("Should be archive");
     }
   });
 
@@ -203,7 +205,9 @@ describe("toContent", () => {
     const item: YTVideoResource = { ...upcomingVideoResource, liveStreamingDetails: {} };
     const result = toContent(item);
     expect(result.type).toBe("scheduled");
-    expect((result as ScheduledStream).scheduledStartAt).toEqual(new Date("2024-01-01T00:00:00Z"));
+    expect((result as ScheduledBroadcast).scheduledStartAt).toEqual(
+      new Date("2024-01-01T00:00:00Z"),
+    );
   });
 
   it("preserves raw data", () => {

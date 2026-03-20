@@ -28,7 +28,7 @@ const sdk = new NodeSDK({
 sdk.start();
 
 // All unified-live API calls now emit traces and metrics automatically
-const content = await client.getContent("https://youtube.com/watch?v=abc123");
+const content = await client.resolve("https://youtube.com/watch?v=abc123");
 ```
 
 ### Span Hierarchy
@@ -36,8 +36,8 @@ const content = await client.getContent("https://youtube.com/watch?v=abc123");
 Two-level span hierarchy:
 
 ```
-unified-live.client getContent           ← Client-level span
-  └── GET                                ← REST-level span (kind: CLIENT)
+unified-live.client resolve                ← Client-level span
+  └── GET                                  ← REST-level span (kind: CLIENT)
 ```
 
 Filter by Instrumentation Scope name `unified-live` in your tracing UI.
@@ -47,8 +47,8 @@ Filter by Instrumentation Scope name `unified-live` in your tracing UI.
 | Attribute                 | Type     | Description                                                    |
 | :------------------------ | :------- | :------------------------------------------------------------- |
 | `unified_live.platform`   | `string` | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`) |
-| `unified_live.operation`  | `string` | Operation name (e.g., `"getContent"`, `"search"`)              |
-| `unified_live.batch.size` | `number` | Batch size (only for `getContents`, `getLiveStreamsBatch`)     |
+| `unified_live.operation`  | `string` | Operation name (e.g., `"resolve"`, `"search"`)                 |
+| `unified_live.batch.size` | `number` | Batch size (only for `batchGetContents`, `batchGetBroadcasts`) |
 
 ### REST Span Attributes
 

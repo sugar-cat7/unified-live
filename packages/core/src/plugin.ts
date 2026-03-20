@@ -4,23 +4,23 @@ import { createRestManager, type RestManager } from "./rest/manager";
 import type { RateLimitStrategy } from "./rest/strategy";
 import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
 import type {
+  Archive,
   BatchResult,
+  Broadcast,
   Channel,
   Clip,
   ClipOptions,
   Content,
-  LiveStream,
   Page,
   ResolvedUrl,
   SearchOptions,
-  Video,
 } from "./types";
 
 /** @category Plugins */
 export type PluginCapabilities = {
-  /** Whether the plugin supports live stream detection */
-  supportsLiveStreams: boolean;
-  /** Whether the plugin supports archive resolution (live -> video) */
+  /** Whether the plugin supports broadcast (live stream) detection */
+  supportsBroadcasts: boolean;
+  /** Whether the plugin supports archive resolution (broadcast -> archive) */
   supportsArchiveResolution: boolean;
   /** Authentication model used by this plugin */
   authModel: "apiKey" | "oauth2" | "basic" | "none";
@@ -28,8 +28,8 @@ export type PluginCapabilities = {
   rateLimitModel: "quota" | "tokenBucket";
   /** Whether the plugin supports batch content retrieval */
   supportsBatchContent: boolean;
-  /** Whether the plugin supports batch live stream retrieval */
-  supportsBatchLiveStreams: boolean;
+  /** Whether the plugin supports batch broadcast retrieval */
+  supportsBatchBroadcasts: boolean;
   /** Whether the plugin supports search */
   supportsSearch: boolean;
   /** Whether the plugin supports clip retrieval */
@@ -94,37 +94,37 @@ export type PluginMethods = {
   /** Retrieve channel by ID. */
   getChannel: (rest: RestManager, id: string) => Promise<Channel>;
 
-  /** List live streams for a channel. */
-  getLiveStreams: (rest: RestManager, channelId: string) => Promise<LiveStream[]>;
+  /** List currently active broadcasts for a channel. */
+  listBroadcasts: (rest: RestManager, channelId: string) => Promise<Broadcast[]>;
 
-  /** List videos for a channel with pagination. */
-  getVideos: (
+  /** List archives for a channel with pagination. */
+  listArchives: (
     rest: RestManager,
     channelId: string,
     cursor?: string,
     pageSize?: number,
-  ) => Promise<Page<Video>>;
+  ) => Promise<Page<Archive>>;
 
-  /** Resolve archive for a live stream (optional). */
-  resolveArchive?: (rest: RestManager, live: LiveStream) => Promise<Video | null>;
+  /** Resolve the archive for a broadcast (optional). */
+  resolveArchive?: (rest: RestManager, live: Broadcast) => Promise<Archive | null>;
 
   /** Batch-retrieve content by IDs (optional). */
-  getContents?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Content>>;
+  batchGetContents?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Content>>;
 
-  /** Batch-retrieve live streams by channel IDs (optional). */
-  getLiveStreamsBatch?: (
+  /** Batch-retrieve broadcasts by channel IDs (optional). */
+  batchGetBroadcasts?: (
     rest: RestManager,
     channelIds: string[],
-  ) => Promise<BatchResult<LiveStream[]>>;
+  ) => Promise<BatchResult<Broadcast[]>>;
 
   /** Search for content (optional). */
   search?: (rest: RestManager, options: SearchOptions) => Promise<Page<Content>>;
 
   /** List clips for a channel (optional). */
-  getClips?: (rest: RestManager, channelId: string, options?: ClipOptions) => Promise<Page<Clip>>;
+  listClips?: (rest: RestManager, channelId: string, options?: ClipOptions) => Promise<Page<Clip>>;
 
   /** Batch-retrieve clips by IDs (optional). */
-  getClipsByIds?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Clip>>;
+  batchGetClips?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Clip>>;
 };
 
 /**
@@ -151,35 +151,35 @@ export type PlatformPlugin = {
    */
   match(url: string): ResolvedUrl | null;
 
-  /** Retrieve content (live stream or video) by ID. */
+  /** Retrieve content (broadcast or archive) by ID. */
   getContent(id: string): Promise<Content>;
 
   /** Retrieve channel information by ID. */
   getChannel(id: string): Promise<Channel>;
 
-  /** List currently active live streams for a channel. */
-  getLiveStreams(channelId: string): Promise<LiveStream[]>;
+  /** List currently active broadcasts for a channel. */
+  listBroadcasts(channelId: string): Promise<Broadcast[]>;
 
-  /** List videos (archives) for a channel with cursor-based pagination. */
-  getVideos(channelId: string, cursor?: string, pageSize?: number): Promise<Page<Video>>;
+  /** List archives for a channel with cursor-based pagination. */
+  listArchives(channelId: string, cursor?: string, pageSize?: number): Promise<Page<Archive>>;
 
-  /** Resolve the archive video for a live stream (platform-specific). */
-  resolveArchive?(live: LiveStream): Promise<Video | null>;
+  /** Resolve the archive for a broadcast (platform-specific). */
+  resolveArchive?(live: Broadcast): Promise<Archive | null>;
 
   /** Batch-retrieve content by IDs (platform-specific). */
-  getContents?(ids: string[]): Promise<BatchResult<Content>>;
+  batchGetContents?(ids: string[]): Promise<BatchResult<Content>>;
 
-  /** Batch-retrieve live streams by channel IDs (platform-specific). */
-  getLiveStreamsBatch?(channelIds: string[]): Promise<BatchResult<LiveStream[]>>;
+  /** Batch-retrieve broadcasts by channel IDs (platform-specific). */
+  batchGetBroadcasts?(channelIds: string[]): Promise<BatchResult<Broadcast[]>>;
 
   /** Search for content (platform-specific). */
   search?(options: SearchOptions): Promise<Page<Content>>;
 
   /** List clips for a channel (platform-specific). */
-  getClips?(channelId: string, options?: ClipOptions): Promise<Page<Clip>>;
+  listClips?(channelId: string, options?: ClipOptions): Promise<Page<Clip>>;
 
   /** Batch-retrieve clips by IDs (platform-specific). */
-  getClipsByIds?(ids: string[]): Promise<BatchResult<Clip>>;
+  batchGetClips?(ids: string[]): Promise<BatchResult<Clip>>;
 
   /** Release resources (timers, connections). */
   [Symbol.dispose](): void;
@@ -255,33 +255,35 @@ export const PlatformPlugin = {
       name: definition.name,
       rest,
       capabilities: definition.capabilities ?? {
-        supportsLiveStreams: true,
+        supportsBroadcasts: true,
         supportsArchiveResolution: !!methods.resolveArchive,
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
-        supportsBatchContent: !!methods.getContents,
-        supportsBatchLiveStreams: !!methods.getLiveStreamsBatch,
+        supportsBatchContent: !!methods.batchGetContents,
+        supportsBatchBroadcasts: !!methods.batchGetBroadcasts,
         supportsSearch: !!methods.search,
-        supportsClips: !!methods.getClips,
+        supportsClips: !!methods.listClips,
       },
       match: definition.matchUrl,
       getContent: (id) => methods.getContent(rest, id),
       getChannel: (id) => methods.getChannel(rest, id),
-      getLiveStreams: (channelId) => methods.getLiveStreams(rest, channelId),
-      getVideos: (channelId, cursor, pageSize) =>
-        methods.getVideos(rest, channelId, cursor, pageSize),
+      listBroadcasts: (channelId) => methods.listBroadcasts(rest, channelId),
+      listArchives: (channelId, cursor, pageSize) =>
+        methods.listArchives(rest, channelId, cursor, pageSize),
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
-      getContents: methods.getContents ? (ids) => methods.getContents!(rest, ids) : undefined,
-      getLiveStreamsBatch: methods.getLiveStreamsBatch
-        ? (channelIds) => methods.getLiveStreamsBatch!(rest, channelIds)
+      batchGetContents: methods.batchGetContents
+        ? (ids) => methods.batchGetContents!(rest, ids)
+        : undefined,
+      batchGetBroadcasts: methods.batchGetBroadcasts
+        ? (channelIds) => methods.batchGetBroadcasts!(rest, channelIds)
         : undefined,
       search: methods.search ? (options) => methods.search!(rest, options) : undefined,
-      getClips: methods.getClips
-        ? (channelId, options) => methods.getClips!(rest, channelId, options)
+      listClips: methods.listClips
+        ? (channelId, options) => methods.listClips!(rest, channelId, options)
         : undefined,
-      getClipsByIds: methods.getClipsByIds ? (ids) => methods.getClipsByIds!(rest, ids) : undefined,
+      batchGetClips: methods.batchGetClips ? (ids) => methods.batchGetClips!(rest, ids) : undefined,
       [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 
@@ -303,8 +305,8 @@ export const PlatformPlugin = {
       typeof obj.match === "function" &&
       typeof obj.getContent === "function" &&
       typeof obj.getChannel === "function" &&
-      typeof obj.getLiveStreams === "function" &&
-      typeof obj.getVideos === "function" &&
+      typeof obj.listBroadcasts === "function" &&
+      typeof obj.listArchives === "function" &&
       typeof obj[Symbol.dispose] === "function" &&
       obj.rest !== undefined &&
       typeof obj.capabilities === "object" &&

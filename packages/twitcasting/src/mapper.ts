@@ -1,5 +1,5 @@
 import { ParseError } from "@unified-live/core";
-import type { Channel, Content, LiveStream, Video } from "@unified-live/core";
+import type { Archive, Broadcast, Channel, Content } from "@unified-live/core";
 
 /** Subset of TwitCasting Movie resource fields actually used. */
 export type TCMovie = {
@@ -33,15 +33,15 @@ export type TCUser = {
 };
 
 /**
- * Convert a TwitCasting live Movie to a unified LiveStream.
+ * Convert a TwitCasting live Movie to a unified Broadcast.
  *
  * @param movie - TwitCasting movie resource
  * @param user - TwitCasting user who owns the movie
- * @returns unified LiveStream
+ * @returns unified Broadcast
  * @precondition movie.is_live === true
- * @postcondition returns LiveStream with sessionId set to movie.id
+ * @postcondition returns Broadcast with sessionId set to movie.id
  */
-export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
+export const toLive = (movie: TCMovie, user: TCUser): Broadcast => {
   if (!movie.id || !user.id) {
     throw new ParseError("twitcasting", "PARSE_RESPONSE", {
       message: `TwitCasting resource missing required fields (movie.id, user.id)${movie.id ? ` for movie ${movie.id}` : ""}`,
@@ -66,23 +66,23 @@ export const toLive = (movie: TCMovie, user: TCUser): LiveStream => {
       url: `https://twitcasting.tv/${user.screen_id}`,
     },
     sessionId: movie.id,
-    type: "live",
+    type: "broadcast",
     viewerCount: movie.current_view_count,
     startedAt: new Date(movie.created * 1000),
     raw: movie,
-  } satisfies LiveStream;
+  } satisfies Broadcast;
 };
 
 /**
- * Convert a TwitCasting Movie to a unified Video.
+ * Convert a TwitCasting Movie to a unified Archive.
  *
  * @param movie - TwitCasting movie resource
  * @param user - TwitCasting user who owns the movie
- * @returns unified Video
+ * @returns unified Archive
  * @precondition movie.is_live === false
- * @postcondition returns Video with sessionId set to movie.id
+ * @postcondition returns Archive with sessionId set to movie.id
  */
-export const toVideo = (movie: TCMovie, user: TCUser): Video => {
+export const toVideo = (movie: TCMovie, user: TCUser): Archive => {
   if (!movie.id || !user.id) {
     throw new ParseError("twitcasting", "PARSE_RESPONSE", {
       message: `TwitCasting resource missing required fields (movie.id, user.id)${movie.id ? ` for movie ${movie.id}` : ""}`,
@@ -107,13 +107,13 @@ export const toVideo = (movie: TCMovie, user: TCUser): Video => {
       url: `https://twitcasting.tv/${user.screen_id}`,
     },
     sessionId: movie.id,
-    type: "video",
+    type: "archive",
     duration: movie.duration,
     viewCount: movie.total_view_count,
     publishedAt: new Date(movie.created * 1000),
     startedAt: new Date(movie.created * 1000),
     raw: movie,
-  } satisfies Video;
+  } satisfies Archive;
 };
 
 /**
@@ -121,7 +121,7 @@ export const toVideo = (movie: TCMovie, user: TCUser): Video => {
  *
  * @param movie - TwitCasting movie resource
  * @param user - TwitCasting user who owns the movie
- * @returns unified Content (LiveStream if live, Video otherwise)
+ * @returns unified Content (Broadcast if live, Archive otherwise)
  */
 export const toContent = (movie: TCMovie, user: TCUser): Content => {
   if (movie.is_live) {

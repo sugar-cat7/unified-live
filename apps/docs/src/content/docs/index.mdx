@@ -24,7 +24,7 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 <CardGrid>
   <Card title="Unified API" icon="rocket">
     One interface for YouTube, Twitch, and TwitCasting. Pass a URL — the SDK auto-detects the
-    platform, normalizes the response into `Content`, `Channel`, `LiveStream`, and `Video` types.
+    platform, normalizes the response into `Content`, `Channel`, `Broadcast`, and `Archive` types.
   </Card>
   <Card title="Plugin Architecture" icon="puzzle">
     Install only the platforms you need. Each platform is a separate package
@@ -40,8 +40,9 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
     transparently. The SDK retries with exponential backoff and tracks quota consumption locally.
   </Card>
   <Card title="Type-Safe" icon="approve-check">
-    Zod-validated schemas with discriminated unions (`Content = LiveStream | Video`). Companion
-    object type guards (`Content.isLive()`, `Content.isVideo()`) for safe narrowing.
+    Zod-validated schemas with discriminated unions (`Content` covers `Broadcast`,
+    `ScheduledBroadcast`, `Archive`, and `Clip`). Companion object type guards
+    (`Content.isBroadcast()`, `Content.isArchive()`, etc.) for safe narrowing.
   </Card>
   <Card title="Runtime Agnostic" icon="laptop">
     Works on Node.js 18+, Deno, Bun, and Cloudflare Workers — any runtime with native `fetch`. No

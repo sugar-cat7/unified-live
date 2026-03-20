@@ -1,14 +1,14 @@
 import {
+  type Archive,
   type BatchResult,
+  type Broadcast,
   type Channel,
   type Content,
-  type LiveStream,
   NotFoundError,
   Page,
   type RestManager,
   type SearchOptions,
   UnifiedLiveError,
-  type Video,
 } from "@unified-live/core";
 import {
   toChannel,
@@ -95,18 +95,18 @@ export const youtubeGetChannel = async (rest: RestManager, id: string): Promise<
 };
 
 /**
- * Fetch active live streams for a YouTube channel.
+ * Fetch active broadcasts for a YouTube channel.
  *
  * @param rest - REST manager for API requests
  * @param channelId - YouTube channel ID
- * @returns array of active LiveStream objects (empty if none are live)
+ * @returns array of active Broadcast objects (empty if none are live)
  * @precondition channelId is a valid YouTube channel ID
- * @postcondition returns only streams with type "live"
+ * @postcondition returns only streams with type "broadcast"
  */
-export const youtubeGetLiveStreams = async (
+export const youtubeListBroadcasts = async (
   rest: RestManager,
   channelId: string,
-): Promise<LiveStream[]> => {
+): Promise<Broadcast[]> => {
   const res = await rest.request<YTListResponse<Schemas["SearchResult"]>>({
     method: "GET",
     path: "/search",
@@ -139,34 +139,34 @@ export const youtubeGetLiveStreams = async (
   });
 
   const items = videosRes.data.items ?? [];
-  const liveStreams: LiveStream[] = [];
+  const broadcasts: Broadcast[] = [];
   for (const item of items) {
     const content = toContent(item);
-    if (content.type === "live") {
-      liveStreams.push(content);
+    if (content.type === "broadcast") {
+      broadcasts.push(content);
     }
   }
-  return liveStreams;
+  return broadcasts;
 };
 
 /**
- * Fetch paginated uploaded videos for a YouTube channel.
+ * Fetch paginated uploaded archives for a YouTube channel.
  *
  * @param rest - REST manager for API requests
  * @param channelId - YouTube channel ID
  * @param cursor - optional page token for pagination
  * @param pageSize - number of items per page (default 50)
- * @returns paginated list of Video objects
+ * @returns paginated list of Archive objects
  * @throws NotFoundError if channel does not exist or has no uploads playlist
  * @precondition channelId is a valid YouTube channel ID
- * @postcondition returns videos from the channel's uploads playlist
+ * @postcondition returns archives from the channel's uploads playlist
  */
-export const youtubeGetVideos = async (
+export const youtubeListArchives = async (
   rest: RestManager,
   channelId: string,
   cursor?: string,
   pageSize = 50,
-): Promise<Page<Video>> => {
+): Promise<Page<Archive>> => {
   const channelRes = await rest.request<YTListResponse<YTChannelResource>>({
     method: "GET",
     path: "/channels",
@@ -223,16 +223,16 @@ export const youtubeGetVideos = async (
   });
 
   const items = videosRes.data.items ?? [];
-  const videos: Video[] = [];
+  const archives: Archive[] = [];
   for (const item of items) {
     const content = toContent(item);
-    if (content.type === "video") {
-      videos.push(content);
+    if (content.type === "archive") {
+      archives.push(content);
     }
   }
 
   return {
-    items: videos,
+    items: archives,
     cursor: playlistRes.data.nextPageToken,
     total: playlistRes.data.pageInfo?.totalResults ?? 0,
     hasMore: playlistRes.data.nextPageToken !== undefined,
@@ -240,22 +240,22 @@ export const youtubeGetVideos = async (
 };
 
 /**
- * Resolve a live stream to its archived video.
+ * Resolve a broadcast to its archived content.
  *
  * YouTube uses the same video ID for live and archive, so this re-fetches
- * the content and returns it only if it has transitioned to a video.
+ * the content and returns it only if it has transitioned to an archive.
  *
  * @param rest - REST manager for API requests
- * @param live - live stream to check for archive
- * @returns archived Video, or null if still live
- * @postcondition returns Video if the stream ended, null otherwise
+ * @param live - broadcast to check for archive
+ * @returns Archive, or null if still live
+ * @postcondition returns Archive if the stream ended, null otherwise
  */
 export const youtubeResolveArchive = async (
   rest: RestManager,
-  live: LiveStream,
-): Promise<Video | null> => {
+  live: Broadcast,
+): Promise<Archive | null> => {
   const content = await youtubeGetContent(rest, live.id);
-  return content.type === "video" ? content : null;
+  return content.type === "archive" ? content : null;
 };
 
 const YOUTUBE_MAX_IDS_PER_REQUEST = 50;
@@ -270,7 +270,7 @@ const YOUTUBE_MAX_IDS_PER_REQUEST = 50;
  * @postcondition values contains Content for each found video; errors contains NotFoundError for each missing ID
  * @idempotency Safe — read-only API calls
  */
-export const youtubeGetContents = async (
+export const youtubeBatchGetContents = async (
   rest: RestManager,
   ids: string[],
 ): Promise<BatchResult<Content>> => {

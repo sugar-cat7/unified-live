@@ -17,8 +17,8 @@ const client = UnifiedClient.create({
   plugins: [createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! })],
 });
 
-const content = await client.getContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-console.log(content.title, content.type); // "live" or "video"
+const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+console.log(content.title, content.type); // "broadcast" or "archive"
 
 client[Symbol.dispose]();
 ```
@@ -29,7 +29,7 @@ client[Symbol.dispose]();
 import { UnifiedLiveError, NotFoundError, RateLimitError } from "@unified-live/core";
 
 try {
-  const content = await client.getContent("https://www.youtube.com/watch?v=invalid");
+  const content = await client.resolve("https://www.youtube.com/watch?v=invalid");
 } catch (err) {
   if (err instanceof RateLimitError) {
     console.log(`Rate limited — retry after ${err.retryAfter}s`);
@@ -43,25 +43,25 @@ try {
 }
 ```
 
-### List Live Streams for a Channel
+### List Broadcasts for a Channel
 
 ```ts
-const streams = await client.getLiveStreams("youtube", "UC_x5XG1OV2P6uZZ5FSM9Ttw");
+const streams = await client.listBroadcasts("youtube", "UC_x5XG1OV2P6uZZ5FSM9Ttw");
 
 for (const stream of streams) {
   console.log(`${stream.title} — ${stream.viewerCount} viewers`);
 }
 ```
 
-### Paginate Through Videos
+### Paginate Through Archives
 
 ```ts
 let cursor: string | undefined;
 
 do {
-  const page = await client.getVideos("twitch", "123456", cursor);
-  for (const video of page.items) {
-    console.log(`${video.title} (${video.duration}s)`);
+  const page = await client.listArchives("twitch", "123456", cursor);
+  for (const archive of page.items) {
+    console.log(`${archive.title} (${archive.duration}s)`);
   }
   cursor = page.hasMore ? page.cursor : undefined;
 } while (cursor);
@@ -71,7 +71,7 @@ do {
 
 ### Multi-Platform Aggregation
 
-Fetch live streams from YouTube and Twitch in parallel, then merge the results:
+Fetch broadcasts from YouTube and Twitch in parallel, then merge the results:
 
 ```ts
 import { UnifiedClient } from "@unified-live/core";
@@ -89,8 +89,8 @@ const client = UnifiedClient.create({
 });
 
 const [ytStreams, twitchStreams] = await Promise.all([
-  client.getLiveStreams("youtube", "UC_x5XG1OV2P6uZZ5FSM9Ttw"),
-  client.getLiveStreams("twitch", "twitchdev"),
+  client.listBroadcasts("youtube", "UC_x5XG1OV2P6uZZ5FSM9Ttw"),
+  client.listBroadcasts("twitch", "twitchdev"),
 ]);
 
 const allStreams = [...ytStreams, ...twitchStreams].sort((a, b) => b.viewerCount - a.viewerCount);
@@ -108,11 +108,11 @@ Poll for new live streams at a regular interval:
 const seen = new Set<string>();
 
 const poll = async () => {
-  const streams = await client.getLiveStreams("twitch", "twitchdev");
+  const streams = await client.listBroadcasts("twitch", "twitchdev");
   for (const stream of streams) {
     if (!seen.has(stream.id)) {
       seen.add(stream.id);
-      console.log(`🔴 New stream: ${stream.title}`);
+      console.log(`New stream: ${stream.title}`);
     }
   }
 };
@@ -132,14 +132,14 @@ Use the `Content` type guards for safe narrowing:
 ```ts
 import { Content } from "@unified-live/core";
 
-const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
+const content = await client.resolve("https://www.youtube.com/watch?v=abc123");
 
-if (Content.isLive(content)) {
-  // TypeScript knows: content is LiveStream
+if (Content.isBroadcast(content)) {
+  // TypeScript knows: content is Broadcast
   console.log(`Live: ${content.viewerCount} viewers since ${content.startedAt}`);
-} else if (Content.isVideo(content)) {
-  // TypeScript knows: content is Video
-  console.log(`Video: ${content.duration}s, ${content.viewCount} views`);
+} else if (Content.isArchive(content)) {
+  // TypeScript knows: content is Archive
+  console.log(`Archive: ${content.duration}s, ${content.viewCount} views`);
 }
 ```
 
@@ -173,7 +173,7 @@ const client = UnifiedClient.create({
   ],
 });
 
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
+const content = await client.resolve("https://www.twitch.tv/videos/123456");
 // A span "unified-live.rest GET" is emitted with platform and path attributes
 
 client[Symbol.dispose]();
@@ -190,14 +190,14 @@ import {
   type Content,
   type Channel,
   type Page,
-  type Video,
-  type LiveStream,
+  type Archive,
+  type Broadcast,
 } from "@unified-live/core";
 
 const mockContent: Content = {
   id: "test-1",
   platform: "mock",
-  type: "video",
+  type: "archive",
   title: "Test Video",
   url: "https://example.com/video/test-1",
   thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
@@ -212,7 +212,7 @@ const mockPlugin: PlatformPlugin = {
   name: "mock",
   rest: {} as any, // not used in mock
   capabilities: {
-    supportsLiveStreams: true,
+    supportsBroadcasts: true,
     supportsArchiveResolution: false,
     authModel: "apiKey",
     rateLimitModel: "tokenBucket",
@@ -228,14 +228,14 @@ const mockPlugin: PlatformPlugin = {
     name: "Test Channel",
     url: "https://example.com/channel/ch-1",
   }),
-  getLiveStreams: async () => [],
-  getVideos: async () => ({ items: [mockContent as Video], hasMore: false }),
+  listBroadcasts: async () => [],
+  listArchives: async () => ({ items: [mockContent as Archive], hasMore: false }),
   [Symbol.dispose]: () => {},
 };
 
 // Use in tests
 const client = UnifiedClient.create({ plugins: [mockPlugin] });
-const content = await client.getContent("https://example.com/video/test-1");
+const content = await client.resolve("https://example.com/video/test-1");
 expect(content.title).toBe("Test Video");
 ```
 

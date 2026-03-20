@@ -47,12 +47,12 @@ const youtube = createYouTubePlugin({
 
 YouTube uses a cost-based daily quota (default: 10,000 units). Different operations cost different amounts:
 
-| Operation                                                      | Cost      |
-| -------------------------------------------------------------- | --------- |
-| `getContent` (videos.list)                                     | 1 unit    |
-| `getChannel` (channels.list)                                   | 1 unit    |
-| `getVideos` (channels.list + playlistItems.list + videos.list) | 3 units   |
-| `getLiveStreams` (search.list + videos.list)                   | 101 units |
+| Operation                                                           | Cost      |
+| ------------------------------------------------------------------- | --------- |
+| `getContent` (videos.list)                                          | 1 unit    |
+| `getChannel` (channels.list)                                        | 1 unit    |
+| `listArchives` (channels.list + playlistItems.list + videos.list)   | 3 units   |
+| `listBroadcasts` (search.list + videos.list)                        | 101 units |
 
 The SDK tracks quota consumption locally and throws `QuotaExhaustedError` when the limit is reached.
 
@@ -163,5 +163,5 @@ using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: ".
 ## Next Steps
 
 - [Error Handling](../error-handling/) — Handling API errors
-- [Pagination](../pagination/) — Fetching video lists
+- [Pagination](../pagination/) — Fetching archive lists
 - [Creating a Plugin](../creating-a-plugin/) — Build your own platform plugin

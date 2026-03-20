@@ -5,17 +5,17 @@ description: "Content, Channel, URL resolution, and the unified type system"
 
 ## Content
 
-`Content` is the unified abstraction over live streams and archived videos. It is a discriminated union with `type: "live" | "video"`.
+`Content` is the unified abstraction over broadcasts and archives. It is a discriminated union with `type: "broadcast" | "archive"`.
 
 ```ts
-const content = await client.getContent(url);
+const content = await client.resolve(url);
 
-if (content.type === "live") {
+if (content.type === "broadcast") {
   console.log(content.viewerCount); // number
   console.log(content.startedAt); // Date
 }
 
-if (content.type === "video") {
+if (content.type === "archive") {
   console.log(content.duration); // seconds
   console.log(content.viewCount); // number
   console.log(content.publishedAt); // Date
@@ -29,20 +29,20 @@ Use the `Content` companion object for type narrowing:
 ```ts
 import { Content } from "@unified-live/core";
 
-if (Content.isLive(content)) {
-  // content is narrowed to LiveStream
+if (Content.isBroadcast(content)) {
+  // content is narrowed to Broadcast
   console.log(content.viewerCount);
 }
 
-if (Content.isVideo(content)) {
-  // content is narrowed to Video
+if (Content.isArchive(content)) {
+  // content is narrowed to Archive
   console.log(content.duration);
 }
 ```
 
 ### Shared Fields
 
-Both `LiveStream` and `Video` share these fields:
+Both `Broadcast` and `Archive` share these fields:
 
 | Field       | Type         | Description                                       |
 | ----------- | ------------ | ------------------------------------------------- |
@@ -75,17 +75,17 @@ The client can auto-detect the platform from a URL:
 
 ```ts
 // YouTube
-const content = await client.getContent("https://www.youtube.com/watch?v=abc123");
+const content = await client.resolve("https://www.youtube.com/watch?v=abc123");
 ```
 
 ```ts
 // Twitch
-const content = await client.getContent("https://www.twitch.tv/videos/123456");
+const content = await client.resolve("https://www.twitch.tv/videos/123456");
 ```
 
 ```ts
 // TwitCasting
-const content = await client.getContent("https://twitcasting.tv/user/movie/123");
+const content = await client.resolve("https://twitcasting.tv/user/movie/123");
 ```
 
 ```ts
@@ -121,15 +121,15 @@ const resolved = client.match("https://www.twitch.tv/username");
 
 ## Session ID
 
-`sessionId` links a live broadcast to its archive video. On some platforms (YouTube, TwitCasting), the live and archive share the same ID. On Twitch, they have different IDs, but `sessionId` provides a stable link.
+`sessionId` links a live broadcast to its archive. On some platforms (YouTube, TwitCasting), the live and archive share the same ID. On Twitch, they have different IDs, but `sessionId` provides a stable link.
 
 ```ts
 // During live
-const live = await client.getContent("https://youtube.com/watch?v=abc123");
+const live = await client.resolve("https://youtube.com/watch?v=abc123");
 console.log(live.sessionId); // "abc123"
 
 // After the stream ends, the archive has the same sessionId
-const archive = await client.getContent("https://youtube.com/watch?v=abc123");
+const archive = await client.resolve("https://youtube.com/watch?v=abc123");
 console.log(archive.sessionId); // "abc123"
 ```
 

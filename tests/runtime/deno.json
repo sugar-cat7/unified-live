@@ -1,10 +1,9 @@
 {
+  "nodeModulesDir": "manual",
   "imports": {
     "@unified-live/core": "../../packages/core/dist/index.mjs",
     "@unified-live/twitch": "../../packages/twitch/dist/index.mjs",
     "@unified-live/youtube": "../../packages/youtube/dist/index.mjs",
-    "@unified-live/twitcasting": "../../packages/twitcasting/dist/index.mjs",
-    "zod/v4": "npm:zod@4/v4",
-    "@opentelemetry/api": "npm:@opentelemetry/api@^1"
+    "@unified-live/twitcasting": "../../packages/twitcasting/dist/index.mjs"
   }
 }

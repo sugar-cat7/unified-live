@@ -1,6 +1,21 @@
 {
   "name": "@unified-live/twitch",
-  "version": "0.1.0",
+  "version": "0.0.1",
+  "description": "Twitch Helix API plugin for unified-live SDK — token bucket rate limiting, OAuth2 Client Credentials",
+  "keywords": [
+    "live-streaming",
+    "sdk",
+    "twitch",
+    "twitch-api",
+    "typescript"
+  ],
+  "homepage": "https://sugar-cat7.github.io/unified-live",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sugar-cat7/unified-live.git",
+    "directory": "packages/twitch"
+  },
   "files": [
     "dist"
   ],
@@ -38,5 +53,8 @@
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

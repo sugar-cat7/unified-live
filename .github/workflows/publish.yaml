@@ -1,21 +1,21 @@
-name: Release
+name: Publish
 
 on:
   push:
-    branches: [main]
+    tags: ["v*"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  version:
-    name: Create Release PR
+  publish:
+    name: Publish to npm
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write
-      pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +25,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for OIDC Trusted Publishing
+        run: npm install -g npm@11.5.1
 
       - run: pnpm install --frozen-lockfile
 
@@ -34,11 +38,10 @@ jobs:
 
       - run: pnpm test
 
-      - name: Create Release Pull Request
-        uses: changesets/action@v1
-        with:
-          version: pnpm version-packages
-          title: "chore(release): version packages"
-          commit: "chore(release): version packages"
+      - name: Publish to npm
+        run: pnpm release
+
+      - name: Create GitHub Release
+        run: gh release create ${{ github.ref_name }} --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

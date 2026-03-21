@@ -159,7 +159,7 @@ describe("createYouTubePlugin", () => {
     expect(resolved).toBeNull();
   });
 
-  it("listBroadcasts returns empty array when no live streams", async () => {
+  it("listBroadcasts returns empty array when no broadcasts", async () => {
     const fetchFn = createMockFetch([
       {
         body: {
@@ -240,7 +240,7 @@ describe("createYouTubePlugin", () => {
     await expect(plugin.getChannel("@nonexistent")).rejects.toThrow(NotFoundError);
   });
 
-  it("listBroadcasts returns live streams from search + video pipeline", async () => {
+  it("listBroadcasts returns broadcasts from search + video pipeline", async () => {
     const fetchFn = createMockFetch([
       // search.list response
       {

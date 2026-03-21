@@ -73,7 +73,7 @@ describe("toContent", () => {
     }
   });
 
-  it("maps a live stream", () => {
+  it("maps a broadcast", () => {
     const content = toContent(liveVideoResource);
 
     expect(content.type).toBe("broadcast");
@@ -107,7 +107,7 @@ describe("toContent", () => {
     }
   });
 
-  it("maps languageCode from defaultAudioLanguage on live stream", () => {
+  it("maps languageCode from defaultAudioLanguage on broadcast", () => {
     const resource: YTVideoResource = {
       ...liveVideoResource,
       snippet: {

@@ -263,7 +263,7 @@ export const twitchBatchGetBroadcasts = async (
   const values = new Map<string, Broadcast[]>();
   const errors = new Map<string, UnifiedLiveError>();
 
-  // Initialize all channels as empty (no live streams)
+  // Initialize all channels as empty (no broadcasts)
   for (const id of channelIds) {
     values.set(id, []);
   }
@@ -277,7 +277,7 @@ export const twitchBatchGetBroadcasts = async (
       bucketId: "streams",
     });
 
-    // Group live streams by user_id
+    // Group broadcasts by user_id
     for (const stream of res.data.data) {
       const existing = values.get(stream.user_id) ?? [];
       existing.push(toLive(stream));
@@ -316,7 +316,7 @@ export const twitchSearch = async (
       });
       return { items: res.data.data.map(toVideo), hasMore: false };
     }
-    // Default or status=live: fetch live streams for this channel
+    // Default or status=live: fetch broadcasts for this channel
     const res = await rest.request<TwitchResponse<TwitchStream>>({
       method: "GET",
       path: "/streams",
@@ -330,7 +330,7 @@ export const twitchSearch = async (
   if (options.status === "ended") return Page.empty<Content>();
 
   // Twitch /search/channels only returns meaningful Content when filtered to live channels.
-  // Without live_only, results are channels (not streams/videos) which don't map to Content.
+  // Without live_only, results are channels (not broadcasts/archives) which don't map to Content.
   if (!options.query) return Page.empty<Content>();
 
   const query: Record<string, string> = {

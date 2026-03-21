@@ -60,6 +60,8 @@ export {
   BatchResult,
   Broadcast,
   broadcastSchema,
+  BroadcastSession,
+  broadcastSessionSchema,
   Channel,
   channelRefSchema,
   channelSchema,

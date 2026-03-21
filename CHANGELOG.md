@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `description` field on all Content types (Broadcast, Archive, ScheduledBroadcast)
 - `tags` field on all Content types (string array)
-- `Clip` type — short clip extracted from a stream or video, discriminated by `type: "clip"`
+- `Clip` type — short clip extracted from a broadcast or archive, discriminated by `type: "clip"`
 - `clipSchema`, `clipOptionsSchema` — Zod schemas for clips
 - `Clip.is()` type guard
 - `Content.isClip()` type guard on the Content companion object
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `channelRefSchema` — lightweight channel reference embedded in content objects
 - `thumbnailSchema` — Zod schema for image thumbnails
 - `Content` base schema: `languageCode` optional field
-- `Broadcast` schema: `endedAt` optional field for stream end time
+- `Broadcast` schema: `endedAt` optional field for broadcast end time
 - `SearchOptions.channelId` for per-channel search
 - `SearchOptions.order` for result ordering (`"relevance"` | `"date"`)
 - `UnifiedClient.batchGetBroadcasts()` — batch broadcast check across multiple channels

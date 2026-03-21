@@ -125,7 +125,7 @@ describe("createTwitchPlugin", () => {
     plugin[Symbol.dispose]();
   });
 
-  it("listBroadcasts returns live streams", async () => {
+  it("listBroadcasts returns broadcasts", async () => {
     const mockStream = {
       id: "s1",
       user_id: "u1",

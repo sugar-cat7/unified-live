@@ -118,7 +118,7 @@ describe("twitchGetChannel", () => {
 });
 
 describe("twitchListBroadcasts", () => {
-  it("returns live streams filtered by type", async () => {
+  it("returns broadcasts filtered by type", async () => {
     const rest = createMockRest({ data: [sampleStream, { ...sampleStream, type: "" }] });
     const result = await twitchListBroadcasts(rest, "u1");
     expect(result).toHaveLength(1);
@@ -300,7 +300,7 @@ describe("twitchBatchGetContents", () => {
 });
 
 describe("twitchBatchGetBroadcasts", () => {
-  it("fetches live streams for multiple channels", async () => {
+  it("fetches broadcasts for multiple channels", async () => {
     const rest = createMockRest({ data: [sampleStream] });
     const result = await twitchBatchGetBroadcasts(rest, [sampleStream.user_id, "other_user"]);
     expect(result.values.get(sampleStream.user_id)).toHaveLength(1);
@@ -308,7 +308,7 @@ describe("twitchBatchGetBroadcasts", () => {
     expect(result.errors.size).toBe(0);
   });
 
-  it("returns empty arrays for channels with no live streams", async () => {
+  it("returns empty arrays for channels with no broadcasts", async () => {
     const rest = createMockRest({ data: [] });
     const result = await twitchBatchGetBroadcasts(rest, ["ch1", "ch2"]);
     expect(result.values.get("ch1")).toEqual([]);
@@ -432,7 +432,7 @@ describe("twitchSearch", () => {
     expect(result.hasMore).toBe(false);
   });
 
-  it("fetches live streams by channelId", async () => {
+  it("fetches broadcasts by channelId", async () => {
     const rest = createMockRest({ data: [sampleStream] });
     const result = await twitchSearch(rest, { channelId: "u1", status: "live" });
     expect(result.items).toHaveLength(1);
@@ -448,7 +448,7 @@ describe("twitchSearch", () => {
     expect(rest.request).toHaveBeenCalledWith(expect.objectContaining({ path: "/videos" }));
   });
 
-  it("fetches live streams by channelId without status", async () => {
+  it("fetches broadcasts by channelId without status", async () => {
     const rest = createMockRest({ data: [sampleStream] });
     const result = await twitchSearch(rest, { channelId: "u1" });
     expect(result.items).toHaveLength(1);

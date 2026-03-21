@@ -147,7 +147,7 @@ describe("youtubeGetChannel", () => {
 });
 
 describe("youtubeListBroadcasts", () => {
-  it("returns empty array when no live streams", async () => {
+  it("returns empty array when no broadcasts", async () => {
     const rest = createMockRest();
     (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200,

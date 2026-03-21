@@ -91,7 +91,7 @@ describe("twitcastingGetChannel", () => {
 });
 
 describe("twitcastingListBroadcasts", () => {
-  it("returns live stream when user is live", async () => {
+  it("returns broadcast when user is live", async () => {
     const liveUser = { ...mockUser, is_live: true };
     const rest = createMockRest({ user: liveUser });
     // Override request to handle two calls: first /users, then /users/.../current_live

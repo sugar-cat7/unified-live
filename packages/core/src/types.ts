@@ -60,7 +60,7 @@ export const broadcastSchema = contentBaseSchema.extend({
 export type Broadcast = z.infer<typeof broadcastSchema>;
 
 /**
- * Zod schema for an archived or uploaded video.
+ * Zod schema for an archived broadcast recording.
  * Validates duration, view count, and publish date.
  *
  * @category Types
@@ -75,7 +75,7 @@ export const archiveSchema = contentBaseSchema.extend({
 });
 
 /**
- * An archived or uploaded video on any supported platform.
+ * An archived broadcast recording on any supported platform.
  * Discriminated by `type: "archive"`. Use `Content.isArchive()` to narrow from Content.
  *
  * @category Types
@@ -102,7 +102,7 @@ export const scheduledBroadcastSchema = contentBaseSchema.extend({
 export type ScheduledBroadcast = z.infer<typeof scheduledBroadcastSchema>;
 
 /**
- * Zod schema for a short clip extracted from a stream or video.
+ * Zod schema for a short clip extracted from a broadcast or archive.
  * Validates duration (non-negative), view count, and creation date.
  *
  * @category Types
@@ -120,7 +120,7 @@ export const clipSchema = contentBaseSchema.extend({
 });
 
 /**
- * A short clip extracted from a stream or video on any supported platform.
+ * A short clip extracted from a broadcast or archive on any supported platform.
  * Discriminated by `type: "clip"`. Use `Content.isClip()` to narrow from Content.
  *
  * @category Types

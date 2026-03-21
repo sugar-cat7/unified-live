@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# cd to the workerd test directory so wrangler resolves tsconfig relative to CWD
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
 PORT=8787
 WRANGLER_LOG=$(mktemp)
 
@@ -11,7 +14,7 @@ if command -v lsof &>/dev/null && lsof -i ":$PORT" -sTCP:LISTEN -t &>/dev/null; 
 fi
 
 # Start wrangler in background, redirect output to log
-npx wrangler dev --config tests/runtime/workerd/wrangler.jsonc --port "$PORT" --ip 127.0.0.1 > "$WRANGLER_LOG" 2>&1 &
+npx wrangler dev --port "$PORT" --ip 127.0.0.1 > "$WRANGLER_LOG" 2>&1 &
 WRANGLER_PID=$!
 trap "kill $WRANGLER_PID 2>/dev/null; pkill -P $WRANGLER_PID 2>/dev/null || true; rm -f $WRANGLER_LOG" EXIT
 

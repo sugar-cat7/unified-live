@@ -19,6 +19,10 @@
       "require": "./dist/index.cjs"
     }
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "generate:types": "tsx ../../scripts/generate-youtube-types.ts",
     "build": "tsdown",

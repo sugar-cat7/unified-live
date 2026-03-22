@@ -174,6 +174,15 @@ describe("Archive.is", () => {
   it("returns false for Broadcast", () => {
     expect(Archive.is(baseBroadcast)).toBe(false);
   });
+
+  it.each([
+    { name: "null", value: null },
+    { name: "string", value: "not an object" },
+    { name: "number", value: 42 },
+    { name: "undefined", value: undefined },
+  ])("returns false for $name", ({ value }) => {
+    expect(Archive.is(value)).toBe(false);
+  });
 });
 
 describe("Channel.is", () => {
@@ -189,6 +198,15 @@ describe("Channel.is", () => {
 
   it("returns false for invalid object", () => {
     expect(Channel.is({ id: "ch1" })).toBe(false);
+  });
+
+  it.each([
+    { name: "null", value: null },
+    { name: "string", value: "not an object" },
+    { name: "number", value: 42 },
+    { name: "undefined", value: undefined },
+  ])("returns false for $name", ({ value }) => {
+    expect(Channel.is(value)).toBe(false);
   });
 });
 
@@ -238,6 +256,15 @@ describe("BroadcastSession.is", () => {
 
   it("returns false for invalid object", () => {
     expect(BroadcastSession.is({ sessionId: "" })).toBe(false);
+  });
+
+  it.each([
+    { name: "null", value: null },
+    { name: "string", value: "not an object" },
+    { name: "number", value: 42 },
+    { name: "undefined", value: undefined },
+  ])("returns false for $name", ({ value }) => {
+    expect(BroadcastSession.is(value)).toBe(false);
   });
 });
 

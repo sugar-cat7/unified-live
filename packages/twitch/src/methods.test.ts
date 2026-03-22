@@ -348,6 +348,28 @@ describe("twitchBatchGetBroadcasts", () => {
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
   });
+
+  it("accumulates multiple streams for the same user_id", async () => {
+    const stream1 = { ...sampleStream, id: "s1", user_id: "u1" };
+    const stream2 = { ...sampleStream, id: "s2", user_id: "u1", title: "Second Stream" };
+    const rest = createMockRest({ data: [stream1, stream2] });
+    const result = await twitchBatchGetBroadcasts(rest, ["u1"]);
+    expect(result.values.get("u1")).toHaveLength(2);
+    expect(result.values.get("u1")![0]!.id).toBe("s1");
+    expect(result.values.get("u1")![1]!.id).toBe("s2");
+  });
+
+  it("uses fallback [] for a stream whose user_id is not in the requested channelIds", async () => {
+    // API returns a stream for "unknown_user" even though only "u1" was requested
+    const unexpectedStream = { ...sampleStream, id: "s99", user_id: "unknown_user" };
+    const rest = createMockRest({ data: [unexpectedStream] });
+    const result = await twitchBatchGetBroadcasts(rest, ["u1"]);
+    // u1 was requested but has no streams
+    expect(result.values.get("u1")).toEqual([]);
+    // unknown_user was not requested but came back from API — the ?? [] fallback creates its entry
+    expect(result.values.get("unknown_user")).toHaveLength(1);
+    expect(result.values.get("unknown_user")![0]!.id).toBe("s99");
+  });
 });
 
 const sampleSearchChannel = {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { QuotaExhaustedError } from "../errors";
 import { createQuotaBudgetStrategy } from "./quota";
 import type { RestRequest } from "./types";
@@ -164,6 +164,36 @@ describe("createQuotaBudgetStrategy", () => {
     expect(diffMs).toBeLessThanOrEqual(25 * 60 * 60 * 1000);
   });
 
+  it("uses defaults for dailyLimit, defaultCost, and platform when not provided", async () => {
+    strategy = createQuotaBudgetStrategy({
+      costMap: {},
+    } as any);
+
+    // Default dailyLimit = 10000, defaultCost = 1, platform = "unknown"
+    const handle = await strategy.acquire(makeReq("anything"));
+    handle.complete(new Headers());
+    const status = strategy.getStatus();
+    expect(status.remaining).toBe(9999); // 10000 - 1
+    expect(status.limit).toBe(10000);
+  });
+
+  it("handles missing DateTimeFormat parts by falling back to 0", () => {
+    const originalFormatToParts = Intl.DateTimeFormat.prototype.formatToParts;
+    Intl.DateTimeFormat.prototype.formatToParts = () => [];
+    try {
+      // Creating strategy triggers nextResetTime() which uses formatToParts
+      strategy = createQuotaBudgetStrategy({
+        dailyLimit: 100,
+        costMap: {},
+        platform: "test",
+      });
+      const status = strategy.getStatus();
+      expect(status.resetsAt).toBeInstanceOf(Date);
+    } finally {
+      Intl.DateTimeFormat.prototype.formatToParts = originalFormatToParts;
+    }
+  });
+
   it("throws on negative cost map values", () => {
     expect(() =>
       createQuotaBudgetStrategy({
@@ -172,5 +202,29 @@ describe("createQuotaBudgetStrategy", () => {
         platform: "youtube",
       }),
     ).toThrow("negative cost");
+  });
+
+  it("lazy resets quota when past reset time", async () => {
+    vi.useFakeTimers();
+    try {
+      strategy = createQuotaBudgetStrategy({
+        dailyLimit: 10,
+        costMap: { "videos:list": 5 },
+        platform: "youtube",
+      });
+
+      // Consume some quota
+      await strategy.acquire(makeReq("videos:list"));
+      expect(strategy.getStatus().remaining).toBe(5);
+
+      // Advance time past the reset time (25 hours to ensure crossing midnight PT)
+      vi.advanceTimersByTime(25 * 60 * 60 * 1000);
+
+      // Next acquire should trigger lazy reset — quota restored
+      await strategy.acquire(makeReq("videos:list"));
+      expect(strategy.getStatus().remaining).toBe(5); // 10 - 5 after reset + new acquire
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

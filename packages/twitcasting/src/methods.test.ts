@@ -170,6 +170,26 @@ describe("twitcastingListArchives", () => {
     expect(result.cursor).toBeUndefined();
   });
 
+  it("sets hasMore and cursor when movies fill page size", async () => {
+    const movies = Array.from({ length: 50 }, (_, i) => ({
+      ...mockArchiveMovie,
+      id: `m${i}`,
+    }));
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { status: 200, headers: new Headers(), data: { total_count: 100, movies } };
+      }
+      return { status: 200, headers: new Headers(), data: { user: mockUser } };
+    });
+
+    const result = await twitcastingListArchives(rest, "u1");
+    expect(result.hasMore).toBe(true);
+    expect(result.cursor).toBe("m49");
+  });
+
   it("passes cursor as slice_id", async () => {
     let callCount = 0;
     const rest = createMockRest({});
@@ -226,6 +246,26 @@ describe("twitcastingListMovies", () => {
     const result = await twitcastingListMovies(rest, "u1");
     expect(result.hasMore).toBe(false);
     expect(result.cursor).toBeUndefined();
+  });
+
+  it("sets hasMore and cursor when movies fill page size", async () => {
+    const movies = Array.from({ length: 50 }, (_, i) => ({
+      ...mockArchiveMovie,
+      id: `m${i}`,
+    }));
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { status: 200, headers: new Headers(), data: { total_count: 100, movies } };
+      }
+      return { status: 200, headers: new Headers(), data: { user: mockUser } };
+    });
+
+    const result = await twitcastingListMovies(rest, "u1");
+    expect(result.hasMore).toBe(true);
+    expect(result.cursor).toBe("m49");
   });
 
   it("passes cursor as slice_id", async () => {
@@ -418,6 +458,20 @@ describe("twitcastingSearch", () => {
     expect(result.items[0]!.type).toBe("broadcast");
   });
 
+  it("returns empty when channelId user is live but current_live movie is null", async () => {
+    const liveUser = { ...mockUser, is_live: true };
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) return { status: 200, headers: new Headers(), data: { user: liveUser } };
+      return { status: 200, headers: new Headers(), data: { movie: null } };
+    });
+    const result = await twitcastingSearch(rest, { channelId: "user1", status: "live" });
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+  });
+
   it("returns empty when channelId user is not live and status=live", async () => {
     const offlineUser = { ...mockUser, is_live: false };
     const rest = createMockRest({});
@@ -427,6 +481,67 @@ describe("twitcastingSearch", () => {
       data: { user: offlineUser },
     });
     const result = await twitcastingSearch(rest, { channelId: "user1", status: "live" });
+    expect(result.items).toEqual([]);
+  });
+
+  it("handles undefined users in search response", async () => {
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: {},
+    });
+    const result = await twitcastingSearch(rest, { query: "test" });
+    expect(result.items).toEqual([]);
+  });
+
+  it("handles null movie in search live by query", async () => {
+    const liveUser = { ...mockUser, is_live: true };
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) return { status: 200, headers: new Headers(), data: { users: [liveUser] } };
+      return { status: 200, headers: new Headers(), data: { movie: null } };
+    });
+    const result = await twitcastingSearch(rest, { query: "test", status: "live" });
+    expect(result.items).toEqual([]);
+  });
+
+  it("handles undefined movies in search ended response", async () => {
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) return { status: 200, headers: new Headers(), data: { users: [mockUser] } };
+      return { status: 200, headers: new Headers(), data: {} };
+    });
+    const result = await twitcastingSearch(rest, { query: "test", status: "ended" });
+    expect(result.items).toEqual([]);
+  });
+
+  it("fetches recent movies by channelId with status=ended", async () => {
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) return { status: 200, headers: new Headers(), data: { user: mockUser } };
+      return { status: 200, headers: new Headers(), data: { movies: [mockArchiveMovie] } };
+    });
+    const result = await twitcastingSearch(rest, { channelId: "user1", status: "ended" });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.type).toBe("archive");
+  });
+
+  it("handles undefined movies in channelId search", async () => {
+    const rest = createMockRest({});
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) return { status: 200, headers: new Headers(), data: { user: mockUser } };
+      return { status: 200, headers: new Headers(), data: {} };
+    });
+    const result = await twitcastingSearch(rest, { channelId: "user1" });
     expect(result.items).toEqual([]);
   });
 

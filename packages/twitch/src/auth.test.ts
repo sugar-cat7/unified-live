@@ -170,6 +170,25 @@ describe("createClientCredentialsTokenManager", () => {
     expect(callCount).toBe(2); // Only one additional fetch
   });
 
+  it("falls back to globalThis.fetch when config.fetch is omitted", async () => {
+    const mockGlobalFetch = makeMockFetch({ accessToken: "global-token" });
+    const original = globalThis.fetch;
+    globalThis.fetch = mockGlobalFetch;
+    try {
+      const manager = createClientCredentialsTokenManager({
+        clientId: "id",
+        clientSecret: "secret",
+      });
+
+      const header = await manager.getAuthHeader();
+
+      expect(header).toBe("Bearer global-token");
+      expect(mockGlobalFetch).toHaveBeenCalledOnce();
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
   it("sends correct content type and body parameters", async () => {
     const mockFetch = makeMockFetch();
     const manager = createClientCredentialsTokenManager({

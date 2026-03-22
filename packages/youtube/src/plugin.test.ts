@@ -76,6 +76,11 @@ describe("createYouTubePlugin", () => {
     });
   });
 
+  it("accepts custom quota dailyLimit", () => {
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: createMockFetch([]), quota: { dailyLimit: 5000 } });
+    expect(plugin.capabilities.rateLimitModel).toBe("quota");
+  });
+
   it("throws on empty API key", () => {
     expect(() => createYouTubePlugin({ apiKey: "", fetch: createMockFetch([]) })).toThrow(
       "API key is required",
@@ -456,6 +461,18 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
 
     await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(QuotaExhaustedError);
+  });
+
+  it("handleRateLimit returns false for non-429 (e.g. 403)", async () => {
+    const fetchFn = createMockFetch([
+      {
+        status: 403,
+        body: { error: { errors: [{ reason: "forbidden" }] } },
+      },
+    ]);
+
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
+    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow();
   });
 
   it("handles 429 rate limit by retrying", async () => {

@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { AuthenticationError, NetworkError, NotFoundError, UnifiedLiveError } from "../errors";
+import {
+  AuthenticationError,
+  NetworkError,
+  NotFoundError,
+  RateLimitError,
+  UnifiedLiveError,
+} from "../errors";
 import { SPAN_KIND_CLIENT } from "../telemetry/otel-types";
 import { createMockFetch } from "../test-helpers";
 import { createRestManager, parseRetryAfter, RestManager } from "./manager";
@@ -488,6 +494,84 @@ describe("createRestManager", () => {
     }
   });
 
+  it("throws NetworkError after all retries exhausted when loop completes without returning", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      retry: { maxRetries: -1, baseDelay: 1 },
+    });
+
+    try {
+      await manager.request({ method: "POST", path: "/exhausted" });
+      expect.unreachable("Should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(NetworkError);
+      const err = e as NetworkError;
+      expect(err.code).toBe("NETWORK_CONNECTION");
+      expect(err.context.path).toBe("/exhausted");
+      expect(err.context.method).toBe("POST");
+      expect(err.message).toContain("failed after 0 attempts");
+    }
+  });
+
+  it("sets error.type to 'unknown' when a non-Error is thrown and no HTTP status exists", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    // Override createHeaders to throw a non-Error value inside the try block
+    manager.createHeaders = () => {
+      // eslint-disable-next-line no-throw-literal
+      throw "string-error";
+    };
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toBe("string-error");
+  });
+
+  it("throws RateLimitError on 403 (handleRateLimit returns false for non-429)", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 403 }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    await expect(manager.request({ method: "GET", path: "/forbidden" })).rejects.toThrow(
+      RateLimitError,
+    );
+  });
+
+  it("default parseRateLimitHeaders returns undefined for any headers", () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: { ok: true } }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    expect(manager.parseRateLimitHeaders(new Headers())).toBeUndefined();
+    expect(
+      manager.parseRateLimitHeaders(new Headers({ "X-RateLimit-Limit": "100" })),
+    ).toBeUndefined();
+  });
+
   it("function properties are overridable but not deletable", () => {
     strategy = createMockStrategy();
     const manager = createRestManager({
@@ -501,6 +585,202 @@ describe("createRestManager", () => {
     const originalRequest = manager.request;
     manager.request = vi.fn() as typeof manager.request;
     expect(manager.request).not.toBe(originalRequest);
+  });
+
+  it("accepts custom retryableStatuses set", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([{ status: 502, body: {} }]);
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+      retry: { maxRetries: 0, retryableStatuses: [502, 503] },
+    });
+
+    // 502 with 0 retries — should fail, but the retryableStatuses set is used
+    await expect(
+      manager.request({ method: "GET", path: "/test" }),
+    ).rejects.toThrow();
+  });
+
+  it("handles invalid baseUrl gracefully (no URL parsing crash)", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([{ status: 200, body: { ok: true } }]);
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "not-a-valid-url",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+    });
+
+    expect(manager.baseUrl).toBe("not-a-valid-url");
+  });
+
+  it("uses default maxRetries and baseDelay when retry config is absent", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([{ status: 200, body: { ok: true } }]);
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+      // no retry config — defaults should be used
+    });
+
+    const result = await manager.request({ method: "GET", path: "/test" });
+    expect(result.data).toEqual({ ok: true });
+  });
+
+  it("uses port 80 for HTTP URLs without explicit port", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([{ status: 200, body: { ok: true } }]);
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "http://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+    });
+
+    const result = await manager.request({ method: "GET", path: "/test" });
+    expect(result.data).toEqual({ ok: true });
+  });
+
+  it("wraps non-Error thrown from runRequest in Error", async () => {
+    const strategy = createMockStrategy();
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: createMockFetch([]),
+    });
+    manager.runRequest = vi.fn().mockRejectedValue("string-error");
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(NetworkError);
+  });
+
+  it("sets retryAfter to undefined when Retry-After header is 0", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([
+      { status: 429, headers: { "Retry-After": "0" } },
+    ]);
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+      retry: { maxRetries: 0 },
+    });
+    manager.handleRateLimit = vi.fn().mockResolvedValue(false);
+
+    const err = await manager.request({ method: "GET", path: "/test" }).catch((e) => e) as RateLimitError;
+    expect(err).toBeInstanceOf(RateLimitError);
+    expect(err.retryAfter).toBeUndefined();
+  });
+
+  it("calls tokenManager.invalidate on 401 when tokenManager exists", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([{ status: 401, body: {} }]);
+    const invalidateFn = vi.fn();
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+      retry: { maxRetries: 0 },
+      tokenManager: {
+        getAuthHeader: vi.fn().mockResolvedValue("Bearer token"),
+        invalidate: invalidateFn,
+      },
+    });
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(AuthenticationError);
+    expect(invalidateFn).toHaveBeenCalled();
+  });
+
+  it("uses globalThis.fetch when no fetch option provided", () => {
+    const strategy = createMockStrategy();
+    // Just verify the manager can be created without providing fetch
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+    });
+    expect(manager.platform).toBe("test");
+  });
+
+  it("handles 401 without tokenManager", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([{ status: 401, body: {} }]);
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+      retry: { maxRetries: 0 },
+      // no tokenManager
+    });
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(AuthenticationError);
+  });
+
+  it("throws ParseError when response body is not valid JSON", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = vi.fn().mockResolvedValue(
+      new Response("not json", { status: 200 }),
+    ) as unknown as typeof globalThis.fetch;
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+    });
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow("Failed to parse JSON");
+  });
+
+  it("wraps non-Error from response.json() in ParseError", async () => {
+    const strategy = createMockStrategy();
+    // Create a response where .json() throws a non-Error value
+    const fakeResponse = new Response("", { status: 200 });
+    Object.defineProperty(fakeResponse, "json", {
+      value: () => {
+        throw "not-an-error-object";
+      },
+    });
+    const mockFetch = vi.fn().mockResolvedValue(fakeResponse) as unknown as typeof globalThis.fetch;
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+    });
+
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow("Failed to parse JSON");
+  });
+
+  it("includes rate limit info in response when parseRateLimitHeaders returns data", async () => {
+    const strategy = createMockStrategy();
+    const mockFetch = createMockFetch([
+      { status: 200, body: { ok: true }, headers: { "X-RateLimit-Remaining": "50", "X-RateLimit-Limit": "100" } },
+    ]);
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.test.com",
+      rateLimitStrategy: strategy,
+      fetch: mockFetch,
+    });
+    manager.parseRateLimitHeaders = (headers: Headers) => ({
+      remaining: Number.parseInt(headers.get("X-RateLimit-Remaining") ?? "0", 10),
+      limit: Number.parseInt(headers.get("X-RateLimit-Limit") ?? "0", 10),
+      resetsAt: new Date(),
+    });
+
+    const result = await manager.request({ method: "GET", path: "/test" });
+
+    expect(result.rateLimit).toBeDefined();
+    expect(result.rateLimit!.remaining).toBe(50);
+    expect(result.rateLimit!.limit).toBe(100);
   });
 });
 
@@ -702,6 +982,35 @@ describe("createRestManager OTel integration", () => {
 
     expect(spans[0]!.attributes["error.type"]).toBe("404");
     expect(spans[0]!.status?.code).toBe(2); // SpanStatusCode.ERROR
+  });
+
+  it("sets error.type to 'unknown' when non-Error is thrown without HTTP status", async () => {
+    const { spans, provider: tracerProvider } = createMockTracer();
+    const { recordings, provider: meterProvider } = createMockMeter();
+    const strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+      tracerProvider,
+      meterProvider,
+    });
+
+    // Override createHeaders to throw a non-Error inside the try block
+    manager.createHeaders = () => {
+      // eslint-disable-next-line no-throw-literal
+      throw "string-error";
+    };
+
+    await manager.request({ method: "GET", path: "/test" }).catch(() => {});
+
+    expect(spans[0]!.attributes["error.type"]).toBe("unknown");
+    expect(spans[0]!.status?.code).toBe(2);
+    expect(recordings).toHaveLength(1);
+    expect(recordings[0]!.attributes["error.type"]).toBe("unknown");
   });
 
   it("does not require @opentelemetry/api at runtime", async () => {

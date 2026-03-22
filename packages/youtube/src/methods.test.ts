@@ -224,6 +224,30 @@ describe("youtubeListBroadcasts", () => {
     const result = await youtubeListBroadcasts(rest, "UCtest");
     expect(result).toEqual([]);
   });
+
+  it("returns empty when video items is empty after fetching details", async () => {
+    const rest = createMockRest();
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          status: 200,
+          headers: new Headers(),
+          data: { items: [{ id: { videoId: "v1" } }] },
+        };
+      }
+      // videos endpoint returns empty items (undefined)
+      return {
+        status: 200,
+        headers: new Headers(),
+        data: {},
+      };
+    });
+
+    const result = await youtubeListBroadcasts(rest, "UCtest");
+    expect(result).toEqual([]);
+  });
 });
 
 describe("youtubeListArchives", () => {
@@ -361,6 +385,31 @@ describe("youtubeListArchives", () => {
     expect(result.total).toBe(0); // no pageInfo means fallback to 0
   });
 
+  it("returns empty archives when video items is undefined after fetching details", async () => {
+    const rest = createMockRest();
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { status: 200, headers: new Headers(), data: { items: [sampleChannelItem] } };
+      }
+      if (callCount === 2) {
+        return {
+          status: 200,
+          headers: new Headers(),
+          data: {
+            items: [{ snippet: { resourceId: { videoId: "dQw4w9WgXcQ" } } }],
+          },
+        };
+      }
+      // videos endpoint returns undefined items
+      return { status: 200, headers: new Headers(), data: {} };
+    });
+
+    const result = await youtubeListArchives(rest, "UCtest");
+    expect(result.items).toEqual([]);
+  });
+
   it("returns empty page when no playlist items", async () => {
     const rest = createMockRest();
     let callCount = 0;
@@ -427,6 +476,33 @@ describe("youtubeBatchGetContents", () => {
     const result = await youtubeBatchGetContents(rest, ids);
     expect(callCount).toBe(2);
     expect(result.values.size).toBe(60);
+  });
+
+  it("skips items without id and marks requested id as not found", async () => {
+    const rest = createMockRest();
+    const itemWithoutId = { ...sampleVideoItem, id: undefined };
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [itemWithoutId] },
+    });
+    const result = await youtubeBatchGetContents(rest, ["v1"]);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.get("v1")).toBeInstanceOf(NotFoundError);
+  });
+
+  it("handles undefined items in API response", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: {},
+    });
+    const result = await youtubeBatchGetContents(rest, ["v1"]);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.get("v1")).toBeInstanceOf(NotFoundError);
   });
 });
 
@@ -519,6 +595,79 @@ describe("youtubeSearch", () => {
       }),
     );
   });
+
+  it("passes limit as maxResults (capped at 50) and cursor as pageToken", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [] },
+    });
+    await youtubeSearch(rest, { query: "test", limit: 100, cursor: "TOKEN_ABC" });
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ maxResults: "50", pageToken: "TOKEN_ABC" }),
+      }),
+    );
+  });
+
+  it("returns empty when search results have no valid videoIds", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [{ id: {} }, { id: { videoId: undefined } }] },
+    });
+    const result = await youtubeSearch(rest, { query: "test" });
+    expect(result.items).toEqual([]);
+    expect(result.hasMore).toBe(false);
+    // Only one call — no second call for videos since videoIds is empty
+    expect(rest.request).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles undefined items in video details response", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { items: [{ id: { videoId: "v1" } }] },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {},
+      });
+    const result = await youtubeSearch(rest, { query: "test" });
+    expect(result.items).toEqual([]);
+    expect(rest.request).toHaveBeenCalledTimes(2);
+  });
+
+  it("fetches video details and returns paginated results with cursor", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: {
+          items: [{ id: { videoId: "v1" } }, { id: { videoId: "v2" } }],
+          nextPageToken: "PAGE2",
+          pageInfo: { totalResults: 100 },
+        },
+      })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { items: [createSampleVideoItem("v1"), createSampleVideoItem("v2")] },
+      });
+
+    const result = await youtubeSearch(rest, { query: "music" });
+    expect(result.items).toHaveLength(2);
+    expect(result.cursor).toBe("PAGE2");
+    expect(result.total).toBe(100);
+    expect(result.hasMore).toBe(true);
+    expect(rest.request).toHaveBeenCalledTimes(2);
+  });
 });
 
 const createSampleChannelItem = (id: string) => ({
@@ -572,6 +721,20 @@ describe("youtubeBatchGetChannels", () => {
     expect(result.values.size).toBe(60);
   });
 
+  it("skips items without id and marks requested id as not found", async () => {
+    const rest = createMockRest();
+    const itemWithoutId = { ...sampleChannelItem, id: undefined };
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [itemWithoutId] },
+    });
+    const result = await youtubeBatchGetChannels(rest, ["UC1"]);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.get("UC1")).toBeInstanceOf(NotFoundError);
+  });
+
   it("sends comma-separated IDs with channels:list bucketId", async () => {
     const rest = createMockRest();
     (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -598,6 +761,19 @@ describe("youtubeBatchGetChannels", () => {
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
     expect(rest.request).not.toHaveBeenCalled();
+  });
+
+  it("handles undefined items in API response", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: {},
+    });
+    const result = await youtubeBatchGetChannels(rest, ["UC1"]);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.get("UC1")).toBeInstanceOf(NotFoundError);
   });
 });
 

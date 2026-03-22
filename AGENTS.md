@@ -13,19 +13,11 @@
 
 ## References
 
-- Detailed technical documentation: `docs/`
-- Architecture reference: `docs/backend/sdk-architecture.md`
-- Glossary & decisions: `docs/reference/`
-- Type definitions: `docs/plan/unified-live-sdk/01_TYPES.md`
-- Platform plugins: `docs/plan/unified-live-sdk/02_PLUGINS.md`
-- Public API: `docs/plan/unified-live-sdk/03_CLIENT_API.md`
+- User-facing documentation: `apps/docs/src/content/docs/`
 - AI agent skills: `.agent/skills/`
 
-## Spec-Driven Development
+## Development
 
-- Feature development follows: spec drafting -> checklist generation -> phased implementation.
-- Spec documents are placed in `docs/plan/<feature>/`.
-- **Spec update -> Implementation**: When specs change, update `docs/plan/` first, then modify code. Verbal agreements are not specs.
 - Implementation order is bottom-up: Types -> Infrastructure -> Plugins -> Client API.
 - Skills: `/plan-feature` (spec drafting), `/init-impl` (checklist generation).
 

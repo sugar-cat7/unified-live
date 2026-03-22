@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { QuotaExhaustedError } from "../errors";
 import { createQuotaBudgetStrategy } from "./quota";
 import type { RestRequest } from "./types";
@@ -11,10 +11,6 @@ const makeReq = (bucketId?: string): RestRequest => ({
 
 describe("createQuotaBudgetStrategy", () => {
   let strategy: ReturnType<typeof createQuotaBudgetStrategy>;
-
-  afterEach(() => {
-    strategy?.[Symbol.dispose]();
-  });
 
   it("deducts cost per bucketId", async () => {
     strategy = createQuotaBudgetStrategy({
@@ -176,17 +172,5 @@ describe("createQuotaBudgetStrategy", () => {
         platform: "youtube",
       }),
     ).toThrow("negative cost");
-  });
-
-  it("dispose clears reset timer without error", () => {
-    strategy = createQuotaBudgetStrategy({
-      dailyLimit: 100,
-      costMap: {},
-      platform: "youtube",
-    });
-
-    // Should not throw
-    strategy[Symbol.dispose]();
-    strategy[Symbol.dispose](); // Double dispose is safe
   });
 });

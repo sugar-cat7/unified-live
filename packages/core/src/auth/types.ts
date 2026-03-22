@@ -12,8 +12,6 @@ export type TokenManager = {
   getAuthHeader(): Promise<string>;
   /** Invalidate current token (called on 401 response). */
   invalidate(): void;
-  /** Release resources (timers, etc.). */
-  [Symbol.dispose]?(): void;
 };
 
 /**

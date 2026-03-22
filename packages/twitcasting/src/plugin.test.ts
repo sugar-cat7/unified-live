@@ -30,7 +30,6 @@ describe("createTwitCastingPlugin", () => {
       supportsSearch: true,
       supportsClips: false,
     });
-    plugin[Symbol.dispose]();
   });
 
   it("throws on missing credentials", () => {
@@ -60,7 +59,6 @@ describe("createTwitCastingPlugin", () => {
     });
 
     expect(plugin.name).toBe("twitcasting");
-    plugin[Symbol.dispose]();
   });
 
   it("matches TwitCasting URLs", () => {
@@ -81,8 +79,6 @@ describe("createTwitCastingPlugin", () => {
       id: "user123",
     });
     expect(plugin.match("https://youtube.com/watch?v=abc")).toBeNull();
-
-    plugin[Symbol.dispose]();
   });
 
   it("getContent fetches a movie by ID", async () => {
@@ -119,8 +115,6 @@ describe("createTwitCastingPlugin", () => {
     expect(content.type).toBe("archive");
     expect(content.id).toBe("m123");
     expect(content.platform).toBe("twitcasting");
-
-    plugin[Symbol.dispose]();
   });
 
   it("getChannel fetches user info", async () => {
@@ -133,8 +127,6 @@ describe("createTwitCastingPlugin", () => {
     const channel = await plugin.getChannel("testuser");
     expect(channel.name).toBe("TestUser");
     expect(channel.platform).toBe("twitcasting");
-
-    plugin[Symbol.dispose]();
   });
 
   it("listBroadcasts returns empty when not live", async () => {
@@ -151,8 +143,6 @@ describe("createTwitCastingPlugin", () => {
 
     const streams = await plugin.listBroadcasts("u1");
     expect(streams).toHaveLength(0);
-
-    plugin[Symbol.dispose]();
   });
 
   it("listBroadcasts returns stream when live", async () => {
@@ -190,8 +180,6 @@ describe("createTwitCastingPlugin", () => {
     expect(streams).toHaveLength(1);
     expect(streams[0]!.type).toBe("broadcast");
     expect(streams[0]!.viewerCount).toBe(300);
-
-    plugin[Symbol.dispose]();
   });
 
   it("includes X-Api-Version header in requests", async () => {
@@ -208,8 +196,6 @@ describe("createTwitCastingPlugin", () => {
     const calls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls;
     const headers = (calls[0]?.[1] as RequestInit)?.headers as Record<string, string>;
     expect(headers["X-Api-Version"]).toBe("2.0");
-
-    plugin[Symbol.dispose]();
   });
 
   it("resolveArchive returns video when movie is no longer live", async () => {
@@ -259,8 +245,6 @@ describe("createTwitCastingPlugin", () => {
     expect(archive).not.toBeNull();
     expect(archive!.type).toBe("archive");
     expect(archive!.id).toBe("m123");
-
-    plugin[Symbol.dispose]();
   });
 
   it("resolveArchive returns null when still live", async () => {
@@ -306,7 +290,5 @@ describe("createTwitCastingPlugin", () => {
 
     const archive = await plugin.resolveArchive!(live);
     expect(archive).toBeNull();
-
-    plugin[Symbol.dispose]();
   });
 });

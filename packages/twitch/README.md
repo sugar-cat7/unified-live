@@ -21,7 +21,7 @@ pnpm add @unified-live/core @unified-live/twitch
 import { UnifiedClient } from "@unified-live/core";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
-using client = UnifiedClient.create({
+const client = UnifiedClient.create({
   plugins: [
     createTwitchPlugin({
       clientId: process.env.TWITCH_CLIENT_ID!,

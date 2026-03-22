@@ -111,7 +111,7 @@ test(twitch): add URL matching edge cases
 ## Code Style
 
 - **Arrow functions only** — No `function` declarations (avoids hoisting)
-- **Zod Schema First** — Types derived from Zod schemas (`z.infer<typeof schema>`)
+- **Plain TypeScript types** — No runtime schema libraries. Discriminated unions with type guards.
 - **Colocated tests** — `foo.test.ts` next to `foo.ts`, no `__tests__/` folders
 - **Table-driven tests** — Use `it.each` as the default test pattern
 - **No premature abstraction** — Only abstract when duplicated 3+ times

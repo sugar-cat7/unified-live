@@ -72,34 +72,15 @@ export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitS
 
   let consumed = 0;
   let resetsAt = nextResetTime();
-  let resetTimer: ReturnType<typeof setTimeout> | undefined;
-
-  const scheduleReset = (): void => {
-    const ms = resetsAt.getTime() - Date.now();
-    if (ms <= 0) {
-      consumed = 0;
-      resetsAt = nextResetTime();
-      // Use setTimeout(0) to break potential recursion on clock edge
-      resetTimer = setTimeout(() => scheduleReset(), 0);
-      if (resetTimer && "unref" in resetTimer) {
-        resetTimer.unref();
-      }
-      return;
-    }
-    resetTimer = setTimeout(() => {
-      consumed = 0;
-      resetsAt = nextResetTime();
-      scheduleReset();
-    }, ms);
-    if (typeof resetTimer === "object" && typeof resetTimer.unref === "function") {
-      resetTimer.unref();
-    }
-  };
-
-  scheduleReset();
 
   return {
     acquire(req: RestRequest): Promise<RateLimitHandle> {
+      // Lazy reset: if past reset time, reset quota inline
+      if (Date.now() >= resetsAt.getTime()) {
+        consumed = 0;
+        resetsAt = nextResetTime();
+      }
+
       const cost: number =
         req.bucketId !== undefined ? (config.costMap[req.bucketId] ?? defaultCost) : defaultCost;
 
@@ -135,13 +116,6 @@ export const createQuotaBudgetStrategy = (config: QuotaBudgetConfig): RateLimitS
         resetsAt,
         queued: 0,
       };
-    },
-
-    [Symbol.dispose](): void {
-      if (resetTimer !== undefined) {
-        clearTimeout(resetTimer);
-        resetTimer = undefined;
-      }
     },
   };
 };

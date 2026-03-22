@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AuthenticationError, NetworkError, NotFoundError, UnifiedLiveError } from "../errors";
 import { SPAN_KIND_CLIENT } from "../telemetry/otel-types";
 import { createMockFetch } from "../test-helpers";
@@ -18,16 +18,11 @@ const createMockStrategy = (): RateLimitStrategy => {
       resetsAt: new Date(),
       queued: 0,
     }),
-    [Symbol.dispose]: vi.fn(),
   };
 };
 
 describe("createRestManager", () => {
   let strategy: RateLimitStrategy;
-
-  afterEach(() => {
-    strategy?.[Symbol.dispose]();
-  });
 
   it("makes a successful GET request", async () => {
     strategy = createMockStrategy();
@@ -222,7 +217,6 @@ describe("createRestManager", () => {
         resetsAt: new Date(),
         queued: 0,
       }),
-      [Symbol.dispose]: vi.fn(),
     };
 
     const fetchFn = createMockFetch([{ status: 200, body: {} }]);
@@ -253,7 +247,6 @@ describe("createRestManager", () => {
         resetsAt: new Date(),
         queued: 0,
       }),
-      [Symbol.dispose]: vi.fn(),
     };
 
     const fetchFn = createMockFetch([{ status: 404 }]);
@@ -339,22 +332,6 @@ describe("createRestManager", () => {
 
     await expect(manager.request({ method: "GET", path: "/broken" })).rejects.toThrow(
       "Failed to parse JSON response",
-    );
-  });
-
-  it("throws after [Symbol.dispose] is called", async () => {
-    strategy = createMockStrategy();
-    const manager = createRestManager({
-      platform: "test",
-      baseUrl: "https://api.example.com",
-      rateLimitStrategy: strategy,
-      fetch: createMockFetch([]),
-    });
-
-    manager[Symbol.dispose]();
-
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
-      "has been disposed",
     );
   });
 
@@ -524,29 +501,6 @@ describe("createRestManager", () => {
     const originalRequest = manager.request;
     manager.request = vi.fn() as typeof manager.request;
     expect(manager.request).not.toBe(originalRequest);
-
-    manager[Symbol.dispose]();
-  });
-
-  it("[Symbol.dispose] cleans up strategy and tokenManager", () => {
-    const tokenDispose = vi.fn();
-    strategy = createMockStrategy();
-
-    const manager = createRestManager({
-      platform: "test",
-      baseUrl: "https://api.example.com",
-      rateLimitStrategy: strategy,
-      fetch: createMockFetch([]),
-      tokenManager: {
-        getAuthHeader: async () => "",
-        invalidate: vi.fn(),
-        [Symbol.dispose]: tokenDispose,
-      },
-    });
-
-    manager[Symbol.dispose]();
-    expect(strategy[Symbol.dispose]).toHaveBeenCalledTimes(1);
-    expect(tokenDispose).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -634,8 +588,6 @@ describe("createRestManager OTel integration", () => {
     expect(spans[0]!.name).toBe("GET");
     expect(spans[0]!.options).toEqual({ kind: SPAN_KIND_CLIENT });
     expect(spans[0]!.ended).toBe(true);
-
-    manager[Symbol.dispose]();
   });
 
   it("sets required semconv attributes on span", async () => {
@@ -664,8 +616,6 @@ describe("createRestManager OTel integration", () => {
     expect(attrs["server.port"]).toBe(8443);
     expect(attrs["http.response.status_code"]).toBe(200);
     expect(attrs["unified_live.platform"]).toBe("test");
-
-    manager[Symbol.dispose]();
   });
 
   it("defaults server.port to 443 for HTTPS", async () => {
@@ -685,8 +635,6 @@ describe("createRestManager OTel integration", () => {
 
     await manager.request({ method: "GET", path: "/test" });
     expect(spans[0]!.attributes["server.port"]).toBe(443);
-
-    manager[Symbol.dispose]();
   });
 
   it("records http.client.request.duration histogram on success", async () => {
@@ -711,8 +659,6 @@ describe("createRestManager OTel integration", () => {
     expect(recordings[0]!.attributes["http.request.method"]).toBe("GET");
     expect(recordings[0]!.attributes["http.response.status_code"]).toBe(200);
     expect(recordings[0]!.attributes["server.address"]).toBe("api.example.com");
-
-    manager[Symbol.dispose]();
   });
 
   it("records histogram with error.type on failure", async () => {
@@ -735,8 +681,6 @@ describe("createRestManager OTel integration", () => {
     expect(recordings).toHaveLength(1);
     expect(recordings[0]!.attributes["error.type"]).toBe("404");
     expect(recordings[0]!.attributes["http.response.status_code"]).toBe(404);
-
-    manager[Symbol.dispose]();
   });
 
   it("sets error.type to status code string for HTTP errors", async () => {
@@ -758,8 +702,6 @@ describe("createRestManager OTel integration", () => {
 
     expect(spans[0]!.attributes["error.type"]).toBe("404");
     expect(spans[0]!.status?.code).toBe(2); // SpanStatusCode.ERROR
-
-    manager[Symbol.dispose]();
   });
 
   it("does not require @opentelemetry/api at runtime", async () => {
@@ -779,8 +721,6 @@ describe("createRestManager OTel integration", () => {
 
     // Should work without propagation.inject — no runtime OTel dependency
     await expect(manager.request({ method: "GET", path: "/test" })).resolves.toBeDefined();
-
-    manager[Symbol.dispose]();
   });
 });
 
@@ -829,7 +769,6 @@ describe("RestManager.is", () => {
     });
 
     expect(RestManager.is(manager)).toBe(true);
-    manager[Symbol.dispose]();
   });
 });
 

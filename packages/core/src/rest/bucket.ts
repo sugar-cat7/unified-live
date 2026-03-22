@@ -1,3 +1,4 @@
+import { RateLimitError } from "../errors";
 import type { RateLimitHandle, RateLimitStatus, RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestRequest } from "./types";
 
@@ -5,79 +6,59 @@ import type { RateLimitInfo, RestRequest } from "./types";
 export type TokenBucketConfig = {
   global: { requests: number; perMs: number };
   parseHeaders: (headers: Headers) => RateLimitInfo | undefined;
+  platform: string;
 };
 
 /**
  * Creates a header-driven token bucket strategy (used by Twitch, TwitCasting).
+ * Uses lazy refill: tokens are recalculated from elapsed time on each acquire() call.
+ * No timers, no cleanup needed.
  *
- * @param config - token bucket configuration with limits and header parser
+ * @param config - token bucket configuration with limits, header parser, and platform name
  * @returns a RateLimitStrategy backed by a token bucket
  * @precondition global.requests > 0 and global.perMs > 0
- * @postcondition acquire() blocks when no tokens are available, resolves on refill
+ * @postcondition acquire() rejects with RateLimitError when no tokens are available
  * @idempotency Not idempotent — each acquire() consumes a token
  * @category Plugin Development
  */
 export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitStrategy => {
   let remaining = config.global.requests;
   const limit = config.global.requests;
-  let resetsAt = new Date(Date.now() + config.global.perMs);
-  const waiters: Array<() => void> = [];
-  let disposed = false;
-  let refillTimer: ReturnType<typeof setInterval> | undefined;
+  let lastRefillTime = Date.now();
+  let resetsAt = new Date(lastRefillTime + config.global.perMs);
 
-  const ensureRefillTimer = (): void => {
-    if (refillTimer !== undefined || disposed) return;
-    refillTimer = setInterval(() => {
+  const refill = (): void => {
+    if (Date.now() >= resetsAt.getTime()) {
       remaining = limit;
-      resetsAt = new Date(Date.now() + config.global.perMs);
-      // Wake all waiters
-      while (waiters.length > 0) {
-        const resolve = waiters.shift();
-        resolve?.();
-      }
-    }, config.global.perMs);
-
-    if (typeof refillTimer === "object" && typeof refillTimer.unref === "function") {
-      refillTimer.unref();
+      lastRefillTime = Date.now();
+      resetsAt = new Date(lastRefillTime + config.global.perMs);
     }
   };
 
   return {
     acquire(_req: RestRequest): Promise<RateLimitHandle> {
-      ensureRefillTimer();
-      const tryAcquire = (): Promise<RateLimitHandle> => {
-        if (disposed) {
-          // Return a no-op handle when disposed — allows pending promises to resolve
-          return Promise.resolve({
-            complete() {},
-            release() {},
-          } satisfies RateLimitHandle);
-        }
+      refill();
 
-        if (remaining > 0) {
-          remaining--;
-          const handle: RateLimitHandle = {
-            complete(headers: Headers) {
-              const info = config.parseHeaders(headers);
-              if (info) {
-                remaining = info.remaining;
-                resetsAt = info.resetsAt;
-              }
-            },
-            release() {
-              remaining = Math.min(remaining + 1, limit);
-            },
-          };
-          return Promise.resolve(handle);
-        }
+      if (remaining <= 0) {
+        const retryAfterMs = resetsAt.getTime() - Date.now();
+        const retryAfter = Math.max(1, Math.ceil(retryAfterMs / 1000));
+        return Promise.reject(new RateLimitError(config.platform, { retryAfter }));
+      }
 
-        // No tokens available — wait for refill
-        return new Promise<void>((resolve) => {
-          waiters.push(resolve);
-        }).then(() => tryAcquire());
+      remaining--;
+      const handle: RateLimitHandle = {
+        complete(headers: Headers) {
+          const info = config.parseHeaders(headers);
+          if (info) {
+            remaining = info.remaining;
+            resetsAt = info.resetsAt;
+          }
+        },
+        release() {
+          remaining = Math.min(remaining + 1, limit);
+        },
       };
-
-      return tryAcquire();
+      return Promise.resolve(handle);
     },
 
     getStatus(): RateLimitStatus {
@@ -85,20 +66,8 @@ export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitS
         remaining,
         limit,
         resetsAt,
-        queued: waiters.length,
+        queued: 0,
       };
-    },
-
-    [Symbol.dispose](): void {
-      disposed = true;
-      if (refillTimer !== undefined) {
-        clearInterval(refillTimer);
-      }
-      // Unblock all waiters
-      while (waiters.length > 0) {
-        const resolve = waiters.shift();
-        resolve?.();
-      }
     },
   };
 };

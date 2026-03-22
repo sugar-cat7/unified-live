@@ -17,14 +17,17 @@ describe("RateLimitStrategy.is", () => {
     const strategy = createTokenBucketStrategy({
       global: { requests: 10, perMs: 60_000 },
       parseHeaders: noopParseHeaders,
+      platform: "test",
     });
     expect(RateLimitStrategy.is(strategy)).toBe(true);
-    strategy[Symbol.dispose]();
   });
 
-  it("returns false for partial object missing methods", () => {
+  it("returns false for object missing required methods", () => {
     expect(RateLimitStrategy.is({ acquire: () => {} })).toBe(false);
-    expect(RateLimitStrategy.is({ acquire: () => {}, getStatus: () => {} })).toBe(false);
+  });
+
+  it("returns true for object with all required methods", () => {
+    expect(RateLimitStrategy.is({ acquire: () => {}, getStatus: () => {} })).toBe(true);
   });
 
   it("returns false for object with non-function properties", () => {
@@ -32,7 +35,6 @@ describe("RateLimitStrategy.is", () => {
       RateLimitStrategy.is({
         acquire: "not a function",
         getStatus: () => {},
-        [Symbol.dispose]: () => {},
       }),
     ).toBe(false);
   });
@@ -41,7 +43,6 @@ describe("RateLimitStrategy.is", () => {
     const fake = {
       acquire: async () => ({ complete: () => {}, release: () => {} }),
       getStatus: () => ({ remaining: 0, limit: 0, resetsAt: new Date(), queued: 0 }),
-      [Symbol.dispose]: () => {},
     };
     expect(RateLimitStrategy.is(fake)).toBe(true);
   });

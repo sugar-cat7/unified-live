@@ -1,5 +1,5 @@
 import { Content, NotFoundError, UnifiedClient } from "@unified-live/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
 
 // Integration test: Full consumer flow with mock fetch.
@@ -46,10 +46,6 @@ const sampleVideoResponse = {
 
 describe("YouTube Integration", () => {
   let client: ReturnType<typeof UnifiedClient.create>;
-
-  afterEach(() => {
-    client?.[Symbol.dispose]();
-  });
 
   it("full consumer flow: UnifiedClient.create -> resolve by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
@@ -98,17 +94,6 @@ describe("YouTube Integration", () => {
     expect(content.id).toBe("dQw4w9WgXcQ");
   });
 
-  it("[Symbol.dispose] cleans up all resources", () => {
-    const plugin = createYouTubePlugin({
-      apiKey: "test-key",
-      fetch: createMockFetch(() => ({ body: {} })),
-    });
-    client = UnifiedClient.create({ plugins: [plugin] });
-
-    // Should not throw
-    client[Symbol.dispose]();
-  });
-
   it("getContent throws NotFoundError for nonexistent video", async () => {
     const plugin = createYouTubePlugin({
       apiKey: "test-key",
@@ -116,6 +101,5 @@ describe("YouTube Integration", () => {
     });
 
     await expect(plugin.getContent("nonexistent")).rejects.toThrow(NotFoundError);
-    plugin[Symbol.dispose]();
   });
 });

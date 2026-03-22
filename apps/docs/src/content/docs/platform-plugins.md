@@ -151,15 +151,6 @@ client.register(twitch);
 client.register(twitcasting);
 ```
 
-## Cleanup
-
-Use `using` to automatically release internal timers when the client goes out of scope:
-
-```ts
-using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: "..." })] });
-// client[Symbol.dispose]() is called automatically at end of scope
-```
-
 ## Next Steps
 
 - [Error Handling](../error-handling/) — Handling API errors

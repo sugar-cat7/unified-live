@@ -21,7 +21,7 @@ pnpm add @unified-live/core @unified-live/youtube
 import { UnifiedClient } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 
-using client = UnifiedClient.create({
+const client = UnifiedClient.create({
   plugins: [createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! })],
 });
 

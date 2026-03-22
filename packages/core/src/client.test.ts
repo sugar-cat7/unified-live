@@ -59,7 +59,6 @@ const createMockPlugin = (name: string): PlatformPlugin => {
     getChannel: vi.fn(async () => mockChannel),
     listBroadcasts: vi.fn(async () => []),
     listArchives: vi.fn(async () => ({ items: [], cursor: undefined, hasMore: false })),
-    [Symbol.dispose]: vi.fn(),
   };
 };
 
@@ -69,7 +68,6 @@ describe("UnifiedClient.create", () => {
     const client = UnifiedClient.create({ plugins: [plugin] });
 
     expect(client.platforms()).toEqual(["test-platform"]);
-    client[Symbol.dispose]();
   });
 
   it("registers plugins via options", () => {
@@ -77,7 +75,6 @@ describe("UnifiedClient.create", () => {
     const client = UnifiedClient.create({ plugins: [plugin] });
 
     expect(client.platform("youtube")).toBe(plugin);
-    client[Symbol.dispose]();
   });
 
   it("registers plugins via register()", () => {
@@ -86,13 +83,11 @@ describe("UnifiedClient.create", () => {
     client.register(plugin);
 
     expect(client.platform("youtube")).toBe(plugin);
-    client[Symbol.dispose]();
   });
 
   it("throws PlatformNotFoundError for unknown platform", () => {
     const client = UnifiedClient.create();
     expect(() => client.platform("unknown")).toThrow(PlatformNotFoundError);
-    client[Symbol.dispose]();
   });
 
   it("matches URL to correct plugin", () => {
@@ -116,8 +111,6 @@ describe("UnifiedClient.create", () => {
 
     const resolved3 = client.match("https://example.com/foo");
     expect(resolved3).toBeNull();
-
-    client[Symbol.dispose]();
   });
 
   it.each([
@@ -158,8 +151,6 @@ describe("UnifiedClient.create", () => {
       const result = await (client[method] as Function)(...args);
       expect(plugin[pluginMethod]).toHaveBeenCalledWith(...pluginArgs);
       assertion(result);
-
-      client[Symbol.dispose]();
     },
   );
 
@@ -170,8 +161,6 @@ describe("UnifiedClient.create", () => {
     const content = await client.resolve("https://youtube.com/watch?v=abc");
     expect(content.platform).toBe("youtube");
     expect(plugin.getContent).toHaveBeenCalledWith("test-id");
-
-    client[Symbol.dispose]();
   });
 
   it("resolve throws ValidationError on empty URL", async () => {
@@ -179,14 +168,11 @@ describe("UnifiedClient.create", () => {
 
     await expect(client.resolve("")).rejects.toThrow(ValidationError);
     await expect(client.resolve("")).rejects.toThrow("URL must be a non-empty string");
-
-    client[Symbol.dispose]();
   });
 
   it("resolve throws ValidationError for malformed URL", async () => {
     const client = UnifiedClient.create();
     await expect(client.resolve("not-a-url")).rejects.toThrow(ValidationError);
-    client[Symbol.dispose]();
   });
 
   it("resolve throws ValidationError for unmatched URL", async () => {
@@ -196,22 +182,6 @@ describe("UnifiedClient.create", () => {
     await expect(client.resolve("https://unknown.com/video/123")).rejects.toThrow(
       "No registered plugin matches URL",
     );
-
-    client[Symbol.dispose]();
-  });
-
-  it("[Symbol.dispose] calls [Symbol.dispose] on all plugins and clears registry", () => {
-    const yt = createMockPlugin("youtube");
-    const tw = createMockPlugin("twitch");
-    const client = UnifiedClient.create({ plugins: [yt, tw] });
-
-    client[Symbol.dispose]();
-
-    expect(yt[Symbol.dispose]).toHaveBeenCalledTimes(1);
-    expect(tw[Symbol.dispose]).toHaveBeenCalledTimes(1);
-
-    // After [Symbol.dispose], plugins are cleared
-    expect(() => client.platform("youtube")).toThrow(PlatformNotFoundError);
   });
 });
 
@@ -233,7 +203,6 @@ describe("UnifiedClient.is", () => {
   it("returns true for a created UnifiedClient", () => {
     const client = UnifiedClient.create();
     expect(UnifiedClient.is(client)).toBe(true);
-    client[Symbol.dispose]();
   });
 });
 
@@ -258,8 +227,6 @@ describe("UnifiedClient cross-plugin routing", () => {
 
     // Unknown URL returns null
     expect(client.match("https://vimeo.com/12345")).toBeNull();
-
-    client[Symbol.dispose]();
   });
 
   it("register overwrites existing plugin with same name", () => {
@@ -272,8 +239,6 @@ describe("UnifiedClient cross-plugin routing", () => {
     // Should use the replacement, not the original
     expect(client.platform("youtube")).toBe(replacement);
     expect(client.platforms()).toEqual(["youtube"]);
-
-    client[Symbol.dispose]();
   });
 
   it("plugins are iterated in registration order for URL matching", () => {
@@ -288,8 +253,6 @@ describe("UnifiedClient cross-plugin routing", () => {
     // A URL containing "first" should match "first" plugin
     const result = client.match("https://first.example.com/video");
     expect(result?.platform).toBe("first");
-
-    client[Symbol.dispose]();
   });
 
   it("concurrent API calls to different plugins do not interfere", async () => {
@@ -306,8 +269,6 @@ describe("UnifiedClient cross-plugin routing", () => {
     expect(twContent.platform).toBe("twitch");
     expect(yt.getContent).toHaveBeenCalledWith("v1");
     expect(tw.getContent).toHaveBeenCalledWith("v2");
-
-    client[Symbol.dispose]();
   });
 });
 
@@ -321,8 +282,6 @@ describe("UnifiedClient batch operations", () => {
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
     expect(plugin.getContent).not.toHaveBeenCalled();
-
-    client[Symbol.dispose]();
   });
 
   it("batchGetContents deduplicates IDs", async () => {
@@ -332,8 +291,6 @@ describe("UnifiedClient batch operations", () => {
     await client.batchGetContents("test", ["id1", "id1", "id1"]);
 
     expect(plugin.getContent).toHaveBeenCalledTimes(1);
-
-    client[Symbol.dispose]();
   });
 
   it("batchGetContents uses fallback when plugin lacks native batch", async () => {
@@ -345,8 +302,6 @@ describe("UnifiedClient batch operations", () => {
     expect(plugin.getContent).toHaveBeenCalledTimes(3);
     expect(result.values.size).toBe(3);
     expect(result.errors.size).toBe(0);
-
-    client[Symbol.dispose]();
   });
 
   it("batchGetContents fallback separates per-item errors", async () => {
@@ -365,8 +320,6 @@ describe("UnifiedClient batch operations", () => {
     expect(result.errors.size).toBe(1);
     expect(result.errors.has("missing")).toBe(true);
     expect(result.errors.get("missing")).toBeInstanceOf(NotFoundError);
-
-    client[Symbol.dispose]();
   });
 
   it("batchGetContents fallback rethrows request-level errors", async () => {
@@ -375,8 +328,6 @@ describe("UnifiedClient batch operations", () => {
     const client = UnifiedClient.create({ plugins: [plugin] });
 
     await expect(client.batchGetContents("test", ["id1"])).rejects.toThrow(RateLimitError);
-
-    client[Symbol.dispose]();
   });
 
   it("batchGetContents delegates to plugin native batch when available", async () => {
@@ -393,8 +344,6 @@ describe("UnifiedClient batch operations", () => {
     expect(plugin.batchGetContents).toHaveBeenCalledWith(["x"]);
     expect(plugin.getContent).not.toHaveBeenCalled();
     expect(result).toBe(nativeBatch);
-
-    client[Symbol.dispose]();
   });
 
   it("batchGetContents throws PlatformNotFoundError for unknown platform", async () => {
@@ -403,8 +352,6 @@ describe("UnifiedClient batch operations", () => {
     await expect(client.batchGetContents("unknown", ["id1"])).rejects.toThrow(
       PlatformNotFoundError,
     );
-
-    client[Symbol.dispose]();
   });
 });
 
@@ -415,7 +362,6 @@ describe("UnifiedClient batchGetBroadcasts", () => {
     const result = await client.batchGetBroadcasts("test", []);
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
-    client[Symbol.dispose]();
   });
 
   it("uses fallback when plugin lacks native batch", async () => {
@@ -428,7 +374,6 @@ describe("UnifiedClient batchGetBroadcasts", () => {
     for (const streams of result.values.values()) {
       expect(Array.isArray(streams)).toBe(true);
     }
-    client[Symbol.dispose]();
   });
 
   it("deduplicates channel IDs", async () => {
@@ -436,7 +381,6 @@ describe("UnifiedClient batchGetBroadcasts", () => {
     const client = UnifiedClient.create({ plugins: [plugin] });
     await client.batchGetBroadcasts("test", ["ch1", "ch1", "ch1"]);
     expect(plugin.listBroadcasts).toHaveBeenCalledTimes(1);
-    client[Symbol.dispose]();
   });
 
   it("delegates to native batch when available", async () => {
@@ -448,7 +392,6 @@ describe("UnifiedClient batchGetBroadcasts", () => {
     expect(plugin.batchGetBroadcasts).toHaveBeenCalledWith(["ch1"]);
     expect(plugin.listBroadcasts).not.toHaveBeenCalled();
     expect(result).toBe(nativeResult);
-    client[Symbol.dispose]();
   });
 
   it("throws PlatformNotFoundError for unknown platform", async () => {
@@ -456,7 +399,6 @@ describe("UnifiedClient batchGetBroadcasts", () => {
     await expect(client.batchGetBroadcasts("unknown", ["ch1"])).rejects.toThrow(
       PlatformNotFoundError,
     );
-    client[Symbol.dispose]();
   });
 });
 
@@ -474,8 +416,6 @@ describe("UnifiedClient search", () => {
 
     expect(plugin.search).toHaveBeenCalledWith({ query: "hello" });
     expect(result).toBe(searchResult);
-
-    client[Symbol.dispose]();
   });
 
   it("search throws ValidationError when plugin lacks search", async () => {
@@ -486,8 +426,6 @@ describe("UnifiedClient search", () => {
     await expect(client.search("test", { query: "hello" })).rejects.toThrow(
       "does not support search",
     );
-
-    client[Symbol.dispose]();
   });
 
   it("search throws PlatformNotFoundError for unknown platform", async () => {
@@ -496,8 +434,6 @@ describe("UnifiedClient search", () => {
     await expect(client.search("unknown", { query: "hello" })).rejects.toThrow(
       PlatformNotFoundError,
     );
-
-    client[Symbol.dispose]();
   });
 
   it("search throws ValidationError when no query, status, or channelId", async () => {
@@ -509,8 +445,6 @@ describe("UnifiedClient search", () => {
     await expect(client.search("test", {})).rejects.toThrow(
       "search requires at least one of 'query', 'status', or 'channelId'",
     );
-
-    client[Symbol.dispose]();
   });
 
   it("search accepts channelId without query or status", async () => {
@@ -520,8 +454,6 @@ describe("UnifiedClient search", () => {
 
     await client.search("test", { channelId: "ch1" });
     expect(plugin.search).toHaveBeenCalledWith({ channelId: "ch1" });
-
-    client[Symbol.dispose]();
   });
 });
 
@@ -576,8 +508,6 @@ describe("UnifiedClient OTel integration", () => {
     expect(spans[0]!.attributes["unified_live.operation"]).toBe("getContent");
     expect(spans[0]!.attributes["unified_live.platform"]).toBe("youtube");
     expect(spans[0]!.ended).toBe(true);
-
-    client[Symbol.dispose]();
   });
 
   it("sets batch.size for batchGetContents", async () => {
@@ -589,8 +519,6 @@ describe("UnifiedClient OTel integration", () => {
 
     expect(spans).toHaveLength(1);
     expect(spans[0]!.attributes["unified_live.batch.size"]).toBe(3);
-
-    client[Symbol.dispose]();
   });
 
   it("records error on client span when plugin throws", async () => {
@@ -605,8 +533,6 @@ describe("UnifiedClient OTel integration", () => {
 
     expect(spans[0]!.status?.code).toBe(2); // SpanStatusCode.ERROR
     expect(spans[0]!.ended).toBe(true);
-
-    client[Symbol.dispose]();
   });
 });
 
@@ -641,8 +567,6 @@ describe("UnifiedClient listClips", () => {
 
     expect(plugin.listClips).toHaveBeenCalledWith("ch1", { limit: 10 });
     expect(result).toBe(clipPage);
-
-    client[Symbol.dispose]();
   });
 
   it("throws ValidationError when plugin does not support clips", async () => {
@@ -651,16 +575,12 @@ describe("UnifiedClient listClips", () => {
 
     await expect(client.listClips("test", "ch1")).rejects.toThrow(ValidationError);
     await expect(client.listClips("test", "ch1")).rejects.toThrow("does not support clips");
-
-    client[Symbol.dispose]();
   });
 
   it("throws PlatformNotFoundError for unknown platform", async () => {
     const client = UnifiedClient.create();
 
     await expect(client.listClips("unknown", "ch1")).rejects.toThrow(PlatformNotFoundError);
-
-    client[Symbol.dispose]();
   });
 });
 
@@ -678,8 +598,6 @@ describe("UnifiedClient batchGetClips", () => {
 
     expect(plugin.batchGetClips).toHaveBeenCalledWith(["clip-1"]);
     expect(result).toBe(batchResult);
-
-    client[Symbol.dispose]();
   });
 
   it("returns empty BatchResult for empty array", async () => {
@@ -692,8 +610,6 @@ describe("UnifiedClient batchGetClips", () => {
     expect(result.values.size).toBe(0);
     expect(result.errors.size).toBe(0);
     expect(plugin.batchGetClips).not.toHaveBeenCalled();
-
-    client[Symbol.dispose]();
   });
 
   it("throws ValidationError when plugin does not support batchGetClips", async () => {
@@ -704,8 +620,6 @@ describe("UnifiedClient batchGetClips", () => {
     await expect(client.batchGetClips("test", ["clip-1"])).rejects.toThrow(
       "does not support clip retrieval by IDs",
     );
-
-    client[Symbol.dispose]();
   });
 
   it("deduplicates IDs", async () => {
@@ -716,8 +630,6 @@ describe("UnifiedClient batchGetClips", () => {
     await client.batchGetClips("test", ["clip-1", "clip-1", "clip-1"]);
 
     expect(plugin.batchGetClips).toHaveBeenCalledWith(["clip-1"]);
-
-    client[Symbol.dispose]();
   });
 });
 
@@ -737,8 +649,6 @@ describe("UnifiedClient crossListBroadcasts", () => {
     expect(result.twitch).toBeDefined();
     expect(result.youtube!.values.size).toBe(2);
     expect(result.twitch!.values.size).toBe(1);
-
-    client[Symbol.dispose]();
   });
 
   it("returns empty BatchResult for failed platforms", async () => {
@@ -757,8 +667,6 @@ describe("UnifiedClient crossListBroadcasts", () => {
     expect(result.twitch).toBeDefined();
     expect(result.twitch!.values.size).toBe(0);
     expect(result.twitch!.errors.size).toBe(0);
-
-    client[Symbol.dispose]();
   });
 
   it("returns empty result for empty input", async () => {
@@ -767,8 +675,6 @@ describe("UnifiedClient crossListBroadcasts", () => {
     const result = await client.crossListBroadcasts({});
 
     expect(Object.keys(result)).toHaveLength(0);
-
-    client[Symbol.dispose]();
   });
 });
 
@@ -802,8 +708,6 @@ describe("UnifiedClient crossSearch", () => {
     expect(Object.keys(result)).toHaveLength(2);
     expect(result.youtube).toBe(ytResult);
     expect(result.twitch).toBe(twResult);
-
-    client[Symbol.dispose]();
   });
 
   it("returns empty Page for failed platforms", async () => {
@@ -833,8 +737,6 @@ describe("UnifiedClient crossSearch", () => {
     expect(result.twitch).toBeDefined();
     expect(result.twitch!.items).toEqual([]);
     expect(result.twitch!.hasMore).toBe(false);
-
-    client[Symbol.dispose]();
   });
 
   it("skips plugins that do not support search", async () => {
@@ -854,8 +756,6 @@ describe("UnifiedClient crossSearch", () => {
     expect(Object.keys(result)).toHaveLength(1);
     expect(result.youtube).toBeDefined();
     expect(result.twitch).toBeUndefined();
-
-    client[Symbol.dispose]();
   });
 
   it("returns empty result when no plugins support search", async () => {
@@ -865,7 +765,5 @@ describe("UnifiedClient crossSearch", () => {
     const result = await client.crossSearch({ query: "test" });
 
     expect(Object.keys(result)).toHaveLength(0);
-
-    client[Symbol.dispose]();
   });
 });

@@ -42,8 +42,6 @@ export type RateLimitStrategy = {
   acquire(req: RestRequest): Promise<RateLimitHandle>;
   /** Current rate limit status (for telemetry). */
   getStatus(): RateLimitStatus;
-  /** Release timers and resources. */
-  [Symbol.dispose](): void;
 };
 
 /**
@@ -62,15 +60,11 @@ export const RateLimitStrategy = {
    *
    * @param value - the value to check
    * @returns true if value implements RateLimitStrategy interface
-   * @postcondition returns true if value has acquire, getStatus, and Symbol.dispose methods
+   * @postcondition returns true if value has acquire and getStatus methods
    */
   is(value: unknown): value is RateLimitStrategy {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string | symbol, unknown>;
-    return (
-      typeof obj.acquire === "function" &&
-      typeof obj.getStatus === "function" &&
-      typeof obj[Symbol.dispose] === "function"
-    );
+    return typeof obj.acquire === "function" && typeof obj.getStatus === "function";
   },
 } as const;

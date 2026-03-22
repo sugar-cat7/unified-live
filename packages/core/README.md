@@ -4,7 +4,7 @@
 
 # @unified-live/core
 
-Client, plugin system, unified types, error hierarchy, and OpenTelemetry tracing for the unified-live SDK. **Zero runtime dependencies.**
+Client, plugin system, unified types, error hierarchy, and OpenTelemetry tracing for the unified-live SDK. **Zero required runtime dependencies** (OpenTelemetry via optional peer dep).
 
 [![npm](https://img.shields.io/npm/v/@unified-live/core.svg)](https://www.npmjs.com/package/@unified-live/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
@@ -20,7 +20,7 @@ pnpm add @unified-live/core
 ```ts
 import { UnifiedClient } from "@unified-live/core";
 
-using client = UnifiedClient.create({
+const client = UnifiedClient.create({
   plugins: [
     /* ... */
   ],

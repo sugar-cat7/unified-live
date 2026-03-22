@@ -180,9 +180,6 @@ export type PlatformPlugin = {
 
   /** Batch-retrieve clips by IDs (platform-specific). */
   batchGetClips?(ids: string[]): Promise<BatchResult<Clip>>;
-
-  /** Release resources (timers, connections). */
-  [Symbol.dispose](): void;
 };
 
 /**
@@ -284,7 +281,6 @@ export const PlatformPlugin = {
         ? (channelId, options) => methods.listClips!(rest, channelId, options)
         : undefined,
       batchGetClips: methods.batchGetClips ? (ids) => methods.batchGetClips!(rest, ids) : undefined,
-      [Symbol.dispose]: () => rest[Symbol.dispose](),
     };
 
     return plugin;
@@ -307,7 +303,6 @@ export const PlatformPlugin = {
       typeof obj.getChannel === "function" &&
       typeof obj.listBroadcasts === "function" &&
       typeof obj.listArchives === "function" &&
-      typeof obj[Symbol.dispose] === "function" &&
       obj.rest !== undefined &&
       typeof obj.capabilities === "object" &&
       obj.capabilities !== null

@@ -1,5 +1,5 @@
 import { Content, NotFoundError, UnifiedClient } from "@unified-live/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createTwitCastingPlugin } from "./plugin";
 
 const mockUser = {
@@ -51,10 +51,6 @@ const sampleMovieResponse = {
 describe("TwitCasting Integration", () => {
   let client: ReturnType<typeof UnifiedClient.create>;
 
-  afterEach(() => {
-    client?.[Symbol.dispose]();
-  });
-
   it("full consumer flow: UnifiedClient.create -> resolve by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleMovieResponse }));
     const plugin = createTwitCastingPlugin({
@@ -102,16 +98,6 @@ describe("TwitCasting Integration", () => {
 
     const content = await client.getContent("twitcasting", "123");
     expect(content.id).toBe("123");
-  });
-
-  it("[Symbol.dispose] cleans up all resources", () => {
-    const plugin = createTwitCastingPlugin({
-      clientId: "test-id",
-      clientSecret: "test-secret",
-      fetch: createMockFetch(() => ({ body: {} })),
-    });
-    client = UnifiedClient.create({ plugins: [plugin] });
-    client[Symbol.dispose]();
   });
 
   it("getChannel throws NotFoundError for nonexistent user", async () => {

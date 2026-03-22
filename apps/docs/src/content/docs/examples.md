@@ -19,8 +19,6 @@ const client = UnifiedClient.create({
 
 const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 console.log(content.title, content.type); // e.g. "broadcast", "scheduled", "archive", or "clip"
-
-client[Symbol.dispose]();
 ```
 
 ### Error Handling
@@ -96,8 +94,6 @@ const [ytStreams, twitchStreams] = await Promise.all([
 const allStreams = [...ytStreams, ...twitchStreams].sort((a, b) => b.viewerCount - a.viewerCount);
 
 console.log(`${allStreams.length} streams across platforms`);
-
-client[Symbol.dispose]();
 ```
 
 ### Live Stream Monitor
@@ -122,7 +118,6 @@ await poll(); // initial check
 
 // Cleanup
 clearInterval(interval);
-client[Symbol.dispose]();
 ```
 
 ### Type-Safe Content Branching
@@ -176,7 +171,6 @@ const client = UnifiedClient.create({
 const content = await client.resolve("https://www.twitch.tv/videos/123456");
 // A span "unified-live.rest GET" is emitted with platform and path attributes
 
-client[Symbol.dispose]();
 await sdk.shutdown();
 ```
 
@@ -230,7 +224,6 @@ const mockPlugin: PlatformPlugin = {
   }),
   listBroadcasts: async () => [],
   listArchives: async () => ({ items: [mockContent as Archive], hasMore: false }),
-  [Symbol.dispose]: () => {},
 };
 
 // Use in tests

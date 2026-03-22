@@ -30,7 +30,7 @@ export type RestManager = {
   /**
    * Execute a full request lifecycle: rate limit → headers → fetch → retry → parse.
    *
-   * @precondition rateLimitStrategy is initialized and not disposed
+   * @precondition rateLimitStrategy is initialized
    * @postcondition returns parsed response or throws an error from the hierarchy
    */
   request: <T>(req: RestRequest) => Promise<RestResponse<T>>;
@@ -76,14 +76,6 @@ export type RestManager = {
    * @postcondition returns RateLimitInfo if headers contain rate limit data, undefined otherwise
    */
   parseRateLimitHeaders: (headers: Headers) => RateLimitInfo | undefined;
-
-  /**
-   * Release all resources (timers, connections).
-   *
-   * @postcondition rateLimitStrategy and tokenManager are disposed
-   * @idempotency Safe — multiple calls have no additional effect
-   */
-  [Symbol.dispose]: () => void;
 };
 
 /**
@@ -110,8 +102,6 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     description: "Duration of HTTP client requests",
     unit: "s",
   });
-  let disposed = false;
-
   // Cache parsed base URL components for OTel attributes (avoids parsing on every request)
   let cachedUrl: { hostname: string; port: number; scheme: string } | undefined;
   try {
@@ -145,13 +135,6 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
     tokenManager: options.tokenManager,
 
     request: async <T>(req: RestRequest): Promise<RestResponse<T>> => {
-      if (disposed) {
-        throw new UnifiedLiveError(
-          `RestManager for "${options.platform}" has been disposed`,
-          "INTERNAL",
-          { platform: options.platform },
-        );
-      }
       return tracer.startActiveSpan(req.method, { kind: SPAN_KIND_CLIENT }, async (span) => {
         span.setAttribute(SpanAttributes.PLATFORM, manager.platform);
         span.setAttribute(SpanAttributes.HTTP_METHOD, req.method);
@@ -410,13 +393,6 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
       // Default: no parsing. Plugins override this.
       return undefined;
     },
-
-    [Symbol.dispose]: (): void => {
-      if (disposed) return;
-      disposed = true;
-      manager.rateLimitStrategy[Symbol.dispose]();
-      manager.tokenManager?.[Symbol.dispose]?.();
-    },
   };
 
   // Prevent accidental deletion of function properties
@@ -435,13 +411,6 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
       configurable: false,
     });
   }
-  Object.defineProperty(manager, Symbol.dispose, {
-    value: manager[Symbol.dispose],
-    writable: false,
-    enumerable: false,
-    configurable: false,
-  });
-
   return manager;
 };
 
@@ -473,8 +442,7 @@ export const RestManager = {
       typeof obj.runRequest === "function" &&
       typeof obj.handleResponse === "function" &&
       typeof obj.handleRateLimit === "function" &&
-      typeof obj.parseRateLimitHeaders === "function" &&
-      typeof obj[Symbol.dispose] === "function"
+      typeof obj.parseRateLimitHeaders === "function"
     );
   },
 } as const;

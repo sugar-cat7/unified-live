@@ -56,6 +56,7 @@ export const createTwitCastingPlugin = (config: TwitCastingPluginConfig): Platfo
       rateLimitStrategy: createTokenBucketStrategy({
         global: { requests: 60, perMs: 60_000 },
         parseHeaders: parseTwitCastingRateLimitHeaders,
+        platform: "twitcasting",
       }),
       tokenManager: createBasicAuthTokenManager({
         clientId: config.clientId,

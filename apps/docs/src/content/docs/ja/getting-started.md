@@ -23,7 +23,7 @@ import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 // 1. プラットフォームプラグインを指定してクライアントを作成
-using client = UnifiedClient.create({
+const client = UnifiedClient.create({
   plugins: [
     createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
     createTwitchPlugin({
@@ -40,19 +40,6 @@ console.log(content.title); // 動画タイトル
 console.log(content.platform); // "youtube"
 console.log(content.type); // "broadcast" または "archive"
 ```
-
-:::tip[`using` について]
-`using` キーワード（[Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management)）はスコープを抜けるとき自動的にクライアントを破棄します。TypeScript 5.2+ と `"lib": ["esnext.disposable"]` が必要です。
-
-`using` を使わない場合は、手動で `client[Symbol.dispose]()` を呼びます:
-
-```ts
-const client = UnifiedClient.create({ plugins: [...] });
-// ... client を使用 ...
-client[Symbol.dispose]();
-```
-
-:::
 
 ## 動作要件
 

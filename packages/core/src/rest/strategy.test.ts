@@ -22,8 +22,11 @@ describe("RateLimitStrategy.is", () => {
     expect(RateLimitStrategy.is(strategy)).toBe(true);
   });
 
-  it("returns false for partial object missing methods", () => {
+  it("returns false for object missing required methods", () => {
     expect(RateLimitStrategy.is({ acquire: () => {} })).toBe(false);
+  });
+
+  it("returns true for object with all required methods", () => {
     expect(RateLimitStrategy.is({ acquire: () => {}, getStatus: () => {} })).toBe(true);
   });
 

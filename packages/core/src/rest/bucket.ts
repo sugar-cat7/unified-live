@@ -28,12 +28,10 @@ export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitS
   let resetsAt = new Date(lastRefillTime + config.global.perMs);
 
   const refill = (): void => {
-    const now = Date.now();
-    const elapsed = now - lastRefillTime;
-    if (elapsed >= config.global.perMs) {
+    if (Date.now() >= resetsAt.getTime()) {
       remaining = limit;
-      lastRefillTime = now;
-      resetsAt = new Date(now + config.global.perMs);
+      lastRefillTime = Date.now();
+      resetsAt = new Date(lastRefillTime + config.global.perMs);
     }
   };
 

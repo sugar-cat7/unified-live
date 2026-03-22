@@ -60,10 +60,10 @@ const page = await client.listArchives("twitch", channelId, undefined, 20, {
 });
 ```
 
-| Option      | Values                                    | Description             |
-| :---------- | :---------------------------------------- | :---------------------- |
-| `period`    | `"all"`, `"day"`, `"week"`, `"month"`     | Time range filter       |
-| `sort`      | `"time"`, `"trending"`, `"views"`         | Sort order              |
+| Option      | Values                                                                      | Description       |
+| :---------- | :-------------------------------------------------------------------------- | :---------------- |
+| `period`    | `"all"`, `"day"`, `"week"`, `"month"`                                       | Time range filter |
+| `sort`      | `"time"`, `"trending"`, `"views"`                                           | Sort order        |
 | `videoType` | Platform-specific (e.g., `"archive"`, `"highlight"`, `"upload"` for Twitch) | Video type filter |
 
 ## Broadcasts

@@ -502,7 +502,6 @@ describe("createRestManager", () => {
     manager.request = vi.fn() as typeof manager.request;
     expect(manager.request).not.toBe(originalRequest);
   });
-
 });
 
 describe("createRestManager OTel integration", () => {
@@ -769,7 +768,8 @@ describe("RestManager.is", () => {
       fetch: createMockFetch([]),
     });
 
-    expect(RestManager.is(manager)).toBe(true);  });
+    expect(RestManager.is(manager)).toBe(true);
+  });
 });
 
 describe("createRateLimitHeaderParser", () => {

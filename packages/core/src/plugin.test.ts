@@ -402,7 +402,6 @@ describe("PlatformPlugin.create", () => {
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
-
 });
 
 describe("PlatformPlugin.is", () => {

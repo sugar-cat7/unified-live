@@ -44,9 +44,7 @@ export const createTokenBucketStrategy = (config: TokenBucketConfig): RateLimitS
       if (remaining <= 0) {
         const retryAfterMs = resetsAt.getTime() - Date.now();
         const retryAfter = Math.max(1, Math.ceil(retryAfterMs / 1000));
-        return Promise.reject(
-          new RateLimitError(config.platform, { retryAfter }),
-        );
+        return Promise.reject(new RateLimitError(config.platform, { retryAfter }));
       }
 
       remaining--;

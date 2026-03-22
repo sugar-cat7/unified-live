@@ -76,7 +76,6 @@ export type RestManager = {
    * @postcondition returns RateLimitInfo if headers contain rate limit data, undefined otherwise
    */
   parseRateLimitHeaders: (headers: Headers) => RateLimitInfo | undefined;
-
 };
 
 /**

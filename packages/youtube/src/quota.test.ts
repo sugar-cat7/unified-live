@@ -18,7 +18,6 @@ describe("createYouTubeQuotaStrategy", () => {
     const status = strategy.getStatus();
     expect(status.limit).toBe(10_000);
     expect(status.remaining).toBe(10_000);
-
   });
 
   it("creates a strategy with custom daily limit", () => {
@@ -26,7 +25,6 @@ describe("createYouTubeQuotaStrategy", () => {
     const status = strategy.getStatus();
     expect(status.limit).toBe(5000);
     expect(status.remaining).toBe(5000);
-
   });
 
   it("tracks quota consumption via acquire", async () => {
@@ -40,6 +38,5 @@ describe("createYouTubeQuotaStrategy", () => {
 
     const status = strategy.getStatus();
     expect(status.remaining).toBe(9_900); // 10000 - 100
-
   });
 });

@@ -479,5 +479,4 @@ describe("createYouTubePlugin", () => {
     expect(content.type).toBe("archive");
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
-
 });

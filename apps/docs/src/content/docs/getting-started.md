@@ -41,7 +41,6 @@ console.log(content.platform); // "youtube"
 console.log(content.type); // "broadcast", "scheduled", "archive", or "clip"
 ```
 
-
 ## Requirements
 
 - Node.js 18+ (or any runtime with native `fetch`: Deno, Bun, Cloudflare Workers)

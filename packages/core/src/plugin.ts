@@ -180,7 +180,6 @@ export type PlatformPlugin = {
 
   /** Batch-retrieve clips by IDs (platform-specific). */
   batchGetClips?(ids: string[]): Promise<BatchResult<Clip>>;
-
 };
 
 /**

@@ -213,7 +213,6 @@ export type UnifiedClient = {
    * @postcondition returns a snapshot of currently registered platform names
    */
   platforms(): string[];
-
 };
 
 /**
@@ -549,7 +548,6 @@ export const UnifiedClient = {
       platforms(): string[] {
         return [...plugins.keys()];
       },
-
     };
 
     return client;

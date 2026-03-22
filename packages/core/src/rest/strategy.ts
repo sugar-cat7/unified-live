@@ -65,9 +65,6 @@ export const RateLimitStrategy = {
   is(value: unknown): value is RateLimitStrategy {
     if (typeof value !== "object" || value === null) return false;
     const obj = value as Record<string | symbol, unknown>;
-    return (
-      typeof obj.acquire === "function" &&
-      typeof obj.getStatus === "function"
-    );
+    return typeof obj.acquire === "function" && typeof obj.getStatus === "function";
   },
 } as const;

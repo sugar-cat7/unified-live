@@ -20,7 +20,6 @@ describe("createTwitchPlugin", () => {
       supportsSearch: true,
       supportsClips: true,
     });
-
   });
 
   it("throws on missing credentials", () => {
@@ -46,7 +45,6 @@ describe("createTwitchPlugin", () => {
     });
 
     expect(plugin.name).toBe("twitch");
-
   });
 
   it("matches Twitch URLs", () => {
@@ -67,8 +65,6 @@ describe("createTwitchPlugin", () => {
       id: "12345",
     });
     expect(plugin.match("https://youtube.com/watch?v=abc")).toBeNull();
-
-
   });
 
   it("getContent fetches a video by ID", async () => {
@@ -98,8 +94,6 @@ describe("createTwitchPlugin", () => {
     expect(content.type).toBe("archive");
     expect(content.id).toBe("v123");
     expect(content.platform).toBe("twitch");
-
-
   });
 
   it("getChannel fetches user info", async () => {
@@ -121,8 +115,6 @@ describe("createTwitchPlugin", () => {
     const channel = await plugin.getChannel("testuser");
     expect(channel.name).toBe("TestUser");
     expect(channel.platform).toBe("twitch");
-
-
   });
 
   it("listBroadcasts returns broadcasts", async () => {
@@ -150,8 +142,6 @@ describe("createTwitchPlugin", () => {
     expect(streams).toHaveLength(1);
     expect(streams[0]!.type).toBe("broadcast");
     expect(streams[0]!.viewerCount).toBe(500);
-
-
   });
 
   it("listArchives returns paginated archives", async () => {
@@ -190,8 +180,6 @@ describe("createTwitchPlugin", () => {
     expect(page.items[0]!.type).toBe("archive");
     expect(page.cursor).toBe("next-page");
     expect(page.hasMore).toBe(true);
-
-
   });
 
   it("includes Client-Id header in requests", async () => {
@@ -210,8 +198,6 @@ describe("createTwitchPlugin", () => {
     const apiCall = calls.find((c) => !(c[0] as string).includes("oauth2/token"));
     const headers = (apiCall?.[1] as RequestInit)?.headers as Record<string, string>;
     expect(headers["Client-Id"]).toBe("my-client-id");
-
-
   });
 
   it("resolveArchive finds matching archive video", async () => {
@@ -256,8 +242,6 @@ describe("createTwitchPlugin", () => {
     const archive = await plugin.resolveArchive!(live);
     expect(archive).not.toBeNull();
     expect(archive!.type).toBe("archive");
-
-
   });
 
   it("resolveArchive returns null when no match", async () => {
@@ -285,7 +269,5 @@ describe("createTwitchPlugin", () => {
 
     const archive = await plugin.resolveArchive!(live);
     expect(archive).toBeNull();
-
-
   });
 });

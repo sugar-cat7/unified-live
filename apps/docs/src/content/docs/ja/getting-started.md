@@ -41,7 +41,6 @@ console.log(content.platform); // "youtube"
 console.log(content.type); // "broadcast" または "archive"
 ```
 
-
 ## 動作要件
 
 - Node.js 18 以上（または `fetch` をネイティブサポートするランタイム: Deno, Bun, Cloudflare Workers）

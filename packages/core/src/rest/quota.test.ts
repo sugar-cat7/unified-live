@@ -173,5 +173,4 @@ describe("createQuotaBudgetStrategy", () => {
       }),
     ).toThrow("negative cost");
   });
-
 });

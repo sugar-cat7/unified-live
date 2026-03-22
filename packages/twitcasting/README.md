@@ -22,10 +22,12 @@ import { UnifiedClient } from "@unified-live/core";
 import { createTwitCastingPlugin } from "@unified-live/twitcasting";
 
 using client = UnifiedClient.create({
-  plugins: [createTwitCastingPlugin({
-    clientId: process.env.TC_CLIENT_ID!,
-    clientSecret: process.env.TC_CLIENT_SECRET!,
-  })],
+  plugins: [
+    createTwitCastingPlugin({
+      clientId: process.env.TC_CLIENT_ID!,
+      clientSecret: process.env.TC_CLIENT_SECRET!,
+    }),
+  ],
 });
 
 const content = await client.resolve("https://twitcasting.tv/username/movie/12345");

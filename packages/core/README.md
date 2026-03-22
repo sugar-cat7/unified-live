@@ -20,7 +20,11 @@ pnpm add @unified-live/core
 ```ts
 import { UnifiedClient } from "@unified-live/core";
 
-using client = UnifiedClient.create({ plugins: [/* ... */] });
+using client = UnifiedClient.create({
+  plugins: [
+    /* ... */
+  ],
+});
 const content = await client.resolve("https://www.youtube.com/watch?v=...");
 ```
 

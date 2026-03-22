@@ -22,10 +22,12 @@ import { UnifiedClient } from "@unified-live/core";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 using client = UnifiedClient.create({
-  plugins: [createTwitchPlugin({
-    clientId: process.env.TWITCH_CLIENT_ID!,
-    clientSecret: process.env.TWITCH_CLIENT_SECRET!,
-  })],
+  plugins: [
+    createTwitchPlugin({
+      clientId: process.env.TWITCH_CLIENT_ID!,
+      clientSecret: process.env.TWITCH_CLIENT_SECRET!,
+    }),
+  ],
 });
 
 const content = await client.resolve("https://www.twitch.tv/shroud");

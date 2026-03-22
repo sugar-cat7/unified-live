@@ -1,6 +1,21 @@
 {
   "name": "@unified-live/youtube",
-  "version": "0.1.0",
+  "version": "0.0.1",
+  "description": "YouTube Data API v3 plugin for unified-live SDK — quota-based rate limiting, API key auth",
+  "keywords": [
+    "live-streaming",
+    "sdk",
+    "typescript",
+    "youtube",
+    "youtube-api"
+  ],
+  "homepage": "https://sugar-cat7.github.io/unified-live",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sugar-cat7/unified-live.git",
+    "directory": "packages/youtube"
+  },
   "files": [
     "dist"
   ],
@@ -39,5 +54,8 @@
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

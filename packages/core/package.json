@@ -1,6 +1,23 @@
 {
   "name": "@unified-live/core",
-  "version": "0.1.0",
+  "version": "0.0.1",
+  "description": "Client, plugin system, unified types, error hierarchy, and OpenTelemetry tracing for live streaming platform APIs",
+  "keywords": [
+    "live-streaming",
+    "opentelemetry",
+    "sdk",
+    "twitcasting",
+    "twitch",
+    "typescript",
+    "youtube"
+  ],
+  "homepage": "https://sugar-cat7.github.io/unified-live",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sugar-cat7/unified-live.git",
+    "directory": "packages/core"
+  },
   "files": [
     "dist"
   ],
@@ -43,5 +60,8 @@
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

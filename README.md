@@ -108,6 +108,10 @@ pnpm install
 ./scripts/post-edit-check.sh
 ```
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+
 ## Authors
 
 - **sugar-cat7** - [GitHub](https://github.com/sugar-cat7)

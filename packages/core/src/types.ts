@@ -242,6 +242,17 @@ export type SearchOptions = {
 };
 
 /**
+ * Options for archive listing operations.
+ *
+ * @category Types
+ */
+export type ArchiveListOptions = {
+  period?: "all" | "day" | "week" | "month";
+  sort?: "time" | "trending" | "views";
+  videoType?: string;
+};
+
+/**
  * Options for clip retrieval operations.
  *
  * @category Types

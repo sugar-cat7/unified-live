@@ -1,6 +1,7 @@
 import { NotFoundError } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
 import {
+  youtubeBatchGetChannels,
   youtubeGetChannel,
   youtubeGetContent,
   youtubeBatchGetContents,
@@ -517,6 +518,86 @@ describe("youtubeSearch", () => {
         query: expect.objectContaining({ q: "test", order: "date" }),
       }),
     );
+  });
+});
+
+const createSampleChannelItem = (id: string) => ({
+  ...sampleChannelItem,
+  id,
+});
+
+describe("youtubeBatchGetChannels", () => {
+  it("fetches multiple channels in one API call", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [createSampleChannelItem("UC1"), createSampleChannelItem("UC2")] },
+    });
+    const result = await youtubeBatchGetChannels(rest, ["UC1", "UC2"]);
+    expect(result.values.size).toBe(2);
+    expect(result.errors.size).toBe(0);
+  });
+
+  it("puts missing IDs in errors map", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [createSampleChannelItem("UC1")] },
+    });
+    const result = await youtubeBatchGetChannels(rest, ["UC1", "UC2"]);
+    expect(result.values.size).toBe(1);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.get("UC2")).toBeInstanceOf(NotFoundError);
+  });
+
+  it("chunks for >50 IDs", async () => {
+    const rest = createMockRest();
+    let callCount = 0;
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(
+      async (req: { query: { id: string } }) => {
+        callCount++;
+        const ids = req.query.id.split(",");
+        return {
+          status: 200,
+          headers: new Headers(),
+          data: { items: ids.map((id: string) => createSampleChannelItem(id)) },
+        };
+      },
+    );
+    const ids = Array.from({ length: 60 }, (_, i) => `UC${i}`);
+    const result = await youtubeBatchGetChannels(rest, ids);
+    expect(callCount).toBe(2);
+    expect(result.values.size).toBe(60);
+  });
+
+  it("sends comma-separated IDs with channels:list bucketId", async () => {
+    const rest = createMockRest();
+    (rest.request as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200,
+      headers: new Headers(),
+      data: { items: [createSampleChannelItem("UC1")] },
+    });
+    await youtubeBatchGetChannels(rest, ["UC1"]);
+    expect(rest.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/channels",
+        query: expect.objectContaining({
+          part: "snippet,contentDetails,statistics",
+          id: "UC1",
+        }),
+        bucketId: "channels:list",
+      }),
+    );
+  });
+
+  it("returns empty maps for empty IDs array", async () => {
+    const rest = createMockRest();
+    const result = await youtubeBatchGetChannels(rest, []);
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+    expect(rest.request).not.toHaveBeenCalled();
   });
 });
 

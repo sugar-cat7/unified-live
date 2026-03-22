@@ -5,6 +5,7 @@ import type { RateLimitStrategy } from "./rest/strategy";
 import type { RateLimitInfo, RestRequest, RetryConfig } from "./rest/types";
 import type {
   Archive,
+  ArchiveListOptions,
   BatchResult,
   Broadcast,
   Channel,
@@ -103,6 +104,7 @@ export type PluginMethods = {
     channelId: string,
     cursor?: string,
     pageSize?: number,
+    options?: ArchiveListOptions,
   ) => Promise<Page<Archive>>;
 
   /** Resolve the archive for a broadcast (optional). */
@@ -125,6 +127,9 @@ export type PluginMethods = {
 
   /** Batch-retrieve clips by IDs (optional). */
   batchGetClips?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Clip>>;
+
+  /** Batch-retrieve channels by IDs (optional). */
+  batchGetChannels?: (rest: RestManager, ids: string[]) => Promise<BatchResult<Channel>>;
 };
 
 /**
@@ -161,7 +166,12 @@ export type PlatformPlugin = {
   listBroadcasts(channelId: string): Promise<Broadcast[]>;
 
   /** List archives for a channel with cursor-based pagination. */
-  listArchives(channelId: string, cursor?: string, pageSize?: number): Promise<Page<Archive>>;
+  listArchives(
+    channelId: string,
+    cursor?: string,
+    pageSize?: number,
+    options?: ArchiveListOptions,
+  ): Promise<Page<Archive>>;
 
   /** Resolve the archive for a broadcast (platform-specific). */
   resolveArchive?(live: Broadcast): Promise<Archive | null>;
@@ -180,6 +190,9 @@ export type PlatformPlugin = {
 
   /** Batch-retrieve clips by IDs (platform-specific). */
   batchGetClips?(ids: string[]): Promise<BatchResult<Clip>>;
+
+  /** Batch-retrieve channels by IDs (platform-specific). */
+  batchGetChannels?(ids: string[]): Promise<BatchResult<Channel>>;
 };
 
 /**
@@ -265,8 +278,8 @@ export const PlatformPlugin = {
       getContent: (id) => methods.getContent(rest, id),
       getChannel: (id) => methods.getChannel(rest, id),
       listBroadcasts: (channelId) => methods.listBroadcasts(rest, channelId),
-      listArchives: (channelId, cursor, pageSize) =>
-        methods.listArchives(rest, channelId, cursor, pageSize),
+      listArchives: (channelId, cursor, pageSize, options) =>
+        methods.listArchives(rest, channelId, cursor, pageSize, options),
       resolveArchive: methods.resolveArchive
         ? (live) => methods.resolveArchive!(rest, live)
         : undefined,
@@ -281,6 +294,9 @@ export const PlatformPlugin = {
         ? (channelId, options) => methods.listClips!(rest, channelId, options)
         : undefined,
       batchGetClips: methods.batchGetClips ? (ids) => methods.batchGetClips!(rest, ids) : undefined,
+      batchGetChannels: methods.batchGetChannels
+        ? (ids) => methods.batchGetChannels!(rest, ids)
+        : undefined,
     };
 
     return plugin;

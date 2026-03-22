@@ -308,6 +308,53 @@ export const youtubeBatchGetContents = async (
 };
 
 /**
+ * Batch-fetch YouTube channels by IDs and map to unified Channel.
+ *
+ * @param rest - REST manager for API requests
+ * @param ids - array of YouTube channel IDs (UC...)
+ * @returns BatchResult with values for found channels and NotFoundError for missing IDs
+ * @precondition each id is a valid YouTube channel ID (UC prefix)
+ * @postcondition values contains Channel for each found channel; errors contains NotFoundError for each missing ID
+ * @idempotency Safe — read-only API calls
+ */
+export const youtubeBatchGetChannels = async (
+  rest: RestManager,
+  ids: string[],
+): Promise<BatchResult<Channel>> => {
+  const values = new Map<string, Channel>();
+  const errors = new Map<string, UnifiedLiveError>();
+
+  for (let i = 0; i < ids.length; i += YOUTUBE_MAX_IDS_PER_REQUEST) {
+    const chunk = ids.slice(i, i + YOUTUBE_MAX_IDS_PER_REQUEST);
+    const res = await rest.request<YTListResponse<YTChannelResource>>({
+      method: "GET",
+      path: "/channels",
+      query: {
+        part: "snippet,contentDetails,statistics",
+        id: chunk.join(","),
+      },
+      bucketId: "channels:list",
+    });
+
+    const returnedIds = new Set<string>();
+    for (const item of res.data.items ?? []) {
+      if (item.id) {
+        values.set(item.id, toChannel(item));
+        returnedIds.add(item.id);
+      }
+    }
+
+    for (const id of chunk) {
+      if (!returnedIds.has(id)) {
+        errors.set(id, new NotFoundError("youtube", id));
+      }
+    }
+  }
+
+  return { values, errors };
+};
+
+/**
  * Search YouTube for videos matching the given options.
  *
  * @param rest - REST manager for API requests

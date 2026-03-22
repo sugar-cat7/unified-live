@@ -8,7 +8,7 @@ import {
   type RestManager,
   type SearchOptions,
 } from "@unified-live/core";
-import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
+import { toContent, toLive, toMovie, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
 
 type TCMovieResponse = {
   movie: TCMovie;
@@ -166,6 +166,55 @@ export const twitcastingListArchives = async (
   const nextCursor = movies.length === pageSize ? movies.at(-1)!.id : undefined;
   return {
     items: videos,
+    cursor: nextCursor,
+    total: moviesRes.data.total_count,
+    hasMore: nextCursor !== undefined,
+  };
+};
+
+/**
+ * Fetch paginated movies for a TwitCasting channel (including live and recorded).
+ *
+ * @param rest - REST manager for API requests
+ * @param channelId - TwitCasting user_id or screen_id
+ * @param cursor - optional pagination cursor (slice_id)
+ * @param pageSize - number of items per page (default 50)
+ * @returns paginated list of Content (both Broadcast and Archive)
+ * @precondition channelId is a valid TwitCasting user_id or screen_id
+ * @postcondition returns all movies using slice_id for deep pagination
+ */
+export const twitcastingListMovies = async (
+  rest: RestManager,
+  channelId: string,
+  cursor?: string,
+  pageSize = 50,
+): Promise<Page<Content>> => {
+  const query: Record<string, string> = { limit: String(pageSize) };
+  if (cursor) {
+    query.slice_id = cursor;
+  }
+
+  const encodedId = encodeURIComponent(channelId);
+  const [moviesRes, userRes] = await Promise.all([
+    rest.request<TCMoviesResponse>({
+      method: "GET",
+      path: `/users/${encodedId}/movies`,
+      query,
+      bucketId: "movies",
+    }),
+    rest.request<TCUserResponse>({
+      method: "GET",
+      path: `/users/${encodedId}`,
+      bucketId: "users",
+    }),
+  ]);
+
+  const movies = moviesRes.data.movies;
+  const items: Content[] = movies.map((m) => toMovie(m, userRes.data.user));
+
+  const nextCursor = movies.length === pageSize ? movies.at(-1)!.id : undefined;
+  return {
+    items,
     cursor: nextCursor,
     total: moviesRes.data.total_count,
     hasMore: nextCursor !== undefined,

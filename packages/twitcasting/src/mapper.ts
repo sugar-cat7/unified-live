@@ -131,6 +131,16 @@ export const toContent = (movie: TCMovie, user: TCUser): Content => {
 };
 
 /**
+ * Convert a TwitCasting Movie to unified Content.
+ * Alias for `toContent` using TwitCasting-idiomatic naming.
+ *
+ * @param movie - TwitCasting movie resource
+ * @param user - TwitCasting user who owns the movie
+ * @returns unified Content (Broadcast if live, Archive otherwise)
+ */
+export const toMovie = (movie: TCMovie, user: TCUser): Content => toContent(movie, user);
+
+/**
  * Convert a TwitCasting User to a unified Channel.
  *
  * @param user - TwitCasting user resource

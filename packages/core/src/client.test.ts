@@ -343,17 +343,14 @@ describe("UnifiedClient batch operations", () => {
     },
     { name: "AuthenticationError", error: new AuthenticationError("test") },
     { name: "NetworkError", error: new NetworkError("test", "NETWORK_TIMEOUT") },
-  ])(
-    "batchGetContents fallback rethrows $name as request-level error",
-    async ({ error }) => {
-      const plugin = createMockPlugin("test");
-      (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(error);
-      const client = UnifiedClient.create({ plugins: [plugin] });
+  ])("batchGetContents fallback rethrows $name as request-level error", async ({ error }) => {
+    const plugin = createMockPlugin("test");
+    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+    const client = UnifiedClient.create({ plugins: [plugin] });
 
-      const thrown = await client.batchGetContents("test", ["id1"]).catch((e) => e);
-      expect(thrown).toBe(error);
-    },
-  );
+    const thrown = await client.batchGetContents("test", ["id1"]).catch((e) => e);
+    expect(thrown).toBe(error);
+  });
 
   it("batchGetContents delegates to plugin native batch when available", async () => {
     const plugin = createMockPlugin("test");

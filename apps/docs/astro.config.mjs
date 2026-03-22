@@ -47,7 +47,10 @@ export default defineConfig({
         },
         {
           tag: "meta",
-          attrs: { property: "og:image:alt", content: "unified-live — Unified TypeScript SDK for Live Streaming APIs" },
+          attrs: {
+            property: "og:image:alt",
+            content: "unified-live — Unified TypeScript SDK for Live Streaming APIs",
+          },
         },
         // Twitter image
         {

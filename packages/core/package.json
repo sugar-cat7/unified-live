@@ -1,6 +1,6 @@
 {
   "name": "@unified-live/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Client, plugin system, unified types, error hierarchy, and OpenTelemetry tracing for live streaming platform APIs",
   "keywords": [
     "live-streaming",

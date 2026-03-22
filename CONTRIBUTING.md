@@ -67,8 +67,9 @@ Write a concise summary (this appears in CHANGELOG). The changeset file is commi
 ### How Releases Work
 
 1. PRs with changesets merge to `main`
-2. A "Version Packages" PR is automatically created/updated
-3. Merging that PR publishes all packages to npm and creates a GitHub Release
+2. A "Version Packages" PR is automatically created/updated (CHANGELOG + version bump)
+3. Merging that PR updates versions in `main` (no publish yet)
+4. A maintainer cuts a git tag (`git tag v0.1.0 && git push --tags`) to trigger npm publish and GitHub Release
 
 ## Quality Checks
 

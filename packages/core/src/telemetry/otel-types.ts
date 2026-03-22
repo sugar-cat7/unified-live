@@ -21,8 +21,8 @@ export type { Meter, MeterProvider, Span, Tracer, TracerProvider };
 // OTel spec constants (avoid importing @opentelemetry/api at runtime)
 // ---------------------------------------------------------------------------
 
-/** SpanKind.CLIENT = 3 per OTel spec */
-export const SPAN_KIND_CLIENT = 3;
+/** SpanKind.CLIENT = 2 per OTel spec */
+export const SPAN_KIND_CLIENT = 2;
 
 /** SpanStatusCode.ERROR = 2 per OTel spec */
 export const SPAN_STATUS_ERROR = 2;

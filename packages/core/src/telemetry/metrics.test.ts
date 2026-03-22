@@ -33,8 +33,8 @@ describe("getMeter", () => {
     expect(mockProvider.getMeter).toHaveBeenCalledWith("unified-live", expect.any(String));
   });
 
-  it("uses OTel MeterProvider when passed", () => {
-    const { metrics } = require("@opentelemetry/api");
+  it("uses OTel MeterProvider when passed", async () => {
+    const { metrics } = await import("@opentelemetry/api");
     const spy = vi.spyOn(metrics, "getMeter");
     getMeter(metrics);
     expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));

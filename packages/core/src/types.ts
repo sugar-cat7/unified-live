@@ -1,7 +1,7 @@
 import type { UnifiedLiveError } from "./errors";
 
 /**
- * Image thumbnail with URL and positive integer dimensions.
+ * Image thumbnail with URL and dimensions in pixels.
  *
  * @category Types
  */

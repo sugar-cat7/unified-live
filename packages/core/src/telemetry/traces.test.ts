@@ -42,8 +42,8 @@ describe("getTracer", () => {
     expect(mockProvider.getTracer).toHaveBeenCalledWith("unified-live", expect.any(String));
   });
 
-  it("uses OTel TracerProvider when passed", () => {
-    const { trace } = require("@opentelemetry/api");
+  it("uses OTel TracerProvider when passed", async () => {
+    const { trace } = await import("@opentelemetry/api");
     const spy = vi.spyOn(trace, "getTracer");
     getTracer(trace);
     expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));

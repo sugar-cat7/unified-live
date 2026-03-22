@@ -48,7 +48,7 @@ unified-live.client resolve                ← クライアントレベルスパ
 | :------------------------ | :------- | :----------------------------------------------------------------- |
 | `unified_live.platform`   | `string` | プラットフォーム識別子（`"youtube"`, `"twitch"`, `"twitcasting"`） |
 | `unified_live.operation`  | `string` | 操作名（例: `"resolve"`, `"search"`）                              |
-| `unified_live.batch.size` | `number` | バッチサイズ（`batchGetContents`, `batchGetBroadcasts` のみ）      |
+| `unified_live.batch.size` | `number` | バッチサイズ（`batchGetContents`, `batchGetBroadcasts`, `batchGetChannels`, `batchGetClips` のみ） |
 
 ### REST スパン属性
 

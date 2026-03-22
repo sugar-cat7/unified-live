@@ -48,6 +48,24 @@ for (let i = 0; i < MAX_PAGES; i++) {
 }
 ```
 
+## Filtering Archives
+
+Pass `ArchiveListOptions` to filter results by period, sort order, or video type (platform support varies):
+
+```ts
+const page = await client.listArchives("twitch", channelId, undefined, 20, {
+  period: "week",
+  sort: "views",
+  videoType: "highlight",
+});
+```
+
+| Option      | Values                                    | Description             |
+| :---------- | :---------------------------------------- | :---------------------- |
+| `period`    | `"all"`, `"day"`, `"week"`, `"month"`     | Time range filter       |
+| `sort`      | `"time"`, `"trending"`, `"views"`         | Sort order              |
+| `videoType` | Platform-specific (e.g., `"archive"`, `"highlight"`, `"upload"` for Twitch) | Video type filter |
+
 ## Broadcasts
 
 `listBroadcasts` returns all currently active broadcasts for a channel. No pagination is needed — broadcasts are typically few.

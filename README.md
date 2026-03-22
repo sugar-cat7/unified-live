@@ -89,17 +89,6 @@ console.log(content.type); // "broadcast", "scheduled", "archive", or "clip"
 
 > Any runtime with native `fetch` is supported. No Node.js-specific dependencies in core.
 
-## Feature Status
-
-| Feature                 | Status |
-| :---------------------- | :----- |
-| YouTube plugin          | Stable |
-| Twitch plugin           | Stable |
-| TwitCasting plugin      | Stable |
-| OpenTelemetry tracing   | Stable |
-| Automatic retries       | Stable |
-| Cursor-based pagination | Stable |
-
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

@@ -1,6 +1,6 @@
 import { ParseError } from "@unified-live/core";
 import { describe, expect, it } from "vitest";
-import { toContent, toLive, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
+import { toContent, toLive, toMovie, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
 
 const mockUser: TCUser = {
   id: "user456",
@@ -161,6 +161,23 @@ describe("toContent", () => {
   it("returns Video for archived movies", () => {
     const result = toContent(mockArchiveMovie, mockUser);
     expect(result.type).toBe("archive");
+  });
+});
+
+describe("toMovie", () => {
+  it.each([
+    { desc: "live movie → broadcast", movie: mockLiveMovie, expectedType: "broadcast" },
+    { desc: "archive movie → archive", movie: mockArchiveMovie, expectedType: "archive" },
+  ])("returns $expectedType for $desc", ({ movie, expectedType }) => {
+    const result = toMovie(movie, mockUser);
+    expect(result.type).toBe(expectedType);
+    expect(result.platform).toBe("twitcasting");
+  });
+
+  it("delegates to toContent", () => {
+    const liveResult = toMovie(mockLiveMovie, mockUser);
+    const contentResult = toContent(mockLiveMovie, mockUser);
+    expect(liveResult).toEqual(contentResult);
   });
 });
 

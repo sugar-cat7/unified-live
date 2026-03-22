@@ -1,6 +1,6 @@
 {
   "name": "@unified-live/youtube",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "YouTube Data API v3 plugin for unified-live SDK — quota-based rate limiting, API key auth",
   "keywords": [
     "live-streaming",

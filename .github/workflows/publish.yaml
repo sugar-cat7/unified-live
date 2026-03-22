@@ -3,6 +3,12 @@ name: Publish
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v0.1.0)"
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,8 +22,12 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
 
       - uses: pnpm/action-setup@v4
 
@@ -42,6 +52,6 @@ jobs:
         run: pnpm release
 
       - name: Create GitHub Release
-        run: gh release create ${{ github.ref_name }} --generate-notes
+        run: gh release create "$RELEASE_TAG" --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -28,18 +28,17 @@ export const verifyTwitchPackage = async (): Promise<VerifyResult[]> => {
         throw new Error("AuthenticationError is not instanceof UnifiedLiveError");
     }),
 
-    await verify("Zod validation", () => {
-      const result = core.channelSchema.safeParse({
+    await verify("Type guards", () => {
+      const channel = {
         id: "12345",
         platform: "twitch",
         name: "testuser",
         url: "https://twitch.tv/testuser",
-      });
-      if (!result.success)
-        throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
-
-      const invalid = core.channelSchema.safeParse({ id: 123 });
-      if (invalid.success) throw new Error("Zod should reject invalid input");
+      };
+      if (!core.Channel.is(channel))
+        throw new Error("Channel.is should return true for valid channel");
+      if (core.Channel.is({ id: 123 }))
+        throw new Error("Channel.is should return false for invalid input");
     }),
   ];
 };

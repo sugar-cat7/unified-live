@@ -1,55 +1,40 @@
-import { z } from "zod/v4";
-
 import type { UnifiedLiveError } from "./errors";
 
 /**
- * Image thumbnail with validated URL and positive integer dimensions.
+ * Image thumbnail with URL and positive integer dimensions.
  *
  * @category Types
  */
-export const thumbnailSchema = z.object({
-  url: z.url(),
-  width: z.int().check(z.positive()),
-  height: z.int().check(z.positive()),
-});
+export type Thumbnail = {
+  url: string;
+  width: number;
+  height: number;
+};
 
 /**
  * Lightweight channel reference embedded in content objects.
  *
  * @category Types
  */
-export const channelRefSchema = z.object({
-  id: z.string().check(z.minLength(1)),
-  name: z.string(),
-  url: z.url(),
-});
+export type ChannelRef = {
+  id: string;
+  name: string;
+  url: string;
+};
 
-const contentBaseSchema = z.object({
-  id: z.string().check(z.minLength(1)),
-  platform: z.string().check(z.minLength(1)),
-  title: z.string(),
-  description: z.string(),
-  tags: z.array(z.string()),
-  url: z.url(),
-  thumbnail: thumbnailSchema,
-  channel: channelRefSchema,
-  sessionId: z.string().optional(),
-  raw: z.unknown(),
-  languageCode: z.string().optional(),
-});
-
-/**
- * Zod schema for a currently-active broadcast.
- * Validates viewer count (non-negative) and start time.
- *
- * @category Types
- */
-export const broadcastSchema = contentBaseSchema.extend({
-  type: z.literal("broadcast"),
-  viewerCount: z.int().check(z.nonnegative()),
-  startedAt: z.date(),
-  endedAt: z.date().optional(),
-});
+type ContentBase = {
+  id: string;
+  platform: string;
+  title: string;
+  description: string;
+  tags: string[];
+  url: string;
+  thumbnail: Thumbnail;
+  channel: ChannelRef;
+  sessionId?: string;
+  raw: unknown;
+  languageCode?: string;
+};
 
 /**
  * A currently-active broadcast on any supported platform.
@@ -57,22 +42,12 @@ export const broadcastSchema = contentBaseSchema.extend({
  *
  * @category Types
  */
-export type Broadcast = z.infer<typeof broadcastSchema>;
-
-/**
- * Zod schema for an archived broadcast recording.
- * Validates duration, view count, and publish date.
- *
- * @category Types
- */
-export const archiveSchema = contentBaseSchema.extend({
-  type: z.literal("archive"),
-  duration: z.number().check(z.nonnegative()),
-  viewCount: z.int().check(z.nonnegative()),
-  publishedAt: z.date(),
-  startedAt: z.date().optional(),
-  endedAt: z.date().optional(),
-});
+export type Broadcast = ContentBase & {
+  type: "broadcast";
+  viewerCount: number;
+  startedAt: Date;
+  endedAt?: Date;
+};
 
 /**
  * An archived broadcast recording on any supported platform.
@@ -80,18 +55,14 @@ export const archiveSchema = contentBaseSchema.extend({
  *
  * @category Types
  */
-export type Archive = z.infer<typeof archiveSchema>;
-
-/**
- * Zod schema for a scheduled (upcoming) broadcast.
- * Validates the scheduled start time.
- *
- * @category Types
- */
-export const scheduledBroadcastSchema = contentBaseSchema.extend({
-  type: z.literal("scheduled"),
-  scheduledStartAt: z.date(),
-});
+export type Archive = ContentBase & {
+  type: "archive";
+  duration: number;
+  viewCount: number;
+  publishedAt: Date;
+  startedAt?: Date;
+  endedAt?: Date;
+};
 
 /**
  * A scheduled (upcoming) broadcast on any supported platform.
@@ -99,25 +70,10 @@ export const scheduledBroadcastSchema = contentBaseSchema.extend({
  *
  * @category Types
  */
-export type ScheduledBroadcast = z.infer<typeof scheduledBroadcastSchema>;
-
-/**
- * Zod schema for a short clip extracted from a broadcast or archive.
- * Validates duration (non-negative), view count, and creation date.
- *
- * @category Types
- */
-export const clipSchema = contentBaseSchema.extend({
-  type: z.literal("clip"),
-  duration: z.number().check(z.nonnegative()),
-  viewCount: z.int().check(z.nonnegative()),
-  createdAt: z.date(),
-  clipCreator: z.object({ id: z.string(), name: z.string() }).optional(),
-  embedUrl: z.url().optional(),
-  vodOffset: z.int().optional(),
-  isFeatured: z.boolean().optional(),
-  gameId: z.string().optional(),
-});
+export type ScheduledBroadcast = ContentBase & {
+  type: "scheduled";
+  scheduledStartAt: Date;
+};
 
 /**
  * A short clip extracted from a broadcast or archive on any supported platform.
@@ -125,20 +81,17 @@ export const clipSchema = contentBaseSchema.extend({
  *
  * @category Types
  */
-export type Clip = z.infer<typeof clipSchema>;
-
-/**
- * Discriminated union schema for content. Discriminates on `type` field.
- * Covers broadcasts, archives, scheduled broadcasts, and clips.
- *
- * @category Types
- */
-export const contentSchema = z.discriminatedUnion("type", [
-  broadcastSchema,
-  archiveSchema,
-  scheduledBroadcastSchema,
-  clipSchema,
-]);
+export type Clip = ContentBase & {
+  type: "clip";
+  duration: number;
+  viewCount: number;
+  createdAt: Date;
+  clipCreator?: { id: string; name: string };
+  embedUrl?: string;
+  vodOffset?: number;
+  isFeatured?: boolean;
+  gameId?: string;
+};
 
 /**
  * A piece of content (broadcast, archive, scheduled broadcast, or clip) on any supported platform.
@@ -146,47 +99,23 @@ export const contentSchema = z.discriminatedUnion("type", [
  *
  * @category Types
  */
-export type Content = z.infer<typeof contentSchema>;
-
-/**
- * Zod schema for a streaming channel or user account.
- *
- * @category Types
- */
-export const channelSchema = z.object({
-  id: z.string().check(z.minLength(1)),
-  platform: z.string().check(z.minLength(1)),
-  name: z.string(),
-  url: z.url(),
-  thumbnail: thumbnailSchema.optional(),
-  description: z.string().optional(),
-  subscriberCount: z.int().check(z.nonnegative()).optional(),
-  publishedAt: z.date().optional(),
-});
+export type Content = Broadcast | Archive | ScheduledBroadcast | Clip;
 
 /**
  * A streaming channel or user account on any supported platform.
  *
  * @category Types
  */
-export type Channel = z.infer<typeof channelSchema>;
-
-/**
- * Zod schema for a broadcast session linking live and archive content.
- *
- * @category Types
- */
-export const broadcastSessionSchema = z.object({
-  sessionId: z.string().check(z.minLength(1)),
-  platform: z.string().check(z.minLength(1)),
-  channel: channelRefSchema,
-  startedAt: z.date(),
-  endedAt: z.date().optional(),
-  contentIds: z.object({
-    broadcastId: z.string().optional(),
-    archiveId: z.string().optional(),
-  }),
-});
+export type Channel = {
+  id: string;
+  platform: string;
+  name: string;
+  url: string;
+  thumbnail?: Thumbnail;
+  description?: string;
+  subscriberCount?: number;
+  publishedAt?: Date;
+};
 
 /**
  * Links a broadcast to its eventual archive.
@@ -194,7 +123,17 @@ export const broadcastSessionSchema = z.object({
  *
  * @category Types
  */
-export type BroadcastSession = z.infer<typeof broadcastSessionSchema>;
+export type BroadcastSession = {
+  sessionId: string;
+  platform: string;
+  channel: ChannelRef;
+  startedAt: Date;
+  endedAt?: Date;
+  contentIds: {
+    broadcastId?: string;
+    archiveId?: string;
+  };
+};
 
 /**
  * Cursor-based pagination wrapper.
@@ -254,8 +193,6 @@ export const Page = {
  * Result of a batch operation. Contains successful results and per-item errors.
  * Request-level errors (rate limit, auth) are thrown, not stored here.
  *
- * Exception to Zod-first convention: Map with generic parameter is not representable in Zod.
- *
  * @category Types
  */
 export type BatchResult<T> = {
@@ -286,71 +223,50 @@ export const BatchResult = {
   }),
 } as const;
 
-export const searchOptionsSchema = z.object({
-  query: z.string().optional(),
-  status: z.enum(["live", "upcoming", "ended"]).optional(),
-  channelId: z.string().check(z.minLength(1)).optional(),
-  order: z.enum(["relevance", "date", "rating", "title", "videoCount", "viewCount"]).optional(),
-  limit: z.int().check(z.positive(), z.lte(100)).optional(),
-  cursor: z.string().optional(),
-  safeSearch: z.enum(["moderate", "none", "strict"]).optional(),
-  languageCode: z.string().optional(),
-});
-
 /**
  * Options for search operations across platforms.
- * All fields are optional at the schema level, but `UnifiedClient.search()`
+ * All fields are optional at the type level, but `UnifiedClient.search()`
  * requires at least one of `query`, `status`, or `channelId` to be provided.
  *
  * @category Types
  */
-export type SearchOptions = z.infer<typeof searchOptionsSchema>;
-
-/**
- * Zod schema for clip query options.
- * All fields are optional. `limit` is capped at 100.
- *
- * @category Types
- */
-export const clipOptionsSchema = z.object({
-  startedAt: z.date().optional(),
-  endedAt: z.date().optional(),
-  limit: z.int().check(z.positive(), z.lte(100)).optional(),
-  cursor: z.string().optional(),
-  isFeatured: z.boolean().optional(),
-});
+export type SearchOptions = {
+  query?: string;
+  status?: "live" | "upcoming" | "ended";
+  channelId?: string;
+  order?: "relevance" | "date" | "rating" | "title" | "videoCount" | "viewCount";
+  limit?: number;
+  cursor?: string;
+  safeSearch?: "moderate" | "none" | "strict";
+  languageCode?: string;
+};
 
 /**
  * Options for clip retrieval operations.
  *
  * @category Types
  */
-export type ClipOptions = z.infer<typeof clipOptionsSchema>;
+export type ClipOptions = {
+  startedAt?: Date;
+  endedAt?: Date;
+  limit?: number;
+  cursor?: string;
+  isFeatured?: boolean;
+};
 
 /**
- * Enum schema for known supported platforms.
+ * Known supported platform identifiers.
  *
  * @category Types
  */
-export const knownPlatforms = z.enum(["youtube", "twitch", "twitcasting"]);
+export const knownPlatforms = ["youtube", "twitch", "twitcasting"] as const;
 
 /**
  * A known supported platform identifier.
  *
  * @category Types
  */
-export type KnownPlatform = z.infer<typeof knownPlatforms>;
-
-/**
- * Zod schema for a resolved platform URL.
- *
- * @category Types
- */
-export const resolvedUrlSchema = z.object({
-  platform: z.string().check(z.minLength(1)),
-  type: z.enum(["content", "channel"]),
-  id: z.string().check(z.minLength(1)),
-});
+export type KnownPlatform = (typeof knownPlatforms)[number];
 
 /**
  * Result of resolving a platform URL without network calls.
@@ -358,7 +274,11 @@ export const resolvedUrlSchema = z.object({
  *
  * @category Types
  */
-export type ResolvedUrl = z.infer<typeof resolvedUrlSchema>;
+export type ResolvedUrl = {
+  platform: string;
+  type: "content" | "channel";
+  id: string;
+};
 
 /**
  * Companion object for the Broadcast type.

@@ -3,7 +3,7 @@
 ## Guiding Principles
 
 - Error handling: Public API uses thrown exceptions (`UnifiedLiveError` hierarchy). Internal logic may use `Result<V, E>` / `Ok` / `Err` / `wrap` / `unwrap` for readability, but Result must never appear in public return types.
-- Type definitions: Zod Schema First (`z.infer<typeof schema>`). No explicit interfaces.
+- Type definitions: Plain TypeScript types (no runtime schema library). No explicit interfaces.
 - Simplicity: Remove unnecessary code, only abstract when duplicated 3+ times, no premature optimization.
 - Architecture: discordeno pattern (factory functions, overridable function objects). No class inheritance hierarchies.
 - Function style: All functions use arrow function syntax (`const fn = () => {}`). No `function` declarations (avoid hoisting). Exception: TypeScript overload signatures require `function` (e.g., `Ok` in `result.ts`).

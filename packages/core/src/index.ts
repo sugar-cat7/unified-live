@@ -53,28 +53,23 @@ export type { Logger, LoggerProvider, LogLevel } from "./telemetry/logger";
 export { getLogger, setLoggerProvider } from "./telemetry/logger";
 
 // --- Types ---
-export type { ClipOptions, KnownPlatform, ResolvedUrl, SearchOptions } from "./types";
+export type {
+  ChannelRef,
+  ClipOptions,
+  KnownPlatform,
+  ResolvedUrl,
+  SearchOptions,
+  Thumbnail,
+} from "./types";
 export {
   Archive,
-  archiveSchema,
   BatchResult,
   Broadcast,
-  broadcastSchema,
   BroadcastSession,
-  broadcastSessionSchema,
   Channel,
-  channelRefSchema,
-  channelSchema,
   Clip,
-  clipOptionsSchema,
-  clipSchema,
   Content,
-  contentSchema,
   knownPlatforms,
   Page,
-  resolvedUrlSchema,
   ScheduledBroadcast,
-  scheduledBroadcastSchema,
-  searchOptionsSchema,
-  thumbnailSchema,
 } from "./types";

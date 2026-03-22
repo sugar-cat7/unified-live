@@ -7,7 +7,7 @@
   "tags": ["-lintignore"],
   "workspaces": {
     ".": {
-      "ignore": ["examples/**", "tests/runtime/**"],
+      "ignore": ["examples/**", "tests/runtime/**", ".claude/**"],
       "ignoreDependencies": [
         "@changesets/changelog-github",
         "@changesets/cli",

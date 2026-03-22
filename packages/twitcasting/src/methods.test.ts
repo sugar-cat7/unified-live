@@ -5,6 +5,7 @@ import {
   twitcastingGetChannel,
   twitcastingListBroadcasts,
   twitcastingListArchives,
+  twitcastingListMovies,
   twitcastingResolveArchive,
   twitcastingSearch,
 } from "./methods";
@@ -184,6 +185,79 @@ describe("twitcastingListArchives", () => {
     );
 
     await twitcastingListArchives(rest, "u1", "cursor123");
+  });
+});
+
+describe("twitcastingListMovies", () => {
+  it("returns all movies including live and archived", async () => {
+    const movies = [mockLiveMovie, mockArchiveMovie];
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { status: 200, headers: new Headers(), data: { total_count: 10, movies } };
+      }
+      return { status: 200, headers: new Headers(), data: { user: mockUser } };
+    });
+
+    const result = await twitcastingListMovies(rest, "u1");
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0]!.type).toBe("broadcast");
+    expect(result.items[1]!.type).toBe("archive");
+    expect(result.total).toBe(10);
+  });
+
+  it("hasMore is false when fewer items than page size", async () => {
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          status: 200,
+          headers: new Headers(),
+          data: { total_count: 1, movies: [mockArchiveMovie] },
+        };
+      }
+      return { status: 200, headers: new Headers(), data: { user: mockUser } };
+    });
+
+    const result = await twitcastingListMovies(rest, "u1");
+    expect(result.hasMore).toBe(false);
+    expect(result.cursor).toBeUndefined();
+  });
+
+  it("passes cursor as slice_id", async () => {
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(
+      async (req: { query?: Record<string, string> }) => {
+        callCount++;
+        if (callCount === 1) {
+          expect(req.query?.slice_id).toBe("cursor456");
+          return { status: 200, headers: new Headers(), data: { total_count: 0, movies: [] } };
+        }
+        return { status: 200, headers: new Headers(), data: { user: mockUser } };
+      },
+    );
+
+    await twitcastingListMovies(rest, "u1", "cursor456");
+  });
+
+  it("fetches user info and movies in parallel", async () => {
+    let callCount = 0;
+    const rest = createMockRest({});
+    (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return { status: 200, headers: new Headers(), data: { total_count: 0, movies: [] } };
+      }
+      return { status: 200, headers: new Headers(), data: { user: mockUser } };
+    });
+
+    await twitcastingListMovies(rest, "u1");
+    expect(rest.request).toHaveBeenCalledTimes(2);
   });
 });
 

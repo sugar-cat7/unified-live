@@ -132,7 +132,13 @@ describe("PlatformPlugin.create", () => {
 
     await plugin.listArchives("ch1", "cursor123");
 
-    expect(methods.listArchives).toHaveBeenCalledWith(plugin.rest, "ch1", "cursor123", undefined);
+    expect(methods.listArchives).toHaveBeenCalledWith(
+      plugin.rest,
+      "ch1",
+      "cursor123",
+      undefined,
+      undefined,
+    );
   });
 
   it("wires resolveArchive when provided", async () => {

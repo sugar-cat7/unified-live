@@ -5,6 +5,7 @@ import {
   ValidationError,
 } from "@unified-live/core";
 import {
+  youtubeBatchGetChannels,
   youtubeBatchGetContents,
   youtubeGetChannel,
   youtubeGetContent,
@@ -110,6 +111,7 @@ export const createYouTubePlugin = (config: YouTubePluginConfig): PlatformPlugin
       listArchives: youtubeListArchives,
       resolveArchive: youtubeResolveArchive,
       batchGetContents: youtubeBatchGetContents,
+      batchGetChannels: youtubeBatchGetChannels,
       search: youtubeSearch,
     },
   );

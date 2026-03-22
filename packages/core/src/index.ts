@@ -54,6 +54,7 @@ export { getLogger, setLoggerProvider } from "./telemetry/logger";
 
 // --- Types ---
 export type {
+  ArchiveListOptions,
   ChannelRef,
   ClipOptions,
   KnownPlatform,

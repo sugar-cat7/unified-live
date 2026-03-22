@@ -132,7 +132,7 @@ describe("UnifiedClient.create", () => {
       method: "listArchives" as const,
       args: ["youtube", "ch1", "cursor1"],
       pluginMethod: "listArchives" as const,
-      pluginArgs: ["ch1", "cursor1", undefined],
+      pluginArgs: ["ch1", "cursor1", undefined, undefined],
       assertion: (result: { items: unknown[] }) => expect(result.items).toEqual([]),
     },
     {

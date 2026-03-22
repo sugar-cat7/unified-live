@@ -1,5 +1,6 @@
 import {
   type Archive,
+  type ArchiveListOptions,
   type BatchResult,
   type Broadcast,
   type Channel,
@@ -25,7 +26,7 @@ import {
   toVideo,
 } from "./mapper";
 
-/** Twitch-specific video query options. */
+/** Twitch-specific video query options. Narrows core ArchiveListOptions.videoType. */
 export type TwitchVideoOptions = {
   period?: "all" | "day" | "week" | "month";
   sort?: "time" | "trending" | "views";
@@ -140,7 +141,7 @@ export const twitchListArchives = async (
   channelId: string,
   cursor?: string,
   pageSize = 20,
-  options?: TwitchVideoOptions,
+  options?: ArchiveListOptions,
 ): Promise<Page<Archive>> => {
   const query: Record<string, string> = {
     user_id: channelId,

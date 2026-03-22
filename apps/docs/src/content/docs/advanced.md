@@ -44,11 +44,11 @@ Filter by Instrumentation Scope name `unified-live` in your tracing UI.
 
 ### Client Span Attributes
 
-| Attribute                 | Type     | Description                                                    |
-| :------------------------ | :------- | :------------------------------------------------------------- |
-| `unified_live.platform`   | `string` | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`) |
-| `unified_live.operation`  | `string` | Operation name (e.g., `"resolve"`, `"search"`)                 |
-| `unified_live.batch.size` | `number` | Batch size (only for `batchGetContents`, `batchGetBroadcasts`) |
+| Attribute                 | Type     | Description                                                                                         |
+| :------------------------ | :------- | :-------------------------------------------------------------------------------------------------- |
+| `unified_live.platform`   | `string` | Platform identifier (`"youtube"`, `"twitch"`, `"twitcasting"`)                                      |
+| `unified_live.operation`  | `string` | Operation name (e.g., `"resolve"`, `"search"`)                                                      |
+| `unified_live.batch.size` | `number` | Batch size (only for `batchGetContents`, `batchGetBroadcasts`, `batchGetChannels`, `batchGetClips`) |
 
 ### REST Span Attributes
 

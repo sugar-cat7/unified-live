@@ -14,6 +14,7 @@ import { getTracer, SpanAttributes, withSpan } from "./telemetry/traces";
 import { BatchResult, Page } from "./types";
 import type {
   Archive,
+  ArchiveListOptions,
   Broadcast,
   Channel,
   Clip,
@@ -81,6 +82,8 @@ export type UnifiedClient = {
    * @param platform - platform name
    * @param channelId - channel identifier
    * @param cursor - pagination cursor
+   * @param pageSize - number of items per page
+   * @param options - optional archive filter options (period, sort, videoType)
    * @returns paginated list of archives
    * @precondition platform is registered
    * @throws PlatformNotFoundError if platform is not registered
@@ -90,6 +93,7 @@ export type UnifiedClient = {
     channelId: string,
     cursor?: string,
     pageSize?: number,
+    options?: ArchiveListOptions,
   ): Promise<Page<Archive>>;
 
   /**
@@ -152,6 +156,18 @@ export type UnifiedClient = {
    * @throws ValidationError if platform doesn't support clips
    */
   listClips(platform: string, channelId: string, options?: ClipOptions): Promise<Page<Clip>>;
+
+  /**
+   * Batch retrieve channels by platform and IDs.
+   *
+   * @param platform - platform name
+   * @param ids - channel identifiers
+   * @returns batch result with values and per-item errors
+   * @precondition platform is registered
+   * @postcondition request-level errors (rate limit, auth, network) are thrown, per-item errors go to errors map
+   * @throws PlatformNotFoundError if platform is not registered
+   */
+  batchGetChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>>;
 
   /**
    * Batch retrieve clips by platform and IDs.
@@ -364,10 +380,11 @@ export const UnifiedClient = {
         channelId: string,
         cursor?: string,
         pageSize?: number,
+        options?: ArchiveListOptions,
       ): Promise<Page<Archive>> {
         return withClientSpan("listArchives", { [SpanAttributes.PLATFORM]: platform }, () => {
           const plugin = getPlugin(platform);
-          return plugin.listArchives(channelId, cursor, pageSize);
+          return plugin.listArchives(channelId, cursor, pageSize, options);
         });
       },
 
@@ -453,6 +470,25 @@ export const UnifiedClient = {
           }
           return plugin.listClips(channelId, options);
         });
+      },
+
+      async batchGetChannels(platform: string, ids: string[]): Promise<BatchResult<Channel>> {
+        if (ids.length === 0) return BatchResult.empty();
+        return withClientSpan(
+          "batchGetChannels",
+          {
+            [SpanAttributes.PLATFORM]: platform,
+            [SpanAttributes.BATCH_SIZE]: ids.length,
+          },
+          () => {
+            const plugin = getPlugin(platform);
+            const uniqueIds = [...new Set(ids)];
+            if (plugin.batchGetChannels) {
+              return plugin.batchGetChannels(uniqueIds);
+            }
+            return batchFallback((id) => plugin.getChannel(id), uniqueIds, platform);
+          },
+        );
       },
 
       async batchGetClips(platform: string, ids: string[]): Promise<BatchResult<Clip>> {
@@ -572,6 +608,7 @@ export const UnifiedClient = {
       typeof obj.getChannel === "function" &&
       typeof obj.batchGetContents === "function" &&
       typeof obj.batchGetBroadcasts === "function" &&
+      typeof obj.batchGetChannels === "function" &&
       typeof obj.search === "function" &&
       typeof obj.listClips === "function" &&
       typeof obj.batchGetClips === "function" &&

@@ -48,6 +48,24 @@ for (let i = 0; i < MAX_PAGES; i++) {
 }
 ```
 
+## アーカイブのフィルタリング
+
+`ArchiveListOptions` を渡して、期間・ソート順・動画タイプでフィルタリングできます（プラットフォームによりサポート状況が異なります）:
+
+```ts
+const page = await client.listArchives("twitch", channelId, undefined, 20, {
+  period: "week",
+  sort: "views",
+  videoType: "highlight",
+});
+```
+
+| オプション  | 値                                                                           | 説明               |
+| :---------- | :--------------------------------------------------------------------------- | :----------------- |
+| `period`    | `"all"`, `"day"`, `"week"`, `"month"`                                        | 期間フィルタ       |
+| `sort`      | `"time"`, `"trending"`, `"views"`                                            | ソート順           |
+| `videoType` | プラットフォーム固有（例: Twitch の `"archive"`, `"highlight"`, `"upload"`） | 動画タイプフィルタ |
+
 ## ライブ配信の取得
 
 `listBroadcasts` はチャンネルの現在のライブ配信をすべて返します。ライブ配信は通常少数なので、ページネーションは不要です。

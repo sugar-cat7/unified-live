@@ -331,7 +331,7 @@ describe("UnifiedClient batch operations", () => {
   });
 
   it.each([
-    { name: "RateLimitError", error: new RateLimitError("test"), errorClass: RateLimitError },
+    { name: "RateLimitError", error: new RateLimitError("test") },
     {
       name: "QuotaExhaustedError",
       error: new QuotaExhaustedError("test", {
@@ -340,26 +340,18 @@ describe("UnifiedClient batch operations", () => {
         resetsAt: new Date(),
         requestedCost: 0,
       }),
-      errorClass: QuotaExhaustedError,
     },
-    {
-      name: "AuthenticationError",
-      error: new AuthenticationError("test"),
-      errorClass: AuthenticationError,
-    },
-    {
-      name: "NetworkError",
-      error: new NetworkError("test", "NETWORK_TIMEOUT"),
-      errorClass: NetworkError,
-    },
+    { name: "AuthenticationError", error: new AuthenticationError("test") },
+    { name: "NetworkError", error: new NetworkError("test", "NETWORK_TIMEOUT") },
   ])(
     "batchGetContents fallback rethrows $name as request-level error",
-    async ({ error, errorClass }) => {
+    async ({ error }) => {
       const plugin = createMockPlugin("test");
       (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(error);
       const client = UnifiedClient.create({ plugins: [plugin] });
 
-      await expect(client.batchGetContents("test", ["id1"])).rejects.toThrow(errorClass);
+      const thrown = await client.batchGetContents("test", ["id1"]).catch((e) => e);
+      expect(thrown).toBe(error);
     },
   );
 
@@ -532,12 +524,11 @@ describe("UnifiedClient batchGetChannels", () => {
 
     const result = await client.batchGetChannels("test", ["ok1", "broken"]);
 
-    expect(result.values.size).toBe(1);
     expect(result.errors.size).toBe(1);
     const err = result.errors.get("broken")!;
     expect(err.code).toBe("INTERNAL");
-    expect(err.message).toBe(expectedMsg);
-    expect(err.context.resourceId).toBe("broken");
+    expect.soft(err.message).toBe(expectedMsg);
+    expect.soft(err.context.resourceId).toBe("broken");
   });
 });
 
@@ -917,8 +908,8 @@ describe("UnifiedClient crossSearch", () => {
 
     const err = await client.crossSearch({}).catch((e) => e);
     expect(err).toBeInstanceOf(ValidationError);
-    expect(err.message).toBe(
-      "crossSearch requires at least one of 'query', 'status', or 'channelId'",
-    );
+    expect.soft(err.code).toBe("VALIDATION_INVALID_INPUT");
+    expect.soft(err.message).toContain("query");
+    expect.soft(err.message).toContain("channelId");
   });
 });

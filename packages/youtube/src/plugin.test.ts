@@ -3,6 +3,7 @@ import {
   type Broadcast,
   NotFoundError,
   QuotaExhaustedError,
+  RateLimitError,
   ValidationError,
 } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
@@ -476,7 +477,7 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow("Rate limited");
+    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(RateLimitError);
   });
 
   it("handles 429 rate limit by retrying", async () => {

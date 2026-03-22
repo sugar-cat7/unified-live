@@ -3,6 +3,7 @@ import {
   AuthenticationError,
   NetworkError,
   NotFoundError,
+  ParseError,
   RateLimitError,
   UnifiedLiveError,
 } from "../errors";
@@ -610,32 +611,21 @@ describe("createRestManager", () => {
     expect(manager.baseUrl).toBe("not-a-valid-url");
   });
 
-  it("uses default maxRetries and baseDelay when retry config is absent", async () => {
+  it.each([
+    { name: "HTTPS without retry config", baseUrl: "https://api.test.com" },
+    { name: "HTTP (port 80 path)", baseUrl: "http://api.test.com" },
+  ])("handles $name request successfully", async ({ baseUrl }) => {
     const strategy = createMockStrategy();
     const mockFetch = createMockFetch([{ status: 200, body: { ok: true } }]);
     const manager = createRestManager({
       platform: "test",
-      baseUrl: "https://api.test.com",
-      rateLimitStrategy: strategy,
-      fetch: mockFetch,
-      // no retry config — defaults should be used
-    });
-
-    const result = await manager.request({ method: "GET", path: "/test" });
-    expect(result.data).toEqual({ ok: true });
-  });
-
-  it("uses port 80 for HTTP URLs without explicit port", async () => {
-    const strategy = createMockStrategy();
-    const mockFetch = createMockFetch([{ status: 200, body: { ok: true } }]);
-    const manager = createRestManager({
-      platform: "test",
-      baseUrl: "http://api.test.com",
+      baseUrl,
       rateLimitStrategy: strategy,
       fetch: mockFetch,
     });
 
     const result = await manager.request({ method: "GET", path: "/test" });
+    expect(result.status).toBe(200);
     expect(result.data).toEqual({ ok: true });
   });
 
@@ -734,14 +724,14 @@ describe("createRestManager", () => {
       fetch: mockFetch,
     });
 
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
-      "Failed to parse JSON",
-    );
+    const err = await manager.request({ method: "GET", path: "/test" }).catch((e) => e);
+    expect(err).toBeInstanceOf(ParseError);
+    expect.soft(err.code).toBe("PARSE_JSON");
+    expect.soft(err.cause).toBeInstanceOf(Error);
   });
 
-  it("wraps non-Error from response.json() in ParseError", async () => {
+  it("wraps non-Error from response.json() in ParseError with Error cause", async () => {
     const strategy = createMockStrategy();
-    // Create a response where .json() throws a non-Error value
     const fakeResponse = new Response("", { status: 200 });
     Object.defineProperty(fakeResponse, "json", {
       value: () => {
@@ -756,9 +746,11 @@ describe("createRestManager", () => {
       fetch: mockFetch,
     });
 
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
-      "Failed to parse JSON",
-    );
+    const err = await manager.request({ method: "GET", path: "/test" }).catch((e) => e);
+    expect(err).toBeInstanceOf(ParseError);
+    expect.soft(err.code).toBe("PARSE_JSON");
+    expect.soft(err.cause).toBeInstanceOf(Error);
+    expect.soft((err.cause as Error).message).toBe("not-an-error-object");
   });
 
   it("includes rate limit info in response when parseRateLimitHeaders returns data", async () => {

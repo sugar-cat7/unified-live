@@ -185,7 +185,9 @@ describe("createQuotaBudgetStrategy", () => {
         costMap: {},
         platform: "test",
       });
-      expect(strategy.getStatus().resetsAt).toBeInstanceOf(Date);
+      const resetsAt = strategy.getStatus().resetsAt;
+      expect(resetsAt).toBeInstanceOf(Date);
+      expect(Number.isNaN(resetsAt.getTime())).toBe(false);
     } finally {
       spy.mockRestore();
     }

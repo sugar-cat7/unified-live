@@ -170,15 +170,11 @@ describe("noopTracerProvider", () => {
     },
     { method: "setStatus", call: (s: any) => s.setStatus({ code: 0 }), returnsSpan: true },
     { method: "updateName", call: (s: any) => s.updateName("new"), returnsSpan: true },
-    {
-      method: "recordException",
-      call: (s: any) => s.recordException(new Error("x")),
-      returnsVoid: true,
-    },
+    { method: "recordException", call: (s: any) => s.recordException(new Error("x")) },
     { method: "addEvent", call: (s: any) => s.addEvent("evt"), returnsSpan: true },
     { method: "addLink", call: (s: any) => s.addLink({ context: {} as any }), returnsSpan: true },
     { method: "addLinks", call: (s: any) => s.addLinks([]), returnsSpan: true },
-    { method: "end", call: (s: any) => s.end(), returnsVoid: true },
+    { method: "end", call: (s: any) => s.end() },
   ])("no-op span.$method returns expected value", ({ call, expected, returnsSpan }) => {
     const span = noopTracerProvider.getTracer("t").startSpan("s");
     const result = call(span);

@@ -1,20 +1,17 @@
-import { metrics } from "@opentelemetry/api";
 import { describe, expect, it, vi } from "vitest";
 import { getMeter, MetricNames } from "./metrics.js";
 
 describe("getMeter", () => {
-  it("returns a meter object", () => {
+  it("returns a no-op meter by default", () => {
     const meter = getMeter();
     expect(meter).toBeDefined();
     expect(typeof meter.createHistogram).toBe("function");
-    expect(typeof meter.createCounter).toBe("function");
   });
 
-  it("passes meter name and version to metrics.getMeter", () => {
-    const spy = vi.spyOn(metrics, "getMeter");
-    getMeter();
-    expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));
-    spy.mockRestore();
+  it("no-op meter creates a working histogram", () => {
+    const meter = getMeter();
+    const histogram = meter.createHistogram("test");
+    expect(() => histogram.record(1.0)).not.toThrow();
   });
 
   it("accepts a custom MeterProvider", () => {
@@ -34,6 +31,14 @@ describe("getMeter", () => {
     const meter = getMeter(mockProvider);
     expect(meter).toBe(mockMeter);
     expect(mockProvider.getMeter).toHaveBeenCalledWith("unified-live", expect.any(String));
+  });
+
+  it("uses OTel MeterProvider when passed", async () => {
+    const { metrics } = await import("@opentelemetry/api");
+    const spy = vi.spyOn(metrics, "getMeter");
+    getMeter(metrics);
+    expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));
+    spy.mockRestore();
   });
 });
 

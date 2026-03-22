@@ -1,6 +1,8 @@
 <p align="center">
-  <h1 align="center">unified-live</h1>
+  <img src="apps/docs/public/logo.svg" alt="unified-live logo" width="80" height="80" />
 </p>
+
+<h1 align="center">unified-live</h1>
 
 <p align="center">
   A TypeScript SDK providing a unified interface for live streaming platform APIs.
@@ -11,21 +13,22 @@
   <a href="https://app.codecov.io/github/sugar-cat7/unified-live"><img src="https://codecov.io/github/sugar-cat7/unified-live/graph/badge.svg" alt="codecov" /></a>
   <a href="https://github.com/sugar-cat7/unified-live/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue.svg" alt="TypeScript" /></a>
+  <img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="Zero Dependencies" />
 </p>
 
 <p align="center">
   <a href="https://sugar-cat7.github.io/unified-live">Documentation</a>
-  <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="https://sugar-cat7.github.io/unified-live/getting-started/">Getting Started</a>
-  <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="https://sugar-cat7.github.io/unified-live/api/">API Reference</a>
-  <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+  &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 ---
 
-Pass a URL — the SDK auto-detects the platform, normalizes the response, and handles auth, rate limits, and retries.
+Pass a URL and the SDK auto-detects the platform, normalizes the response, and handles auth, rate limits, and retries.
 
 ## Features
 
@@ -33,7 +36,8 @@ Pass a URL — the SDK auto-detects the platform, normalizes the response, and h
 - **Plugin Architecture** — Install only the platforms you need. Each platform is a separate package with its own auth, rate limiting, and URL resolution.
 - **OpenTelemetry Compatible** — Built-in tracing with zero overhead when OTel SDK is not configured. Every API call emits spans with platform, HTTP, rate limit, and quota attributes.
 - **Automatic Rate Limiting** — Token bucket (Twitch, TwitCasting) and quota-based (YouTube) strategies handled transparently with exponential backoff retries.
-- **Type-Safe** — Zod-validated schemas with discriminated unions. `Content.isBroadcast()` / `Content.isArchive()` type guards for safe narrowing.
+- **Zero Dependencies** — The core package has zero runtime dependencies. Plain TypeScript types with discriminated unions — no schema libraries, no bloat.
+- **Type-Safe** — `Content.isBroadcast()` / `Content.isArchive()` companion object type guards for safe narrowing across all content types.
 - **Runtime Agnostic** — Works on Node.js 18+, Deno, Bun, Cloudflare Workers — any runtime with native `fetch`.
 
 ## Quick Start

@@ -27,9 +27,6 @@ catalogs:
     vitest:
       specifier: 3.2.3
       version: 3.2.3
-    zod:
-      specifier: 4.2.1
-      version: 4.2.1
 
 importers:
 
@@ -115,10 +112,6 @@ importers:
         version: 4.10.0(typedoc@0.28.17(typescript@5.9.3))
 
   packages/core:
-    dependencies:
-      zod:
-        specifier: 'catalog:'
-        version: 4.2.1
     devDependencies:
       '@opentelemetry/api':
         specifier: 'catalog:'
@@ -5439,9 +5432,6 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
-  zod@4.2.1:
-    resolution: {integrity: sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw==}
 
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
@@ -11606,8 +11596,6 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
-
-  zod@4.2.1: {}
 
   zod@4.3.6: {}
 

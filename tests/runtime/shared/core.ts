@@ -9,8 +9,8 @@ export const verifyCorePackage = async (): Promise<VerifyResult[]> => {
         throw new Error("UnifiedClient.create is not a function");
       if (typeof core.UnifiedLiveError !== "function")
         throw new Error("UnifiedLiveError is not a function");
-      if (typeof core.thumbnailSchema?.parse !== "function")
-        throw new Error("thumbnailSchema.parse is not a function");
+      if (typeof core.Broadcast?.is !== "function")
+        throw new Error("Broadcast.is is not a function");
     }),
 
     await verify("Client creation", () => {
@@ -28,17 +28,25 @@ export const verifyCorePackage = async (): Promise<VerifyResult[]> => {
       if (!(err instanceof Error)) throw new Error("NotFoundError is not instanceof Error");
     }),
 
-    await verify("Zod validation", () => {
-      const result = core.thumbnailSchema.safeParse({
-        url: "https://example.com/thumb.jpg",
-        width: 320,
-        height: 180,
-      });
-      if (!result.success)
-        throw new Error(`Zod parse failed: ${JSON.stringify(result.error.issues)}`);
-
-      const invalid = core.thumbnailSchema.safeParse({ url: 123 });
-      if (invalid.success) throw new Error("Zod should reject invalid input");
+    await verify("Type guards", () => {
+      const broadcast = {
+        id: "v1",
+        platform: "youtube",
+        type: "broadcast",
+        title: "",
+        description: "",
+        tags: [],
+        url: "https://example.com",
+        thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
+        channel: { id: "ch1", name: "Ch", url: "https://example.com/ch" },
+        viewerCount: 100,
+        startedAt: new Date(),
+        raw: {},
+      };
+      if (!core.Broadcast.is(broadcast))
+        throw new Error("Broadcast.is should return true for broadcast");
+      if (core.Broadcast.is({ type: "archive" }))
+        throw new Error("Broadcast.is should return false for archive");
     }),
   ];
 };

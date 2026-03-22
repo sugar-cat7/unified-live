@@ -46,9 +46,6 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": {
-    "zod": "catalog:"
-  },
   "devDependencies": {
     "@opentelemetry/api": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
@@ -60,6 +57,11 @@
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=18"

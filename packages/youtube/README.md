@@ -1,11 +1,31 @@
+<p align="center">
+  <img src="../../apps/docs/public/logo.svg" alt="unified-live logo" width="48" height="48" />
+</p>
+
 # @unified-live/youtube
 
-YouTube platform plugin for the unified-live SDK.
+YouTube Data API v3 plugin for the unified-live SDK. Provides quota-based rate limiting, API key auth, and search support.
+
+[![npm](https://img.shields.io/npm/v/@unified-live/youtube.svg)](https://www.npmjs.com/package/@unified-live/youtube)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
 
 ## Install
 
 ```bash
 pnpm add @unified-live/core @unified-live/youtube
+```
+
+## Usage
+
+```ts
+import { UnifiedClient } from "@unified-live/core";
+import { createYouTubePlugin } from "@unified-live/youtube";
+
+using client = UnifiedClient.create({
+  plugins: [createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! })],
+});
+
+const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 ```
 
 ## Development
@@ -18,6 +38,4 @@ pnpm test:run     # Run tests
 
 ## Docs
 
-- [Overview](../../docs/plan/unified-live-sdk/00_OVERVIEW.md)
-- [Plugins](../../docs/plan/unified-live-sdk/02_PLUGINS.md)
-- [Client API](../../docs/plan/unified-live-sdk/03_CLIENT_API.md)
+See the [full documentation](https://sugar-cat7.github.io/unified-live).

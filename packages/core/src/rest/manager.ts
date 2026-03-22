@@ -8,9 +8,9 @@ import {
   RateLimitError,
   UnifiedLiveError,
 } from "../errors";
+import { SPAN_KIND_CLIENT, SPAN_STATUS_ERROR } from "../telemetry/otel-types";
 import { getMeter, MetricNames } from "../telemetry/metrics";
 import { getTracer, SpanAttributes } from "../telemetry/traces";
-import { context, propagation, SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import type { RateLimitStrategy } from "./strategy";
 import type { RateLimitInfo, RestManagerOptions, RestRequest, RestResponse } from "./types";
 
@@ -152,7 +152,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
           { platform: options.platform },
         );
       }
-      return tracer.startActiveSpan(req.method, { kind: SpanKind.CLIENT }, async (span) => {
+      return tracer.startActiveSpan(req.method, { kind: SPAN_KIND_CLIENT }, async (span) => {
         span.setAttribute(SpanAttributes.PLATFORM, manager.platform);
         span.setAttribute(SpanAttributes.HTTP_METHOD, req.method);
         span.setAttribute(SpanAttributes.URL_PATH, req.path);
@@ -190,7 +190,6 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
 
           for (let attempt = 0; attempt <= maxRetries; attempt++) {
             const headers = await manager.createHeaders(req);
-            propagation.inject(context.active(), headers);
 
             const init: RequestInit = {
               method: req.method,
@@ -347,7 +346,7 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
           });
 
           span.setStatus({
-            code: SpanStatusCode.ERROR,
+            code: SPAN_STATUS_ERROR,
             message: error instanceof Error ? error.message : String(error),
           });
           span.recordException(error instanceof Error ? error : new Error(String(error)));

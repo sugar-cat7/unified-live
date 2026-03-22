@@ -1,11 +1,31 @@
+<p align="center">
+  <img src="../../apps/docs/public/logo.svg" alt="unified-live logo" width="48" height="48" />
+</p>
+
 # @unified-live/core
 
-Base types, error hierarchy, REST management, rate limiting, and plugin system for the unified-live SDK.
+Client, plugin system, unified types, error hierarchy, and OpenTelemetry tracing for the unified-live SDK. **Zero runtime dependencies.**
+
+[![npm](https://img.shields.io/npm/v/@unified-live/core.svg)](https://www.npmjs.com/package/@unified-live/core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
 
 ## Install
 
 ```bash
 pnpm add @unified-live/core
+```
+
+## Usage
+
+```ts
+import { UnifiedClient } from "@unified-live/core";
+
+using client = UnifiedClient.create({
+  plugins: [
+    /* ... */
+  ],
+});
+const content = await client.resolve("https://www.youtube.com/watch?v=...");
 ```
 
 ## Development
@@ -18,9 +38,4 @@ pnpm test:run     # Run tests
 
 ## Docs
 
-- [Overview](../../docs/plan/unified-live-sdk/00_OVERVIEW.md)
-- [Types](../../docs/plan/unified-live-sdk/01_TYPES.md)
-- [Plugins](../../docs/plan/unified-live-sdk/02_PLUGINS.md)
-- [Client API](../../docs/plan/unified-live-sdk/03_CLIENT_API.md)
-- [Infrastructure](../../docs/plan/unified-live-sdk/04_INFRASTRUCTURE.md)
-- [Architecture](../../docs/backend/sdk-architecture.md)
+See the [full documentation](https://sugar-cat7.github.io/unified-live).

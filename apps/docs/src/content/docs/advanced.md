@@ -5,12 +5,12 @@ description: "OpenTelemetry tracing and metrics"
 
 ## OpenTelemetry Integration
 
-The SDK emits OpenTelemetry traces and metrics for every API call. `@opentelemetry/api` is a peer dependency (no-op when unconfigured).
+The SDK supports OpenTelemetry traces and metrics for every API call. `@opentelemetry/api` is an **optional** peer dependency — the SDK works without it, using built-in no-op stubs with zero overhead. Install it only when you need real tracing.
 
 ### Setup
 
 ```bash
-pnpm add @opentelemetry/sdk-node @opentelemetry/sdk-trace-node @opentelemetry/resources @opentelemetry/semantic-conventions
+pnpm add @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/sdk-trace-node @opentelemetry/resources @opentelemetry/semantic-conventions
 ```
 
 ```ts

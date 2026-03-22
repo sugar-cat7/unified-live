@@ -3,7 +3,7 @@
 ## Guiding Principles
 
 - Error handling: Thrown exceptions (`UnifiedLiveError` hierarchy). No Result types.
-- Type definitions: Zod Schema First (`z.infer<typeof schema>`). No explicit interfaces.
+- Type definitions: Plain TypeScript types (no runtime schema library). No explicit interfaces.
 - Simplicity: Remove unnecessary code, only abstract when duplicated 3+ times, no premature optimization.
 - Architecture: discordeno pattern (factory functions, overridable function objects). No class inheritance hierarchies.
 - Function documentation: Write JSDoc with preconditions, postconditions, and idempotency for public functions.

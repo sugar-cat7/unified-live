@@ -37,8 +37,12 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
   <Card title="自動レート制限" icon="setting">
     トークンバケット（Twitch、TwitCasting）とクォータベース（YouTube）のレート制限を透過的に処理。指数バックオフでリトライし、クォータ消費をローカルで追跡します。
   </Card>
-  <Card title="型安全" icon="approve-check">
-    Zodバリデーション付きスキーマと判別共用体
+  <Card title="依存ゼロ" icon="approve-check">
+    コアパッケージはランタイム依存ゼロ。素のTypeScript型のみ —
+    スキーマライブラリなし、余計な肥大化なし。あらゆる環境で最小バンドルサイズ。
+  </Card>
+  <Card title="型安全" icon="seti:typescript">
+    判別共用体
     `Content`（`Broadcast`、`ScheduledBroadcast`、`Archive`、`Clip`）。コンパニオンオブジェクトの型ガード（`Content.isBroadcast()`、`Content.isArchive()`
     など）で安全な型絞り込み。
   </Card>

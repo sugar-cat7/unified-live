@@ -13,9 +13,6 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   minify: true,
-  deps: {
-    neverBundle: ["@opentelemetry/api"],
-  },
   define: {
     __SDK_VERSION__: JSON.stringify(pkg.version),
   },

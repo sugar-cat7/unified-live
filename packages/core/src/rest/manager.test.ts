@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthenticationError, NetworkError, NotFoundError, UnifiedLiveError } from "../errors";
+import { SPAN_KIND_CLIENT } from "../telemetry/otel-types";
 import { createMockFetch } from "../test-helpers";
 import { createRestManager, parseRetryAfter, RestManager } from "./manager";
 import type { RateLimitHandle, RateLimitStrategy } from "./strategy";
@@ -631,7 +632,7 @@ describe("createRestManager OTel integration", () => {
 
     expect(spans).toHaveLength(1);
     expect(spans[0]!.name).toBe("GET");
-    expect(spans[0]!.options).toEqual({ kind: 2 }); // SpanKind.CLIENT = 2
+    expect(spans[0]!.options).toEqual({ kind: SPAN_KIND_CLIENT });
     expect(spans[0]!.ended).toBe(true);
 
     manager[Symbol.dispose]();
@@ -761,10 +762,7 @@ describe("createRestManager OTel integration", () => {
     manager[Symbol.dispose]();
   });
 
-  it("calls propagation.inject on outgoing request headers", async () => {
-    const { propagation } = await import("@opentelemetry/api");
-    const injectSpy = vi.spyOn(propagation, "inject");
-
+  it("does not require @opentelemetry/api at runtime", async () => {
     const { provider: tracerProvider } = createMockTracer();
     const { provider: meterProvider } = createMockMeter();
     const strategy = createMockStrategy();
@@ -779,11 +777,9 @@ describe("createRestManager OTel integration", () => {
       meterProvider,
     });
 
-    await manager.request({ method: "GET", path: "/test" });
+    // Should work without propagation.inject — no runtime OTel dependency
+    await expect(manager.request({ method: "GET", path: "/test" })).resolves.toBeDefined();
 
-    expect(injectSpy).toHaveBeenCalledTimes(1);
-
-    injectSpy.mockRestore();
     manager[Symbol.dispose]();
   });
 });

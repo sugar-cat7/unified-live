@@ -69,7 +69,7 @@ Write a concise summary (this appears in CHANGELOG). The changeset file is commi
 1. PRs with changesets merge to `main`
 2. A "Version Packages" PR is automatically created/updated (CHANGELOG + version bump)
 3. Merging that PR updates versions in `main` (no publish yet)
-4. A maintainer cuts a git tag (`git tag v0.1.0 && git push --tags`) to trigger npm publish and GitHub Release
+4. Merging the Version Packages PR auto-creates a git tag (`v*`), which triggers npm publish and GitHub Release
 
 ## Quality Checks
 

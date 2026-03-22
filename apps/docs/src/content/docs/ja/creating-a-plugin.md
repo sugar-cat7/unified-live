@@ -86,6 +86,7 @@ const createDefinition = (config: {
   rateLimitStrategy: createTokenBucketStrategy({
     global: { requests: 100, perMs: 60_000 }, // 100リクエスト/分
     parseHeaders,
+    platform: "example",
   }),
   tokenManager: TokenManager.static(`Bearer ${config.apiKey}`),
   matchUrl: matchExampleUrl,
@@ -268,6 +269,7 @@ import { createTokenBucketStrategy } from "@unified-live/core";
 const strategy = createTokenBucketStrategy({
   global: { requests: 100, perMs: 60_000 },
   parseHeaders: myHeaderParser,
+  platform: "example",
 });
 ```
 
@@ -403,6 +405,7 @@ export const createExamplePlugin = (config: ExamplePluginConfig): PlatformPlugin
       rateLimitStrategy: createTokenBucketStrategy({
         global: { requests: 100, perMs: 60_000 },
         parseHeaders: () => undefined,
+        platform: "example",
       }),
       tokenManager: TokenManager.static(`Bearer ${config.apiKey}`),
       matchUrl,

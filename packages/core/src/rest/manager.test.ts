@@ -599,9 +599,7 @@ describe("createRestManager", () => {
     });
 
     // 502 with 0 retries — should fail, but the retryableStatuses set is used
-    await expect(
-      manager.request({ method: "GET", path: "/test" }),
-    ).rejects.toThrow();
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow();
   });
 
   it("handles invalid baseUrl gracefully (no URL parsing crash)", async () => {
@@ -661,9 +659,7 @@ describe("createRestManager", () => {
 
   it("sets retryAfter to undefined when Retry-After header is 0", async () => {
     const strategy = createMockStrategy();
-    const mockFetch = createMockFetch([
-      { status: 429, headers: { "Retry-After": "0" } },
-    ]);
+    const mockFetch = createMockFetch([{ status: 429, headers: { "Retry-After": "0" } }]);
     const manager = createRestManager({
       platform: "test",
       baseUrl: "https://api.test.com",
@@ -673,7 +669,9 @@ describe("createRestManager", () => {
     });
     manager.handleRateLimit = vi.fn().mockResolvedValue(false);
 
-    const err = await manager.request({ method: "GET", path: "/test" }).catch((e) => e) as RateLimitError;
+    const err = (await manager
+      .request({ method: "GET", path: "/test" })
+      .catch((e) => e)) as RateLimitError;
     expect(err).toBeInstanceOf(RateLimitError);
     expect(err.retryAfter).toBeUndefined();
   });
@@ -694,7 +692,9 @@ describe("createRestManager", () => {
       },
     });
 
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(AuthenticationError);
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
+      AuthenticationError,
+    );
     expect(invalidateFn).toHaveBeenCalled();
   });
 
@@ -721,14 +721,18 @@ describe("createRestManager", () => {
       // no tokenManager
     });
 
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(AuthenticationError);
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
+      AuthenticationError,
+    );
   });
 
   it("throws ParseError when response body is not valid JSON", async () => {
     const strategy = createMockStrategy();
-    const mockFetch = vi.fn().mockResolvedValue(
-      new Response("not json", { status: 200 }),
-    ) as unknown as typeof globalThis.fetch;
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response("not json", { status: 200 }),
+      ) as unknown as typeof globalThis.fetch;
     const manager = createRestManager({
       platform: "test",
       baseUrl: "https://api.test.com",
@@ -736,7 +740,9 @@ describe("createRestManager", () => {
       fetch: mockFetch,
     });
 
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow("Failed to parse JSON");
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
+      "Failed to parse JSON",
+    );
   });
 
   it("wraps non-Error from response.json() in ParseError", async () => {
@@ -756,13 +762,19 @@ describe("createRestManager", () => {
       fetch: mockFetch,
     });
 
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow("Failed to parse JSON");
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(
+      "Failed to parse JSON",
+    );
   });
 
   it("includes rate limit info in response when parseRateLimitHeaders returns data", async () => {
     const strategy = createMockStrategy();
     const mockFetch = createMockFetch([
-      { status: 200, body: { ok: true }, headers: { "X-RateLimit-Remaining": "50", "X-RateLimit-Limit": "100" } },
+      {
+        status: 200,
+        body: { ok: true },
+        headers: { "X-RateLimit-Remaining": "50", "X-RateLimit-Limit": "100" },
+      },
     ]);
     const manager = createRestManager({
       platform: "test",

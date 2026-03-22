@@ -77,7 +77,11 @@ describe("createYouTubePlugin", () => {
   });
 
   it("accepts custom quota dailyLimit", () => {
-    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: createMockFetch([]), quota: { dailyLimit: 5000 } });
+    plugin = createYouTubePlugin({
+      apiKey: "test-key",
+      fetch: createMockFetch([]),
+      quota: { dailyLimit: 5000 },
+    });
     expect(plugin.capabilities.rateLimitModel).toBe("quota");
   });
 

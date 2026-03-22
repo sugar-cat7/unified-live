@@ -159,7 +159,12 @@ describe("UnifiedLiveError base", () => {
   });
 
   it("toJSON returns undefined for non-Error cause", () => {
-    const error = new UnifiedLiveError("test", "INTERNAL", { platform: "test" }, { cause: "string-cause" as unknown as Error });
+    const error = new UnifiedLiveError(
+      "test",
+      "INTERNAL",
+      { platform: "test" },
+      { cause: "string-cause" as unknown as Error },
+    );
     const json = error.toJSON();
     expect(json.cause).toBeUndefined();
   });
@@ -399,7 +404,10 @@ describe("PlatformNotFoundError", () => {
 
 describe("Symbol.toStringTag", () => {
   it.each([
-    { name: "UnifiedLiveError", error: new UnifiedLiveError("test", "INTERNAL", { platform: "test" }) },
+    {
+      name: "UnifiedLiveError",
+      error: new UnifiedLiveError("test", "INTERNAL", { platform: "test" }),
+    },
     { name: "NotFoundError", error: new NotFoundError("youtube", "abc123") },
     { name: "NetworkError", error: new NetworkError("youtube", "NETWORK_TIMEOUT") },
   ])("$name has correct toStringTag", ({ name, error }) => {

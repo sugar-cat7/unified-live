@@ -332,16 +332,36 @@ describe("UnifiedClient batch operations", () => {
 
   it.each([
     { name: "RateLimitError", error: new RateLimitError("test"), errorClass: RateLimitError },
-    { name: "QuotaExhaustedError", error: new QuotaExhaustedError("test", { consumed: 0, limit: 0, resetsAt: new Date(), requestedCost: 0 }), errorClass: QuotaExhaustedError },
-    { name: "AuthenticationError", error: new AuthenticationError("test"), errorClass: AuthenticationError },
-    { name: "NetworkError", error: new NetworkError("test", "NETWORK_TIMEOUT"), errorClass: NetworkError },
-  ])("batchGetContents fallback rethrows $name as request-level error", async ({ error, errorClass }) => {
-    const plugin = createMockPlugin("test");
-    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(error);
-    const client = UnifiedClient.create({ plugins: [plugin] });
+    {
+      name: "QuotaExhaustedError",
+      error: new QuotaExhaustedError("test", {
+        consumed: 0,
+        limit: 0,
+        resetsAt: new Date(),
+        requestedCost: 0,
+      }),
+      errorClass: QuotaExhaustedError,
+    },
+    {
+      name: "AuthenticationError",
+      error: new AuthenticationError("test"),
+      errorClass: AuthenticationError,
+    },
+    {
+      name: "NetworkError",
+      error: new NetworkError("test", "NETWORK_TIMEOUT"),
+      errorClass: NetworkError,
+    },
+  ])(
+    "batchGetContents fallback rethrows $name as request-level error",
+    async ({ error, errorClass }) => {
+      const plugin = createMockPlugin("test");
+      (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+      const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.batchGetContents("test", ["id1"])).rejects.toThrow(errorClass);
-  });
+      await expect(client.batchGetContents("test", ["id1"])).rejects.toThrow(errorClass);
+    },
+  );
 
   it("batchGetContents delegates to plugin native batch when available", async () => {
     const plugin = createMockPlugin("test");
@@ -496,7 +516,11 @@ describe("UnifiedClient batchGetChannels", () => {
   });
 
   it.each([
-    { name: "Error with message", thrown: new TypeError("unexpected type"), expectedMsg: "unexpected type" },
+    {
+      name: "Error with message",
+      thrown: new TypeError("unexpected type"),
+      expectedMsg: "unexpected type",
+    },
     { name: "non-Error without message", thrown: { code: 42 }, expectedMsg: "Unknown error" },
   ])("fallback wraps $name in INTERNAL error", async ({ thrown, expectedMsg }) => {
     const plugin = createMockPlugin("test");

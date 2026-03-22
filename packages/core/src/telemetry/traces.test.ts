@@ -9,7 +9,12 @@ import {
   ATTR_URL_SCHEME,
 } from "@opentelemetry/semantic-conventions";
 import { describe, expect, it, vi } from "vitest";
-import { noopMeterProvider, noopTracerProvider, SPAN_KIND_CLIENT, SPAN_STATUS_ERROR } from "./otel-types";
+import {
+  noopMeterProvider,
+  noopTracerProvider,
+  SPAN_KIND_CLIENT,
+  SPAN_STATUS_ERROR,
+} from "./otel-types";
 import { getTracer, SpanAttributes, withSpan } from "./traces.js";
 
 describe("getTracer", () => {
@@ -154,9 +159,17 @@ describe("noopTracerProvider", () => {
   });
 
   it.each([
-    { method: "spanContext", call: (s: any) => s.spanContext(), expected: { traceId: "", spanId: "", traceFlags: 0 } },
+    {
+      method: "spanContext",
+      call: (s: any) => s.spanContext(),
+      expected: { traceId: "", spanId: "", traceFlags: 0 },
+    },
     { method: "setAttribute", call: (s: any) => s.setAttribute("key", "val"), returnsSpan: true },
-    { method: "setAttributes", call: (s: any) => s.setAttributes({ key: "val" }), returnsSpan: true },
+    {
+      method: "setAttributes",
+      call: (s: any) => s.setAttributes({ key: "val" }),
+      returnsSpan: true,
+    },
     { method: "setStatus", call: (s: any) => s.setStatus({ code: 0 }), returnsSpan: true },
     { method: "updateName", call: (s: any) => s.updateName("new"), returnsSpan: true },
     { method: "addEvent", call: (s: any) => s.addEvent("evt"), returnsSpan: true },
@@ -191,9 +204,27 @@ describe("noopMeterProvider", () => {
     { method: "createCounter", callResult: (r: any) => r.add(1) },
     { method: "createUpDownCounter", callResult: (r: any) => r.add(-1) },
     { method: "createGauge", callResult: (r: any) => r.record(42) },
-    { method: "createObservableGauge", callResult: (r: any) => { r.addCallback(() => {}); r.removeCallback(() => {}); } },
-    { method: "createObservableCounter", callResult: (r: any) => { r.addCallback(() => {}); r.removeCallback(() => {}); } },
-    { method: "createObservableUpDownCounter", callResult: (r: any) => { r.addCallback(() => {}); r.removeCallback(() => {}); } },
+    {
+      method: "createObservableGauge",
+      callResult: (r: any) => {
+        r.addCallback(() => {});
+        r.removeCallback(() => {});
+      },
+    },
+    {
+      method: "createObservableCounter",
+      callResult: (r: any) => {
+        r.addCallback(() => {});
+        r.removeCallback(() => {});
+      },
+    },
+    {
+      method: "createObservableUpDownCounter",
+      callResult: (r: any) => {
+        r.addCallback(() => {});
+        r.removeCallback(() => {});
+      },
+    },
   ])("no-op meter.$method works without error", ({ method, callResult }) => {
     const meter = noopMeterProvider.getMeter("test");
     const instrument = (meter as any)[method]("test-instrument");

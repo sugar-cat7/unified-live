@@ -501,7 +501,8 @@ describe("twitcastingSearch", () => {
     let callCount = 0;
     (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
       callCount++;
-      if (callCount === 1) return { status: 200, headers: new Headers(), data: { users: [liveUser] } };
+      if (callCount === 1)
+        return { status: 200, headers: new Headers(), data: { users: [liveUser] } };
       return { status: 200, headers: new Headers(), data: { movie: null } };
     });
     const result = await twitcastingSearch(rest, { query: "test", status: "live" });
@@ -513,7 +514,8 @@ describe("twitcastingSearch", () => {
     let callCount = 0;
     (rest.request as ReturnType<typeof vi.fn>).mockImplementation(async () => {
       callCount++;
-      if (callCount === 1) return { status: 200, headers: new Headers(), data: { users: [mockUser] } };
+      if (callCount === 1)
+        return { status: 200, headers: new Headers(), data: { users: [mockUser] } };
       return { status: 200, headers: new Headers(), data: {} };
     });
     const result = await twitcastingSearch(rest, { query: "test", status: "ended" });

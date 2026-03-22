@@ -137,6 +137,10 @@ export const toContent = (movie: TCMovie, user: TCUser): Content => {
  * @param movie - TwitCasting movie resource
  * @param user - TwitCasting user who owns the movie
  * @returns unified Content (Broadcast if live, Archive otherwise)
+ * @throws ParseError if required fields are missing
+ * @precondition movie and user have required TwitCasting resource fields
+ * @postcondition returns Content with platform === "twitcasting"
+ * @idempotency Safe — pure function
  */
 export const toMovie = (movie: TCMovie, user: TCUser): Content => toContent(movie, user);
 

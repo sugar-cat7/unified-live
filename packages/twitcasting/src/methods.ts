@@ -190,6 +190,7 @@ export const twitcastingListArchives = async (
  * @returns paginated list of Content (both Broadcast and Archive)
  * @precondition channelId is a valid TwitCasting user_id or screen_id
  * @postcondition returns all movies using slice_id for deep pagination
+ * @idempotency Safe — read-only API calls
  */
 export const twitcastingListMovies = async (
   rest: RestManager,

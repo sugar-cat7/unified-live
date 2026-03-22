@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sugar-cat7.github.io/unified-live/sitemap-index.xml

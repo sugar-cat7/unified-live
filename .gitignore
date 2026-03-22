@@ -38,5 +38,8 @@ coverage
 # starlight-typedoc generated API reference
 apps/docs/src/content/docs/api
 
+# generated OG image (built from SVG source)
+apps/docs/public/og-image.png
+
 # claude hooks state
 .claude/.post_edit_check_pending

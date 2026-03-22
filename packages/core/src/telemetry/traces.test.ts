@@ -157,12 +157,24 @@ describe("noopTracerProvider", () => {
   });
 
   it.each([
-    { method: "spanContext", call: (s: any) => s.spanContext(), expected: { traceId: "", spanId: "", traceFlags: 0 } },
+    {
+      method: "spanContext",
+      call: (s: any) => s.spanContext(),
+      expected: { traceId: "", spanId: "", traceFlags: 0 },
+    },
     { method: "setAttribute", call: (s: any) => s.setAttribute("key", "val"), returnsSpan: true },
-    { method: "setAttributes", call: (s: any) => s.setAttributes({ key: "val" }), returnsSpan: true },
+    {
+      method: "setAttributes",
+      call: (s: any) => s.setAttributes({ key: "val" }),
+      returnsSpan: true,
+    },
     { method: "setStatus", call: (s: any) => s.setStatus({ code: 0 }), returnsSpan: true },
     { method: "updateName", call: (s: any) => s.updateName("new"), returnsSpan: true },
-    { method: "recordException", call: (s: any) => s.recordException(new Error("x")), returnsVoid: true },
+    {
+      method: "recordException",
+      call: (s: any) => s.recordException(new Error("x")),
+      returnsVoid: true,
+    },
     { method: "addEvent", call: (s: any) => s.addEvent("evt"), returnsSpan: true },
     { method: "addLink", call: (s: any) => s.addLink({ context: {} as any }), returnsSpan: true },
     { method: "addLinks", call: (s: any) => s.addLinks([]), returnsSpan: true },

@@ -177,7 +177,11 @@ describe("twitcastingListArchives", () => {
     }));
     const rest = createMockRest({});
     (rest.request as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { total_count: 100, movies } })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { total_count: 100, movies },
+      })
       .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { user: mockUser } });
 
     const result = await twitcastingListArchives(rest, "u1");
@@ -188,7 +192,11 @@ describe("twitcastingListArchives", () => {
   it("passes cursor as slice_id", async () => {
     const rest = createMockRest({});
     (rest.request as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { total_count: 0, movies: [] } })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { total_count: 0, movies: [] },
+      })
       .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { user: mockUser } });
 
     await twitcastingListArchives(rest, "u1", "cursor123");
@@ -245,7 +253,11 @@ describe("twitcastingListMovies", () => {
     }));
     const rest = createMockRest({});
     (rest.request as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { total_count: 100, movies } })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { total_count: 100, movies },
+      })
       .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { user: mockUser } });
 
     const result = await twitcastingListMovies(rest, "u1");
@@ -256,7 +268,11 @@ describe("twitcastingListMovies", () => {
   it("passes cursor as slice_id", async () => {
     const rest = createMockRest({});
     (rest.request as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { total_count: 0, movies: [] } })
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { total_count: 0, movies: [] },
+      })
       .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { user: mockUser } });
 
     await twitcastingListMovies(rest, "u1", "cursor456");
@@ -495,7 +511,11 @@ describe("twitcastingSearch", () => {
     const rest = createMockRest({});
     (rest.request as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { user: mockUser } })
-      .mockResolvedValueOnce({ status: 200, headers: new Headers(), data: { movies: [mockArchiveMovie] } });
+      .mockResolvedValueOnce({
+        status: 200,
+        headers: new Headers(),
+        data: { movies: [mockArchiveMovie] },
+      });
     const result = await twitcastingSearch(rest, { channelId: "user1", status: "ended" });
     expect(result.items).toHaveLength(1);
     expect(result.items[0]!.type).toBe("archive");

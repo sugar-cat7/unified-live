@@ -917,6 +917,8 @@ describe("UnifiedClient crossSearch", () => {
 
     const err = await client.crossSearch({}).catch((e) => e);
     expect(err).toBeInstanceOf(ValidationError);
-    expect(err.message).toBe("crossSearch requires at least one of 'query', 'status', or 'channelId'");
+    expect(err.message).toBe(
+      "crossSearch requires at least one of 'query', 'status', or 'channelId'",
+    );
   });
 });

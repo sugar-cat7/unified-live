@@ -34,7 +34,7 @@
 - All 4 packages use **fixed (lockstep) versioning** via `@changesets/cli`.
 - Run `pnpm changeset` for user-facing changes in PRs. Not needed for CI/test/tooling-only changes.
 - On merge to `main`, `changesets/action` creates a "Version Packages" PR (CHANGELOG + version bump only).
-- Publishing is triggered by pushing a git tag (`v*`), which runs `publish.yaml` via OIDC Trusted Publishing.
+- Merging the Version Packages PR auto-creates a git tag (`v*`), which triggers `publish.yaml` via OIDC Trusted Publishing.
 - Release config: `.changeset/config.json`
 
 ## Claude Code Operations

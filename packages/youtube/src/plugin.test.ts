@@ -76,7 +76,7 @@ describe("createYouTubePlugin", () => {
     });
   });
 
-  it("accepts custom quota dailyLimit", () => {
+  it("creates plugin when quota config is provided", () => {
     plugin = createYouTubePlugin({
       apiKey: "test-key",
       fetch: createMockFetch([]),

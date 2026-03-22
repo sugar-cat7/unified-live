@@ -602,7 +602,7 @@ describe("createRestManager", () => {
     await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow();
   });
 
-  it("handles invalid baseUrl gracefully (no URL parsing crash)", async () => {
+  it("does not crash on invalid baseUrl (catch branch in URL parsing)", async () => {
     const strategy = createMockStrategy();
     const mockFetch = createMockFetch([{ status: 200, body: { ok: true } }]);
     const manager = createRestManager({
@@ -613,6 +613,8 @@ describe("createRestManager", () => {
     });
 
     expect(manager.baseUrl).toBe("not-a-valid-url");
+    // request() still works — it constructs URL from baseUrl + path
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow();
   });
 
   it("uses default maxRetries and baseDelay when retry config is absent", async () => {

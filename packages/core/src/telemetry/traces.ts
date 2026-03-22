@@ -1,5 +1,5 @@
 import type { Tracer, TracerProvider } from "@opentelemetry/api";
-import { SpanStatusCode, trace } from "@opentelemetry/api";
+import { SPAN_STATUS_ERROR, noopTracerProvider } from "./otel-types";
 
 declare const __SDK_VERSION__: string;
 
@@ -8,10 +8,10 @@ const TRACER_VERSION = __SDK_VERSION__;
 
 /**
  * Returns the SDK tracer instance.
- * When no OTel SDK is registered, this returns a no-op tracer automatically
- * (built into @opentelemetry/api).
+ * When no provider is passed, returns a no-op tracer with zero overhead.
+ * Pass the global `trace` object from @opentelemetry/api for real tracing.
  *
- * @param provider - optional TracerProvider override (defaults to global)
+ * @param provider - optional TracerProvider (e.g., `trace` from @opentelemetry/api)
  * @returns the SDK tracer instance
  * @precondition none
  * @postcondition returns a Tracer instance (possibly no-op)
@@ -19,7 +19,7 @@ const TRACER_VERSION = __SDK_VERSION__;
  * @category Observability
  */
 export const getTracer = (provider?: TracerProvider): Tracer => {
-  const tp = provider ?? trace;
+  const tp = provider ?? noopTracerProvider;
   return tp.getTracer(TRACER_NAME, TRACER_VERSION);
 };
 
@@ -62,12 +62,12 @@ export const SpanAttributes = {
 
 /**
  * Wrap an async operation in an OTel span with attributes and automatic error recording.
- * @param tracer - a valid OTel Tracer instance
+ * @param tracer - a valid Tracer instance (real OTel or no-op)
  * @param name - the span name
  * @param attrs - key-value attributes to set on the span
  * @param fn - async function to execute within the span
  * @returns the result of fn
- * @precondition tracer is a valid OTel Tracer instance
+ * @precondition tracer is a valid Tracer instance
  * @postcondition span is ended after fn completes or throws
  * @idempotency Safe — creates a new span per call
  * @category Observability
@@ -86,7 +86,7 @@ export const withSpan = async <T>(
       return result;
     } catch (error) {
       span.setStatus({
-        code: SpanStatusCode.ERROR,
+        code: SPAN_STATUS_ERROR,
         message: error instanceof Error ? error.message : String(error),
       });
       span.recordException(error instanceof Error ? error : new Error(String(error)));

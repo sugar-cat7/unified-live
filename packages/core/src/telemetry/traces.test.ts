@@ -1,4 +1,3 @@
-import { trace } from "@opentelemetry/api";
 import {
   ATTR_ERROR_TYPE,
   ATTR_HTTP_REQUEST_METHOD,
@@ -10,31 +9,17 @@ import {
   ATTR_URL_SCHEME,
 } from "@opentelemetry/semantic-conventions";
 import { describe, expect, it, vi } from "vitest";
+import { SPAN_STATUS_ERROR } from "./otel-types";
 import { getTracer, SpanAttributes, withSpan } from "./traces.js";
 
 describe("getTracer", () => {
-  it("returns a tracer object", () => {
+  it("returns a no-op tracer by default", () => {
     const tracer = getTracer();
     expect(tracer).toBeDefined();
     expect(typeof tracer.startActiveSpan).toBe("function");
-    expect(typeof tracer.startSpan).toBe("function");
   });
 
-  it("passes tracer name and version to trace.getTracer", () => {
-    const spy = vi.spyOn(trace, "getTracer");
-    getTracer();
-    expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));
-    spy.mockRestore();
-  });
-
-  it("returns a tracer on repeated calls", () => {
-    const a = getTracer();
-    const b = getTracer();
-    expect(typeof a.startActiveSpan).toBe("function");
-    expect(typeof b.startActiveSpan).toBe("function");
-  });
-
-  it("startActiveSpan executes the callback and returns its value", () => {
+  it("no-op tracer executes callback and returns its value", () => {
     const tracer = getTracer();
     const result = tracer.startActiveSpan("test-span", (span) => {
       span.end();
@@ -55,6 +40,14 @@ describe("getTracer", () => {
     const tracer = getTracer(mockProvider);
     expect(tracer).toBe(mockTracer);
     expect(mockProvider.getTracer).toHaveBeenCalledWith("unified-live", expect.any(String));
+  });
+
+  it("uses OTel TracerProvider when passed", () => {
+    const { trace } = require("@opentelemetry/api");
+    const spy = vi.spyOn(trace, "getTracer");
+    getTracer(trace);
+    expect(spy).toHaveBeenCalledWith("unified-live", expect.any(String));
+    spy.mockRestore();
   });
 });
 
@@ -115,7 +108,9 @@ describe("withSpan", () => {
         throw new Error("boom");
       }),
     ).rejects.toThrow("boom");
-    expect(mockSpan.setStatus).toHaveBeenCalledWith(expect.objectContaining({ code: 2 }));
+    expect(mockSpan.setStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ code: SPAN_STATUS_ERROR }),
+    );
     expect(mockSpan.recordException).toHaveBeenCalled();
     expect(mockSpan.end).toHaveBeenCalled();
   });

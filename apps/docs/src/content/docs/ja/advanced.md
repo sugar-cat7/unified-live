@@ -5,12 +5,12 @@ description: "OpenTelemetry トレーシングとメトリクス"
 
 ## OpenTelemetry 連携
 
-SDK はすべての API 呼び出しで OpenTelemetry トレースとメトリクスを出力します。`@opentelemetry/api` は peer dependency です（未設定時は no-op）。
+SDK は OpenTelemetry トレースとメトリクスをサポートしています。`@opentelemetry/api` は**オプション**の peer dependency です — インストールしなくてもSDKは動作し、ビルトインの no-op スタブがゼロオーバーヘッドで使われます。実際のトレーシングが必要な場合のみインストールしてください。
 
 ### セットアップ
 
 ```bash
-pnpm add @opentelemetry/sdk-node @opentelemetry/sdk-trace-node @opentelemetry/resources @opentelemetry/semantic-conventions
+pnpm add @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/sdk-trace-node @opentelemetry/resources @opentelemetry/semantic-conventions
 ```
 
 ```ts

@@ -1,5 +1,5 @@
 import type { Meter, MeterProvider } from "@opentelemetry/api";
-import { metrics } from "@opentelemetry/api";
+import { noopMeterProvider } from "./otel-types";
 
 declare const __SDK_VERSION__: string;
 
@@ -8,10 +8,10 @@ const METER_VERSION = __SDK_VERSION__;
 
 /**
  * Returns the SDK meter instance.
- * When no OTel SDK is registered, this returns a no-op meter automatically
- * (built into @opentelemetry/api).
+ * When no provider is passed, returns a no-op meter with zero overhead.
+ * Pass the global `metrics` object from @opentelemetry/api for real metrics.
  *
- * @param provider - optional MeterProvider override (defaults to global)
+ * @param provider - optional MeterProvider (e.g., `metrics` from @opentelemetry/api)
  * @returns the SDK meter instance
  * @precondition none
  * @postcondition returns a Meter instance (possibly no-op)
@@ -19,7 +19,7 @@ const METER_VERSION = __SDK_VERSION__;
  * @category Observability
  */
 export const getMeter = (provider?: MeterProvider): Meter => {
-  const mp = provider ?? metrics;
+  const mp = provider ?? noopMeterProvider;
   return mp.getMeter(METER_NAME, METER_VERSION);
 };
 

@@ -1,11 +1,27 @@
+<p align="center">
+  <img src="../../apps/docs/public/logo.svg" alt="unified-live logo" width="48" height="48" />
+</p>
+
 # @unified-live/core
 
-Base types, error hierarchy, REST management, rate limiting, and plugin system for the unified-live SDK. **Zero runtime dependencies.**
+Client, plugin system, unified types, error hierarchy, and OpenTelemetry tracing for the unified-live SDK. **Zero runtime dependencies.**
+
+[![npm](https://img.shields.io/npm/v/@unified-live/core.svg)](https://www.npmjs.com/package/@unified-live/core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
 
 ## Install
 
 ```bash
 pnpm add @unified-live/core
+```
+
+## Usage
+
+```ts
+import { UnifiedClient } from "@unified-live/core";
+
+using client = UnifiedClient.create({ plugins: [/* ... */] });
+const content = await client.resolve("https://www.youtube.com/watch?v=...");
 ```
 
 ## Development

@@ -12,6 +12,10 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "unified-live",
+      logo: {
+        src: "./public/logo.svg",
+        alt: "unified-live logo",
+      },
       lastUpdated: true,
       editLink: {
         baseUrl: "https://github.com/sugar-cat7/unified-live/edit/main/apps/docs/",

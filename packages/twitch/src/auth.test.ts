@@ -172,8 +172,7 @@ describe("createClientCredentialsTokenManager", () => {
 
   it("falls back to globalThis.fetch when config.fetch is omitted", async () => {
     const mockGlobalFetch = makeMockFetch({ accessToken: "global-token" });
-    const original = globalThis.fetch;
-    globalThis.fetch = mockGlobalFetch;
+    vi.stubGlobal("fetch", mockGlobalFetch);
     try {
       const manager = createClientCredentialsTokenManager({
         clientId: "id",
@@ -185,7 +184,7 @@ describe("createClientCredentialsTokenManager", () => {
       expect(header).toBe("Bearer global-token");
       expect(mockGlobalFetch).toHaveBeenCalledOnce();
     } finally {
-      globalThis.fetch = original;
+      vi.unstubAllGlobals();
     }
   });
 

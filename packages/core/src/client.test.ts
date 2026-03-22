@@ -915,9 +915,8 @@ describe("UnifiedClient crossSearch", () => {
     plugin.search = vi.fn(async () => ({ items: [], hasMore: false }));
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.crossSearch({})).rejects.toThrow(ValidationError);
-    await expect(client.crossSearch({})).rejects.toThrow(
-      "crossSearch requires at least one of 'query', 'status', or 'channelId'",
-    );
+    const err = await client.crossSearch({}).catch((e) => e);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect(err.message).toBe("crossSearch requires at least one of 'query', 'status', or 'channelId'");
   });
 });

@@ -467,7 +467,7 @@ describe("createYouTubePlugin", () => {
     await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(QuotaExhaustedError);
   });
 
-  it("handleRateLimit returns false for non-429 (e.g. 403)", async () => {
+  it("throws RateLimitError on 403 (handleRateLimit returns false for non-429)", async () => {
     const fetchFn = createMockFetch([
       {
         status: 403,
@@ -476,7 +476,7 @@ describe("createYouTubePlugin", () => {
     ]);
 
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
-    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow();
+    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow("Rate limited");
   });
 
   it("handles 429 rate limit by retrying", async () => {

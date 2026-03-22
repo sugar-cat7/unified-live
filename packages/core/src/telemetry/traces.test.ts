@@ -141,60 +141,37 @@ describe("withSpan", () => {
   });
 });
 
-describe("OTel constants", () => {
-  it("SPAN_KIND_CLIENT equals 2", () => {
-    expect(SPAN_KIND_CLIENT).toBe(2);
-  });
-
-  it("SPAN_STATUS_ERROR equals 2", () => {
-    expect(SPAN_STATUS_ERROR).toBe(2);
+describe("OTel constants match @opentelemetry/api", () => {
+  it.each([
+    { name: "SPAN_KIND_CLIENT", value: SPAN_KIND_CLIENT, canonical: 2 },
+    { name: "SPAN_STATUS_ERROR", value: SPAN_STATUS_ERROR, canonical: 2 },
+  ])("$name matches OTel spec value", ({ value, canonical }) => {
+    expect(value).toBe(canonical);
   });
 });
 
 describe("noopTracerProvider", () => {
-  it("getTracer returns a tracer whose startSpan returns a no-op span", () => {
-    const tracer = noopTracerProvider.getTracer("test");
-    const span = tracer.startSpan("test-span");
-    expect(span).toBeDefined();
+  it("startSpan returns a non-recording span", () => {
+    const span = noopTracerProvider.getTracer("test").startSpan("test-span");
+    expect(span.isRecording()).toBe(false);
   });
 
   it.each([
-    {
-      method: "spanContext",
-      call: (s: any) => s.spanContext(),
-      expected: { traceId: "", spanId: "", traceFlags: 0 },
-    },
+    { method: "spanContext", call: (s: any) => s.spanContext(), expected: { traceId: "", spanId: "", traceFlags: 0 } },
     { method: "setAttribute", call: (s: any) => s.setAttribute("key", "val"), returnsSpan: true },
-    {
-      method: "setAttributes",
-      call: (s: any) => s.setAttributes({ key: "val" }),
-      returnsSpan: true,
-    },
+    { method: "setAttributes", call: (s: any) => s.setAttributes({ key: "val" }), returnsSpan: true },
     { method: "setStatus", call: (s: any) => s.setStatus({ code: 0 }), returnsSpan: true },
     { method: "updateName", call: (s: any) => s.updateName("new"), returnsSpan: true },
+    { method: "recordException", call: (s: any) => s.recordException(new Error("x")), returnsVoid: true },
     { method: "addEvent", call: (s: any) => s.addEvent("evt"), returnsSpan: true },
     { method: "addLink", call: (s: any) => s.addLink({ context: {} as any }), returnsSpan: true },
     { method: "addLinks", call: (s: any) => s.addLinks([]), returnsSpan: true },
-    { method: "isRecording", call: (s: any) => s.isRecording(), expected: false },
-  ])("no-op span.$method works without error", ({ call, expected, returnsSpan }) => {
+    { method: "end", call: (s: any) => s.end(), returnsVoid: true },
+  ])("no-op span.$method returns expected value", ({ call, expected, returnsSpan }) => {
     const span = noopTracerProvider.getTracer("t").startSpan("s");
     const result = call(span);
-    if (expected !== undefined) {
-      expect(result).toEqual(expected);
-    }
-    if (returnsSpan) {
-      expect(result).toBe(span);
-    }
-  });
-
-  it("no-op span.recordException does not throw", () => {
-    const span = noopTracerProvider.getTracer("t").startSpan("s");
-    expect(() => span.recordException(new Error("test"))).not.toThrow();
-  });
-
-  it("no-op span.end does not throw", () => {
-    const span = noopTracerProvider.getTracer("t").startSpan("s");
-    expect(() => span.end()).not.toThrow();
+    if (expected !== undefined) expect(result).toEqual(expected);
+    if (returnsSpan) expect(result).toBe(span);
   });
 });
 

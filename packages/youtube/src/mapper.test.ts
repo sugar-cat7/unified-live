@@ -261,73 +261,56 @@ describe("toContent", () => {
     );
   });
 
-  it.each([
-    {
-      desc: "broadcast with missing channelTitle, title, and concurrentViewers",
-      resource: {
-        ...baseVideoResource,
-        snippet: {
-          ...baseVideoResource.snippet,
-          channelTitle: undefined,
-          title: undefined,
-          liveBroadcastContent: "live",
-        },
-        liveStreamingDetails: {
-          actualStartTime: "2024-01-01T12:00:00Z",
-          concurrentViewers: undefined,
-        },
-      } as YTVideoResource,
-      assertions: (content: ReturnType<typeof toContent>) => {
-        expect(content.channel.name).toBe("");
-        expect(content.title).toBe("");
-        if (content.type === "broadcast") {
-          expect(content.viewerCount).toBe(0);
-        }
+  it("falls back to defaults for broadcast with missing channelTitle, title, and concurrentViewers", () => {
+    const resource = {
+      ...baseVideoResource,
+      snippet: {
+        ...baseVideoResource.snippet,
+        channelTitle: undefined,
+        title: undefined,
+        liveBroadcastContent: "live",
       },
-    },
-    {
-      desc: "upcoming with missing title, description, and tags",
-      resource: {
-        ...upcomingVideoResource,
-        snippet: {
-          ...upcomingVideoResource.snippet,
-          title: undefined,
-          description: undefined,
-          tags: undefined,
-        },
-      } as YTVideoResource,
-      assertions: (content: ReturnType<typeof toContent>) => {
-        expect(content.title).toBe("");
-        expect(content.description).toBe("");
-        expect(content.tags).toEqual([]);
+      liveStreamingDetails: {
+        actualStartTime: "2024-01-01T12:00:00Z",
+        concurrentViewers: undefined,
       },
-    },
-    {
-      desc: "archive with missing title, duration, and viewCount",
-      resource: {
-        ...baseVideoResource,
-        snippet: {
-          ...baseVideoResource.snippet,
-          title: undefined,
-        },
-        contentDetails: {
-          duration: undefined,
-        },
-        statistics: {
-          viewCount: undefined,
-        },
-      } as YTVideoResource,
-      assertions: (content: ReturnType<typeof toContent>) => {
-        expect(content.title).toBe("");
-        if (content.type === "archive") {
-          expect(content.duration).toBe(0);
-          expect(content.viewCount).toBe(0);
-        }
-      },
-    },
-  ])("falls back to defaults when $desc", ({ resource, assertions }) => {
+    } as YTVideoResource;
     const content = toContent(resource);
-    assertions(content);
+    expect(content.type).toBe("broadcast");
+    expect(content.channel.name).toBe("");
+    expect(content.title).toBe("");
+    expect((content as { viewerCount: number }).viewerCount).toBe(0);
+  });
+
+  it("falls back to defaults for upcoming with missing title, description, and tags", () => {
+    const resource = {
+      ...upcomingVideoResource,
+      snippet: {
+        ...upcomingVideoResource.snippet,
+        title: undefined,
+        description: undefined,
+        tags: undefined,
+      },
+    } as YTVideoResource;
+    const content = toContent(resource);
+    expect(content.type).toBe("scheduled");
+    expect(content.title).toBe("");
+    expect(content.description).toBe("");
+    expect(content.tags).toEqual([]);
+  });
+
+  it("falls back to defaults for archive with missing title, duration, and viewCount", () => {
+    const resource = {
+      ...baseVideoResource,
+      snippet: { ...baseVideoResource.snippet, title: undefined },
+      contentDetails: { duration: undefined },
+      statistics: { viewCount: undefined },
+    } as YTVideoResource;
+    const content = toContent(resource);
+    expect(content.type).toBe("archive");
+    expect(content.title).toBe("");
+    expect((content as { duration: number }).duration).toBe(0);
+    expect((content as { viewCount: number }).viewCount).toBe(0);
   });
 
   it("throws when video has no thumbnail at all", () => {

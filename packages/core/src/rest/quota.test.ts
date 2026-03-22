@@ -167,7 +167,7 @@ describe("createQuotaBudgetStrategy", () => {
   it("uses defaults for dailyLimit, defaultCost, and platform when not provided", async () => {
     strategy = createQuotaBudgetStrategy({
       costMap: {},
-    } as any);
+    });
 
     // Default dailyLimit = 10000, defaultCost = 1, platform = "unknown"
     const handle = await strategy.acquire(makeReq("anything"));
@@ -178,19 +178,16 @@ describe("createQuotaBudgetStrategy", () => {
   });
 
   it("handles missing DateTimeFormat parts by falling back to 0", () => {
-    const originalFormatToParts = Intl.DateTimeFormat.prototype.formatToParts;
-    Intl.DateTimeFormat.prototype.formatToParts = () => [];
+    const spy = vi.spyOn(Intl.DateTimeFormat.prototype, "formatToParts").mockReturnValue([]);
     try {
-      // Creating strategy triggers nextResetTime() which uses formatToParts
       strategy = createQuotaBudgetStrategy({
         dailyLimit: 100,
         costMap: {},
         platform: "test",
       });
-      const status = strategy.getStatus();
-      expect(status.resetsAt).toBeInstanceOf(Date);
+      expect(strategy.getStatus().resetsAt).toBeInstanceOf(Date);
     } finally {
-      Intl.DateTimeFormat.prototype.formatToParts = originalFormatToParts;
+      spy.mockRestore();
     }
   });
 

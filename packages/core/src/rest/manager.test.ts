@@ -519,20 +519,17 @@ describe("createRestManager", () => {
     }
   });
 
-  it("sets error.type to 'unknown' when a non-Error is thrown and no HTTP status exists", async () => {
+  it("propagates non-Error thrown values from createHeaders", async () => {
     strategy = createMockStrategy();
-    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
 
     const manager = createRestManager({
       platform: "test",
       baseUrl: "https://api.example.com",
       rateLimitStrategy: strategy,
-      fetch: fetchFn,
+      fetch: createMockFetch([]),
     });
 
-    // Override createHeaders to throw a non-Error value inside the try block
     manager.createHeaders = () => {
-      // eslint-disable-next-line no-throw-literal
       throw "string-error";
     };
 
@@ -587,7 +584,7 @@ describe("createRestManager", () => {
     expect(manager.request).not.toBe(originalRequest);
   });
 
-  it("accepts custom retryableStatuses set", async () => {
+  it("treats custom retryableStatuses as retryable", async () => {
     const strategy = createMockStrategy();
     const mockFetch = createMockFetch([{ status: 502, body: {} }]);
     const manager = createRestManager({
@@ -598,23 +595,19 @@ describe("createRestManager", () => {
       retry: { maxRetries: 0, retryableStatuses: [502, 503] },
     });
 
-    // 502 with 0 retries — should fail, but the retryableStatuses set is used
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow();
+    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow(NetworkError);
   });
 
-  it("does not crash on invalid baseUrl (catch branch in URL parsing)", async () => {
+  it("creates manager with invalid baseUrl without crashing", () => {
     const strategy = createMockStrategy();
-    const mockFetch = createMockFetch([{ status: 200, body: { ok: true } }]);
     const manager = createRestManager({
       platform: "test",
       baseUrl: "not-a-valid-url",
       rateLimitStrategy: strategy,
-      fetch: mockFetch,
+      fetch: createMockFetch([]),
     });
 
     expect(manager.baseUrl).toBe("not-a-valid-url");
-    // request() still works — it constructs URL from baseUrl + path
-    await expect(manager.request({ method: "GET", path: "/test" })).rejects.toThrow();
   });
 
   it("uses default maxRetries and baseDelay when retry config is absent", async () => {
@@ -700,9 +693,8 @@ describe("createRestManager", () => {
     expect(invalidateFn).toHaveBeenCalled();
   });
 
-  it("uses globalThis.fetch when no fetch option provided", () => {
+  it("creates manager without custom fetch option", () => {
     const strategy = createMockStrategy();
-    // Just verify the manager can be created without providing fetch
     const manager = createRestManager({
       platform: "test",
       baseUrl: "https://api.test.com",

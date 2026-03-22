@@ -8,7 +8,15 @@ import {
   type RestManager,
   type SearchOptions,
 } from "@unified-live/core";
-import { toContent, toLive, toMovie, toVideo, type TCMovie, type TCUser, toChannel } from "./mapper";
+import {
+  toContent,
+  toLive,
+  toMovie,
+  toVideo,
+  type TCMovie,
+  type TCUser,
+  toChannel,
+} from "./mapper";
 
 type TCMovieResponse = {
   movie: TCMovie;

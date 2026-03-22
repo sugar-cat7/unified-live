@@ -19,8 +19,6 @@ const client = UnifiedClient.create({
 
 const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 console.log(content.title, content.type); // "broadcast" or "archive"
-
-client[Symbol.dispose]();
 ```
 
 ### エラーハンドリング
@@ -96,8 +94,6 @@ const [ytStreams, twitchStreams] = await Promise.all([
 const allStreams = [...ytStreams, ...twitchStreams].sort((a, b) => b.viewerCount - a.viewerCount);
 
 console.log(`プラットフォーム全体で ${allStreams.length} 配信`);
-
-client[Symbol.dispose]();
 ```
 
 ### ライブ配信モニター
@@ -122,7 +118,6 @@ await poll(); // 初回チェック
 
 // クリーンアップ
 clearInterval(interval);
-client[Symbol.dispose]();
 ```
 
 ### 型安全なコンテンツ分岐
@@ -176,7 +171,6 @@ const client = UnifiedClient.create({
 const content = await client.resolve("https://www.twitch.tv/videos/123456");
 // スパン "unified-live.rest GET" がプラットフォームとパス属性付きで発行される
 
-client[Symbol.dispose]();
 await sdk.shutdown();
 ```
 
@@ -230,7 +224,6 @@ const mockPlugin: PlatformPlugin = {
   }),
   listBroadcasts: async () => [],
   listArchives: async () => ({ items: [mockContent as Archive], hasMore: false }),
-  [Symbol.dispose]: () => {},
 };
 
 // テストで使用

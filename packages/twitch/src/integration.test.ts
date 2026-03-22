@@ -1,5 +1,5 @@
 import { Content, NotFoundError, UnifiedClient } from "@unified-live/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createTwitchPlugin } from "./plugin";
 
 const createMockFetch = (
@@ -45,10 +45,6 @@ const sampleVideoResponse = {
 
 describe("Twitch Integration", () => {
   let client: ReturnType<typeof UnifiedClient.create>;
-
-  afterEach(() => {
-    client?.[Symbol.dispose]();
-  });
 
   it("full consumer flow: UnifiedClient.create -> resolve by URL", async () => {
     const fetchFn = createMockFetch(() => ({ body: sampleVideoResponse }));
@@ -97,16 +93,6 @@ describe("Twitch Integration", () => {
 
     const content = await client.getContent("twitch", "12345");
     expect(content.id).toBe("12345");
-  });
-
-  it("[Symbol.dispose] cleans up all resources", () => {
-    const plugin = createTwitchPlugin({
-      clientId: "test-id",
-      clientSecret: "test-secret",
-      fetch: createMockFetch(() => ({ body: {} })),
-    });
-    client = UnifiedClient.create({ plugins: [plugin] });
-    client[Symbol.dispose]();
   });
 
   it("getContent throws NotFoundError for nonexistent video", async () => {

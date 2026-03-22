@@ -151,15 +151,6 @@ client.register(twitch);
 client.register(twitcasting);
 ```
 
-## リソースの解放
-
-`using` を使うとスコープを抜けた時点で自動的に内部タイマーが解放されます:
-
-```ts
-using client = UnifiedClient.create({ plugins: [createYouTubePlugin({ apiKey: "..." })] });
-// スコープ終了時に client[Symbol.dispose]() が自動的に呼ばれます
-```
-
 ## 次のステップ
 
 - [エラーハンドリング](../error-handling/) — API エラーの処理

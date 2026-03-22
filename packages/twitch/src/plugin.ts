@@ -60,6 +60,7 @@ export const createTwitchPlugin = (config: TwitchPluginConfig): PlatformPlugin =
       rateLimitStrategy: createTokenBucketStrategy({
         global: { requests: 800, perMs: 60_000 },
         parseHeaders: parseTwitchRateLimitHeaders,
+        platform: "twitch",
       }),
       tokenManager: createClientCredentialsTokenManager({
         clientId: config.clientId,

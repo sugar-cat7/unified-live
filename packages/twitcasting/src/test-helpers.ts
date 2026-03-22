@@ -49,5 +49,4 @@ export const createMockRest = (response: unknown): RestManager => ({
   handleResponse: vi.fn(),
   handleRateLimit: vi.fn(),
   parseRateLimitHeaders: vi.fn(),
-  [Symbol.dispose]: vi.fn(),
 });

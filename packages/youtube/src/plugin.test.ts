@@ -5,7 +5,7 @@ import {
   QuotaExhaustedError,
   ValidationError,
 } from "@unified-live/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createYouTubePlugin } from "./plugin";
 import { createMockFetch } from "./test-helpers";
 
@@ -61,10 +61,6 @@ const sampleChannelItem = {
 
 describe("createYouTubePlugin", () => {
   let plugin: ReturnType<typeof createYouTubePlugin>;
-
-  afterEach(() => {
-    plugin?.[Symbol.dispose]();
-  });
 
   it("reports correct capabilities", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: createMockFetch([]) });
@@ -484,11 +480,4 @@ describe("createYouTubePlugin", () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
-  it("[Symbol.dispose] releases resources", () => {
-    plugin = createYouTubePlugin({
-      apiKey: "test-key",
-      fetch: createMockFetch([]),
-    });
-    expect(() => plugin[Symbol.dispose]()).not.toThrow();
-  });
 });

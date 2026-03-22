@@ -214,12 +214,6 @@ export type UnifiedClient = {
    */
   platforms(): string[];
 
-  /**
-   * Release all resources (rate limit timers, token refresh schedulers).
-   *
-   * @idempotency Safe to call multiple times
-   */
-  [Symbol.dispose](): void;
 };
 
 /**
@@ -556,12 +550,6 @@ export const UnifiedClient = {
         return [...plugins.keys()];
       },
 
-      [Symbol.dispose](): void {
-        for (const plugin of plugins.values()) {
-          plugin[Symbol.dispose]();
-        }
-        plugins.clear();
-      },
     };
 
     return client;
@@ -593,8 +581,7 @@ export const UnifiedClient = {
       typeof obj.crossSearch === "function" &&
       typeof obj.platform === "function" &&
       typeof obj.match === "function" &&
-      typeof obj.platforms === "function" &&
-      typeof obj[Symbol.dispose] === "function"
+      typeof obj.platforms === "function"
     );
   },
 } as const;

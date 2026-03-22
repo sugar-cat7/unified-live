@@ -13,7 +13,7 @@
   <a href="https://app.codecov.io/github/sugar-cat7/unified-live"><img src="https://codecov.io/github/sugar-cat7/unified-live/graph/badge.svg" alt="codecov" /></a>
   <a href="https://github.com/sugar-cat7/unified-live/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue.svg" alt="TypeScript" /></a>
-  <img src="https://img.shields.io/badge/dependencies-0-brightgreen.svg" alt="Zero Dependencies" />
+  <img src="https://img.shields.io/badge/dependencies-0_(optional_peer:_OTel)-brightgreen.svg" alt="Zero Required Dependencies" />
 </p>
 
 <p align="center">
@@ -36,7 +36,7 @@ Pass a URL and the SDK auto-detects the platform, normalizes the response, and h
 - **Plugin Architecture** — Install only the platforms you need. Each platform is a separate package with its own auth, rate limiting, and URL resolution.
 - **OpenTelemetry Compatible** — Built-in tracing with zero overhead when OTel SDK is not configured. Every API call emits spans with platform, HTTP, rate limit, and quota attributes.
 - **Automatic Rate Limiting** — Token bucket (Twitch, TwitCasting) and quota-based (YouTube) strategies handled transparently with exponential backoff retries.
-- **Zero Dependencies** — The core package has zero runtime dependencies. Plain TypeScript types with discriminated unions — no schema libraries, no bloat.
+- **Zero Required Dependencies** — The core package has no runtime dependencies. OpenTelemetry tracing is supported via an optional peer dependency. Plain TypeScript types with discriminated unions — no schema libraries, no bloat.
 - **Type-Safe** — `Content.isBroadcast()` / `Content.isArchive()` companion object type guards for safe narrowing across all content types.
 - **Runtime Agnostic** — Works on Node.js 18+, Deno, Bun, Cloudflare Workers — any runtime with native `fetch`.
 
@@ -51,7 +51,7 @@ import { UnifiedClient } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
-using client = UnifiedClient.create({
+const client = UnifiedClient.create({
   plugins: [
     createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
     createTwitchPlugin({

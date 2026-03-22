@@ -17,7 +17,6 @@ const createMockStrategy = (): RateLimitStrategy => {
       resetsAt: new Date(),
       queued: 0,
     }),
-    [Symbol.dispose]: vi.fn(),
   };
 };
 
@@ -52,7 +51,6 @@ describe("PlatformPlugin.create", () => {
   let plugin: PlatformPlugin | undefined;
 
   afterEach(() => {
-    plugin?.[Symbol.dispose]();
     plugin = undefined;
   });
 
@@ -218,7 +216,6 @@ describe("PlatformPlugin.create", () => {
     );
     expect(plugin.capabilities.supportsClips).toBe(true);
     expect(plugin.listClips).toBeDefined();
-    plugin[Symbol.dispose]();
   });
 
   it("wires listClips when provided", async () => {
@@ -406,18 +403,6 @@ describe("PlatformPlugin.create", () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
-  it("[Symbol.dispose] calls rest[Symbol.dispose]", () => {
-    const strategy = createMockStrategy();
-    plugin = PlatformPlugin.create(
-      createMinimalDefinition({ rateLimitStrategy: strategy }),
-      createMockMethods(),
-    );
-
-    plugin[Symbol.dispose]();
-
-    expect(strategy[Symbol.dispose]).toHaveBeenCalledTimes(1);
-    plugin = undefined; // prevent double [Symbol.dispose] in afterEach
-  });
 });
 
 describe("PlatformPlugin.is", () => {
@@ -447,8 +432,6 @@ describe("PlatformPlugin.is", () => {
     const plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
 
     expect(PlatformPlugin.is(plugin)).toBe(true);
-
-    plugin[Symbol.dispose]();
   });
 
   it("returns true for a manually constructed object with all required properties", () => {
@@ -469,7 +452,6 @@ describe("PlatformPlugin.is", () => {
       getChannel: async () => ({}),
       listBroadcasts: async () => [],
       listArchives: async () => ({ items: [] }),
-      [Symbol.dispose]: () => {},
     };
 
     expect(PlatformPlugin.is(obj)).toBe(true);

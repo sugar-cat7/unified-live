@@ -30,8 +30,8 @@ const twitcasting = createTwitCastingPlugin({
   clientSecret: process.env.TWITCASTING_CLIENT_SECRET!,
 });
 
-// 2. Create unified client (auto-disposes via `using`)
-using client = UnifiedClient.create({
+// 2. Create unified client
+const client = UnifiedClient.create({
   plugins: [youtube, twitch, twitcasting],
 });
 

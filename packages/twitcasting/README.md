@@ -21,7 +21,7 @@ pnpm add @unified-live/core @unified-live/twitcasting
 import { UnifiedClient } from "@unified-live/core";
 import { createTwitCastingPlugin } from "@unified-live/twitcasting";
 
-using client = UnifiedClient.create({
+const client = UnifiedClient.create({
   plugins: [
     createTwitCastingPlugin({
       clientId: process.env.TC_CLIENT_ID!,

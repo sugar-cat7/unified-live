@@ -33,7 +33,8 @@ Pass a URL — the SDK auto-detects the platform, normalizes the response, and h
 - **Plugin Architecture** — Install only the platforms you need. Each platform is a separate package with its own auth, rate limiting, and URL resolution.
 - **OpenTelemetry Compatible** — Built-in tracing with zero overhead when OTel SDK is not configured. Every API call emits spans with platform, HTTP, rate limit, and quota attributes.
 - **Automatic Rate Limiting** — Token bucket (Twitch, TwitCasting) and quota-based (YouTube) strategies handled transparently with exponential backoff retries.
-- **Type-Safe** — Zod-validated schemas with discriminated unions. `Content.isBroadcast()` / `Content.isArchive()` type guards for safe narrowing.
+- **Zero Dependencies** — The core package has zero runtime dependencies. Plain TypeScript types with discriminated unions — no schema libraries, no bloat.
+- **Type-Safe** — `Content.isBroadcast()` / `Content.isArchive()` companion object type guards for safe narrowing across all content types.
 - **Runtime Agnostic** — Works on Node.js 18+, Deno, Bun, Cloudflare Workers — any runtime with native `fetch`.
 
 ## Quick Start

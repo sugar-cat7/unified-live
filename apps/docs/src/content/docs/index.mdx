@@ -39,10 +39,14 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
     Token bucket (Twitch, TwitCasting) and quota-based (YouTube) strategies are handled
     transparently. The SDK retries with exponential backoff and tracks quota consumption locally.
   </Card>
-  <Card title="Type-Safe" icon="approve-check">
-    Zero-dependency discriminated unions (`Content` covers `Broadcast`, `ScheduledBroadcast`,
-    `Archive`, and `Clip`). Companion object type guards (`Content.isBroadcast()`,
-    `Content.isArchive()`, etc.) for safe narrowing.
+  <Card title="Zero Dependencies" icon="approve-check">
+    The core package has zero runtime dependencies. Plain TypeScript types — no schema libraries, no
+    bloat. Minimal bundle size for any environment.
+  </Card>
+  <Card title="Type-Safe" icon="seti:typescript">
+    Discriminated unions (`Content` covers `Broadcast`, `ScheduledBroadcast`, `Archive`, and
+    `Clip`). Companion object type guards (`Content.isBroadcast()`, `Content.isArchive()`, etc.) for
+    safe narrowing.
   </Card>
   <Card title="Runtime Agnostic" icon="laptop">
     Works on Node.js 18+, Deno, Bun, and Cloudflare Workers — any runtime with native `fetch`. No

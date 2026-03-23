@@ -11,7 +11,7 @@ Building an application that aggregates live streaming data across YouTube, Twit
 | :------------------- | :-------------------------------------------------------------- | :-------------------------------------------------- | :------------------------------------------------------ |
 | **Auth**             | API Key (query parameter)                                       | OAuth2 Client Credentials                           | Basic Auth (base64)                                     |
 | **Rate Limiting**    | Quota-based (10,000 units/day)                                  | Token bucket (header-driven)                        | Token bucket (60 req/60s)                               |
-| **Cost Model**       | Per-endpoint cost (1–100 units)                               | Flat (1 req = 1 token)                              | Flat (1 req = 1 token)                                  |
+| **Cost Model**       | Per-endpoint cost (1–100 units)                                 | Flat (1 req = 1 token)                              | Flat (1 req = 1 token)                                  |
 | **Live vs. Archive** | Same video ID                                                   | Different video IDs                                 | Same movie ID                                           |
 | **Channel ID**       | `UC...` prefix, `@handle`                                       | Login name                                          | User ID                                                 |
 
@@ -78,9 +78,9 @@ console.log(tc.type); // "broadcast" | "archive"
 | Archive resolution             |   ✅    |   ✅   |     ✅      |
 | Search                         |   ✅    |   ✅   |     ✅      |
 | Clips                          |   --    |   ✅   |     --      |
-| Batch get contents             |   ✅    |   ✅   |     ✅*     |
-| Batch get broadcasts           |   ✅*   |   ✅   |     ✅*     |
-| Batch get channels             |   ✅    |   ✅*  |     ✅*     |
+| Batch get contents             |   ✅    |   ✅   |    ✅\*     |
+| Batch get broadcasts           |  ✅\*   |   ✅   |    ✅\*     |
+| Batch get channels             |   ✅    |  ✅\*  |    ✅\*     |
 | Batch get clips                |   --    |   ✅   |     --      |
 | Cross-platform broadcasts      |   ✅    |   ✅   |     ✅      |
 | Cross-platform search          |   ✅    |   ✅   |     ✅      |

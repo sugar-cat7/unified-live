@@ -42,18 +42,21 @@ if (Content.isArchive(content)) {
 
 ### Shared Fields
 
-Both `Broadcast` and `Archive` share these fields:
+All content types (`Broadcast`, `Archive`, `ScheduledBroadcast`, `Clip`) share these fields:
 
-| Field       | Type         | Description                                       |
-| ----------- | ------------ | ------------------------------------------------- |
-| `id`        | `string`     | Platform-specific content ID                      |
-| `platform`  | `string`     | `"youtube"`, `"twitch"`, or `"twitcasting"`       |
-| `title`     | `string`     | Content title                                     |
-| `url`       | `string`     | URL to the content                                |
-| `thumbnail` | `Thumbnail`  | Thumbnail image with `url`, `width`, `height`     |
-| `channel`   | `ChannelRef` | Channel reference with `id`, `name`, `url`        |
-| `sessionId` | `string?`    | Links a live broadcast to its archive (see below) |
-| `raw`       | `unknown`    | Original API response for advanced use            |
+| Field          | Type         | Description                                       |
+| -------------- | ------------ | ------------------------------------------------- |
+| `id`           | `string`     | Platform-specific content ID                      |
+| `platform`     | `string`     | `"youtube"`, `"twitch"`, or `"twitcasting"`       |
+| `title`        | `string`     | Content title                                     |
+| `description`  | `string`     | Content description                               |
+| `tags`         | `string[]`   | Content tags                                      |
+| `url`          | `string`     | URL to the content                                |
+| `thumbnail`    | `Thumbnail`  | Thumbnail image with `url`, `width`, `height`     |
+| `channel`      | `ChannelRef` | Channel reference with `id`, `name`, `url`        |
+| `sessionId`    | `string?`    | Links a live broadcast to its archive (see below) |
+| `languageCode` | `string?`    | Language code of the content                      |
+| `raw`          | `unknown`    | Original API response for advanced use            |
 
 ## Channel
 

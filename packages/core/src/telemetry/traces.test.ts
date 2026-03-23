@@ -9,7 +9,12 @@ import {
   ATTR_URL_SCHEME,
 } from "@opentelemetry/semantic-conventions";
 import { describe, expect, it, vi } from "vitest";
-import { SPAN_STATUS_ERROR } from "./otel-types";
+import {
+  noopMeterProvider,
+  noopTracerProvider,
+  SPAN_KIND_CLIENT,
+  SPAN_STATUS_ERROR,
+} from "./otel-types";
 import { getTracer, SpanAttributes, withSpan } from "./traces.js";
 
 describe("getTracer", () => {
@@ -113,6 +118,108 @@ describe("withSpan", () => {
     );
     expect(mockSpan.recordException).toHaveBeenCalled();
     expect(mockSpan.end).toHaveBeenCalled();
+  });
+
+  it("wraps non-Error thrown values in Error before recording exception", async () => {
+    const mockSpan = {
+      setAttribute: vi.fn(),
+      end: vi.fn(),
+      setStatus: vi.fn(),
+      recordException: vi.fn(),
+    };
+    const mockTracer = { startActiveSpan: vi.fn((_name, fn) => fn(mockSpan)) };
+    await expect(
+      withSpan(mockTracer as any, "fail", {}, async () => {
+        throw "string-error";
+      }),
+    ).rejects.toBe("string-error");
+    expect(mockSpan.setStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ code: SPAN_STATUS_ERROR, message: "string-error" }),
+    );
+    expect(mockSpan.recordException).toHaveBeenCalledWith(expect.any(Error));
+    expect(mockSpan.end).toHaveBeenCalled();
+  });
+});
+
+describe("OTel constants match @opentelemetry/api", () => {
+  it.each([
+    { name: "SPAN_KIND_CLIENT", value: SPAN_KIND_CLIENT, canonical: 2 },
+    { name: "SPAN_STATUS_ERROR", value: SPAN_STATUS_ERROR, canonical: 2 },
+  ])("$name matches OTel spec value", ({ value, canonical }) => {
+    expect(value).toBe(canonical);
+  });
+});
+
+describe("noopTracerProvider", () => {
+  it("startSpan returns a non-recording span", () => {
+    const span = noopTracerProvider.getTracer("test").startSpan("test-span");
+    expect(span.isRecording()).toBe(false);
+  });
+
+  it.each([
+    {
+      method: "spanContext",
+      call: (s: any) => s.spanContext(),
+      expected: { traceId: "", spanId: "", traceFlags: 0 },
+    },
+    { method: "setAttribute", call: (s: any) => s.setAttribute("key", "val"), returnsSpan: true },
+    {
+      method: "setAttributes",
+      call: (s: any) => s.setAttributes({ key: "val" }),
+      returnsSpan: true,
+    },
+    { method: "setStatus", call: (s: any) => s.setStatus({ code: 0 }), returnsSpan: true },
+    { method: "updateName", call: (s: any) => s.updateName("new"), returnsSpan: true },
+    { method: "recordException", call: (s: any) => s.recordException(new Error("x")) },
+    { method: "addEvent", call: (s: any) => s.addEvent("evt"), returnsSpan: true },
+    { method: "addLink", call: (s: any) => s.addLink({ context: {} as any }), returnsSpan: true },
+    { method: "addLinks", call: (s: any) => s.addLinks([]), returnsSpan: true },
+    { method: "end", call: (s: any) => s.end() },
+  ])("no-op span.$method returns expected value", ({ call, expected, returnsSpan }) => {
+    const span = noopTracerProvider.getTracer("t").startSpan("s");
+    const result = call(span);
+    if (expected !== undefined) expect(result).toEqual(expected);
+    if (returnsSpan) expect(result).toBe(span);
+  });
+});
+
+describe("noopMeterProvider", () => {
+  it.each([
+    { method: "createHistogram", callResult: (r: any) => r.record(1.0) },
+    { method: "createCounter", callResult: (r: any) => r.add(1) },
+    { method: "createUpDownCounter", callResult: (r: any) => r.add(-1) },
+    { method: "createGauge", callResult: (r: any) => r.record(42) },
+    {
+      method: "createObservableGauge",
+      callResult: (r: any) => {
+        r.addCallback(() => {});
+        r.removeCallback(() => {});
+      },
+    },
+    {
+      method: "createObservableCounter",
+      callResult: (r: any) => {
+        r.addCallback(() => {});
+        r.removeCallback(() => {});
+      },
+    },
+    {
+      method: "createObservableUpDownCounter",
+      callResult: (r: any) => {
+        r.addCallback(() => {});
+        r.removeCallback(() => {});
+      },
+    },
+  ])("no-op meter.$method works without error", ({ method, callResult }) => {
+    const meter = noopMeterProvider.getMeter("test");
+    const instrument = (meter as any)[method]("test-instrument");
+    expect(() => callResult(instrument)).not.toThrow();
+  });
+
+  it("no-op meter batch observable callbacks do not throw", () => {
+    const meter = noopMeterProvider.getMeter("test");
+    expect(() => meter.addBatchObservableCallback(() => {}, [])).not.toThrow();
+    expect(() => meter.removeBatchObservableCallback(() => {}, [])).not.toThrow();
   });
 });
 

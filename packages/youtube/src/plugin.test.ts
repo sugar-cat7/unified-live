@@ -3,6 +3,7 @@ import {
   type Broadcast,
   NotFoundError,
   QuotaExhaustedError,
+  RateLimitError,
   ValidationError,
 } from "@unified-live/core";
 import { describe, expect, it, vi } from "vitest";
@@ -74,6 +75,15 @@ describe("createYouTubePlugin", () => {
       supportsSearch: true,
       supportsClips: false,
     });
+  });
+
+  it("creates plugin when quota config is provided", () => {
+    plugin = createYouTubePlugin({
+      apiKey: "test-key",
+      fetch: createMockFetch([]),
+      quota: { dailyLimit: 5000 },
+    });
+    expect(plugin.capabilities.rateLimitModel).toBe("quota");
   });
 
   it("throws on empty API key", () => {
@@ -456,6 +466,18 @@ describe("createYouTubePlugin", () => {
     plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
 
     await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(QuotaExhaustedError);
+  });
+
+  it("throws RateLimitError on 403 (handleRateLimit returns false for non-429)", async () => {
+    const fetchFn = createMockFetch([
+      {
+        status: 403,
+        body: { error: { errors: [{ reason: "forbidden" }] } },
+      },
+    ]);
+
+    plugin = createYouTubePlugin({ apiKey: "test-key", fetch: fetchFn });
+    await expect(plugin.getContent("dQw4w9WgXcQ")).rejects.toThrow(RateLimitError);
   });
 
   it("handles 429 rate limit by retrying", async () => {

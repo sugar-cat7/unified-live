@@ -1,7 +1,15 @@
 import type { TracerProvider } from "@opentelemetry/api";
 import { describe, expect, it, vi } from "vitest";
 import { UnifiedClient } from "./client";
-import { NotFoundError, PlatformNotFoundError, RateLimitError, ValidationError } from "./errors";
+import {
+  AuthenticationError,
+  NetworkError,
+  NotFoundError,
+  PlatformNotFoundError,
+  QuotaExhaustedError,
+  RateLimitError,
+  ValidationError,
+} from "./errors";
 import type { PlatformPlugin } from "./plugin";
 import type { BatchResult, Channel, Clip, Content, Page } from "./types";
 
@@ -322,12 +330,26 @@ describe("UnifiedClient batch operations", () => {
     expect(result.errors.get("missing")).toBeInstanceOf(NotFoundError);
   });
 
-  it("batchGetContents fallback rethrows request-level errors", async () => {
+  it.each([
+    { name: "RateLimitError", error: new RateLimitError("test") },
+    {
+      name: "QuotaExhaustedError",
+      error: new QuotaExhaustedError("test", {
+        consumed: 0,
+        limit: 0,
+        resetsAt: new Date(),
+        requestedCost: 0,
+      }),
+    },
+    { name: "AuthenticationError", error: new AuthenticationError("test") },
+    { name: "NetworkError", error: new NetworkError("test", "NETWORK_TIMEOUT") },
+  ])("batchGetContents fallback rethrows $name as request-level error", async ({ error }) => {
     const plugin = createMockPlugin("test");
-    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(new RateLimitError("test"));
+    (plugin.getContent as ReturnType<typeof vi.fn>).mockRejectedValue(error);
     const client = UnifiedClient.create({ plugins: [plugin] });
 
-    await expect(client.batchGetContents("test", ["id1"])).rejects.toThrow(RateLimitError);
+    const thrown = await client.batchGetContents("test", ["id1"]).catch((e) => e);
+    expect(thrown).toBe(error);
   });
 
   it("batchGetContents delegates to plugin native batch when available", async () => {
@@ -399,6 +421,111 @@ describe("UnifiedClient batchGetBroadcasts", () => {
     await expect(client.batchGetBroadcasts("unknown", ["ch1"])).rejects.toThrow(
       PlatformNotFoundError,
     );
+  });
+});
+
+describe("UnifiedClient batchGetChannels", () => {
+  it("returns empty BatchResult for empty IDs", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.batchGetChannels("test", []);
+
+    expect(result.values.size).toBe(0);
+    expect(result.errors.size).toBe(0);
+    expect(plugin.getChannel).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates IDs", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    await client.batchGetChannels("test", ["ch1", "ch1", "ch1"]);
+
+    expect(plugin.getChannel).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses fallback via getChannel when plugin lacks native batchGetChannels", async () => {
+    const plugin = createMockPlugin("test");
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.batchGetChannels("test", ["ch1", "ch2", "ch3"]);
+
+    expect(plugin.getChannel).toHaveBeenCalledTimes(3);
+    expect(result.values.size).toBe(3);
+    expect(result.errors.size).toBe(0);
+  });
+
+  it("delegates to native batchGetChannels when available", async () => {
+    const plugin = createMockPlugin("test");
+    const mockChannel: Channel = {
+      id: "ch1",
+      platform: "test",
+      name: "Test Channel",
+      url: "https://test.com/channel/ch1",
+    };
+    const nativeBatch: BatchResult<Channel> = {
+      values: new Map([["ch1", mockChannel]]),
+      errors: new Map(),
+    };
+    plugin.batchGetChannels = vi.fn(async () => nativeBatch);
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.batchGetChannels("test", ["ch1"]);
+
+    expect(plugin.batchGetChannels).toHaveBeenCalledWith(["ch1"]);
+    expect(plugin.getChannel).not.toHaveBeenCalled();
+    expect(result).toBe(nativeBatch);
+  });
+
+  it("throws PlatformNotFoundError for unknown platform", async () => {
+    const client = UnifiedClient.create();
+
+    await expect(client.batchGetChannels("unknown", ["ch1"])).rejects.toThrow(
+      PlatformNotFoundError,
+    );
+  });
+
+  it("fallback separates per-item errors", async () => {
+    const plugin = createMockPlugin("test");
+    (plugin.getChannel as ReturnType<typeof vi.fn>).mockImplementation(async (id: string) => {
+      if (id === "missing") throw new NotFoundError("test", "missing");
+      return { id, platform: "test", name: "Channel", url: `https://test.com/channel/${id}` };
+    });
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.batchGetChannels("test", ["ok1", "missing", "ok2"]);
+
+    expect(result.values.size).toBe(2);
+    expect(result.values.has("ok1")).toBe(true);
+    expect(result.values.has("ok2")).toBe(true);
+    expect(result.errors.size).toBe(1);
+    expect(result.errors.has("missing")).toBe(true);
+    expect(result.errors.get("missing")).toBeInstanceOf(NotFoundError);
+  });
+
+  it.each([
+    {
+      name: "Error with message",
+      thrown: new TypeError("unexpected type"),
+      expectedMsg: "unexpected type",
+    },
+    { name: "non-Error without message", thrown: { code: 42 }, expectedMsg: "Unknown error" },
+  ])("fallback wraps $name in INTERNAL error", async ({ thrown, expectedMsg }) => {
+    const plugin = createMockPlugin("test");
+    (plugin.getChannel as ReturnType<typeof vi.fn>).mockImplementation(async (id: string) => {
+      if (id === "broken") throw thrown;
+      return { id, platform: "test", name: "Channel", url: `https://test.com/channel/${id}` };
+    });
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const result = await client.batchGetChannels("test", ["ok1", "broken"]);
+
+    expect(result.errors.size).toBe(1);
+    const err = result.errors.get("broken")!;
+    expect(err.code).toBe("INTERNAL");
+    expect.soft(err.message).toBe(expectedMsg);
+    expect.soft(err.context.resourceId).toBe("broken");
   });
 });
 
@@ -765,5 +892,21 @@ describe("UnifiedClient crossSearch", () => {
     const result = await client.crossSearch({ query: "test" });
 
     expect(Object.keys(result)).toHaveLength(0);
+  });
+
+  it("throws ValidationError when searchOptions has none of query, status, or channelId", async () => {
+    const plugin = createMockPlugin("test");
+    (plugin as { capabilities: typeof mockCapabilities }).capabilities = {
+      ...mockCapabilities,
+      supportsSearch: true,
+    };
+    plugin.search = vi.fn(async () => ({ items: [], hasMore: false }));
+    const client = UnifiedClient.create({ plugins: [plugin] });
+
+    const err = await client.crossSearch({}).catch((e) => e);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect.soft(err.code).toBe("VALIDATION_INVALID_INPUT");
+    expect.soft(err.message).toContain("query");
+    expect.soft(err.message).toContain("channelId");
   });
 });

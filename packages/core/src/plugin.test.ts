@@ -261,6 +261,24 @@ describe("PlatformPlugin.create", () => {
     expect(plugin.batchGetClips).toBeUndefined();
   });
 
+  it("wires batchGetChannels when provided", async () => {
+    const mockBatchResult = { values: new Map(), errors: new Map() };
+    const methods: PluginMethods = {
+      ...createMockMethods(),
+      batchGetChannels: vi.fn(async () => mockBatchResult),
+    };
+    plugin = PlatformPlugin.create(createMinimalDefinition(), methods);
+    expect(plugin.batchGetChannels).toBeDefined();
+    const result = await plugin.batchGetChannels!(["ch1", "ch2"]);
+    expect(methods.batchGetChannels).toHaveBeenCalledWith(plugin.rest, ["ch1", "ch2"]);
+    expect(result).toBe(mockBatchResult);
+  });
+
+  it("batchGetChannels is undefined when not provided", () => {
+    plugin = PlatformPlugin.create(createMinimalDefinition(), createMockMethods());
+    expect(plugin.batchGetChannels).toBeUndefined();
+  });
+
   it("capabilities include batch and search flags", () => {
     plugin = PlatformPlugin.create(
       createMinimalDefinition({

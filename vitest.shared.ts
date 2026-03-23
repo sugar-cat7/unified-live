@@ -6,14 +6,12 @@ export const sharedTestConfig: UserConfig["test"] = {
   coverage: {
     provider: "v8",
     include: ["src/**/*.ts"],
-    exclude: ["src/**/*.test.ts", "src/index.ts"],
+    exclude: ["src/**/*.test.ts", "src/index.ts", "src/test-helpers.ts", "src/generated/**"],
     reporter: ["json", "text", "lcov"],
     reportsDirectory: "coverage",
     thresholds: {
-      lines: 80,
-      functions: 80,
-      branches: 70,
-      statements: 80,
+      100: true,
+      perFile: true,
     },
   },
 };

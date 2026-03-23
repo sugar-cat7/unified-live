@@ -251,6 +251,68 @@ describe("toContent", () => {
     expect(() => toContent(resource)).toThrow("missing required parts");
   });
 
+  it("error message omits video id when id is missing", () => {
+    const resource: YTVideoResource = {
+      ...baseVideoResource,
+      id: undefined,
+    };
+    expect(() => toContent(resource)).toThrow(
+      "YouTube video resource missing required parts (id, snippet, contentDetails, statistics)",
+    );
+  });
+
+  it("falls back to defaults for broadcast with missing channelTitle, title, and concurrentViewers", () => {
+    const resource = {
+      ...baseVideoResource,
+      snippet: {
+        ...baseVideoResource.snippet,
+        channelTitle: undefined,
+        title: undefined,
+        liveBroadcastContent: "live",
+      },
+      liveStreamingDetails: {
+        actualStartTime: "2024-01-01T12:00:00Z",
+        concurrentViewers: undefined,
+      },
+    } as YTVideoResource;
+    const content = toContent(resource);
+    expect(content.type).toBe("broadcast");
+    expect(content.channel.name).toBe("");
+    expect(content.title).toBe("");
+    expect((content as { viewerCount: number }).viewerCount).toBe(0);
+  });
+
+  it("falls back to defaults for upcoming with missing title, description, and tags", () => {
+    const resource = {
+      ...upcomingVideoResource,
+      snippet: {
+        ...upcomingVideoResource.snippet,
+        title: undefined,
+        description: undefined,
+        tags: undefined,
+      },
+    } as YTVideoResource;
+    const content = toContent(resource);
+    expect(content.type).toBe("scheduled");
+    expect(content.title).toBe("");
+    expect(content.description).toBe("");
+    expect(content.tags).toEqual([]);
+  });
+
+  it("falls back to defaults for archive with missing title, duration, and viewCount", () => {
+    const resource = {
+      ...baseVideoResource,
+      snippet: { ...baseVideoResource.snippet, title: undefined },
+      contentDetails: { duration: undefined },
+      statistics: { viewCount: undefined },
+    } as YTVideoResource;
+    const content = toContent(resource);
+    expect(content.type).toBe("archive");
+    expect(content.title).toBe("");
+    expect((content as { duration: number }).duration).toBe(0);
+    expect((content as { viewCount: number }).viewCount).toBe(0);
+  });
+
   it("throws when video has no thumbnail at all", () => {
     const noThumb: YTVideoResource = {
       ...baseVideoResource,
@@ -353,6 +415,22 @@ describe("toChannel", () => {
     };
     const channel = toChannel(noThumb);
     expect(channel.thumbnail).toBeUndefined();
+  });
+
+  it("falls back to empty string when channel title is missing", () => {
+    const noTitle: YTChannelResource = {
+      ...channelResource,
+      snippet: { ...channelResource.snippet, title: undefined },
+    };
+    const channel = toChannel(noTitle);
+    expect(channel.name).toBe("");
+  });
+
+  it("error message omits channel id when id is missing", () => {
+    const resource = { snippet: { title: "X" } } as YTChannelResource;
+    expect(() => toChannel(resource)).toThrow(
+      "YouTube channel resource missing required parts (id, snippet)",
+    );
   });
 });
 

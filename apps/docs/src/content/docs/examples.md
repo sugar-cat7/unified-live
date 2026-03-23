@@ -193,6 +193,8 @@ const mockContent: Content = {
   platform: "mock",
   type: "archive",
   title: "Test Video",
+  description: "A test video",
+  tags: [],
   url: "https://example.com/video/test-1",
   thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
   channel: { id: "ch-1", name: "Test Channel", url: "https://example.com/channel/ch-1" },
@@ -208,12 +210,14 @@ const mockPlugin: PlatformPlugin = {
   capabilities: {
     supportsBroadcasts: true,
     supportsArchiveResolution: false,
+    supportsBatchContent: false,
+    supportsBatchBroadcasts: false,
+    supportsSearch: false,
+    supportsClips: false,
     authModel: "apiKey",
     rateLimitModel: "tokenBucket",
   },
   match: (url) =>
-    url.includes("example.com") ? { platform: "mock", type: "content", id: "test-1" } : null,
-  resolveUrl: (url) =>
     url.includes("example.com") ? { platform: "mock", type: "content", id: "test-1" } : null,
   getContent: async () => mockContent,
   getChannel: async () => ({

@@ -42,18 +42,21 @@ if (Content.isArchive(content)) {
 
 ### 共通フィールド
 
-`Broadcast` と `Archive` は以下のフィールドを共有します:
+すべてのコンテンツ型（`Broadcast`、`Archive`、`ScheduledBroadcast`、`Clip`）は以下のフィールドを共有します:
 
-| フィールド  | 型           | 説明                                       |
-| ----------- | ------------ | ------------------------------------------ |
-| `id`        | `string`     | プラットフォーム固有のコンテンツ ID        |
-| `platform`  | `string`     | `"youtube"`, `"twitch"`, `"twitcasting"`   |
-| `title`     | `string`     | コンテンツのタイトル                       |
-| `url`       | `string`     | コンテンツの URL                           |
-| `thumbnail` | `Thumbnail`  | サムネイル画像（`url`, `width`, `height`） |
-| `channel`   | `ChannelRef` | チャンネル参照（`id`, `name`, `url`）      |
-| `sessionId` | `string?`    | ライブとアーカイブを紐付ける ID（後述）    |
-| `raw`       | `unknown`    | プラットフォーム API の生レスポンス        |
+| フィールド     | 型           | 説明                                       |
+| -------------- | ------------ | ------------------------------------------ |
+| `id`           | `string`     | プラットフォーム固有のコンテンツ ID        |
+| `platform`     | `string`     | `"youtube"`, `"twitch"`, `"twitcasting"`   |
+| `title`        | `string`     | コンテンツのタイトル                       |
+| `description`  | `string`     | コンテンツの説明                           |
+| `tags`         | `string[]`   | コンテンツのタグ                           |
+| `url`          | `string`     | コンテンツの URL                           |
+| `thumbnail`    | `Thumbnail`  | サムネイル画像（`url`, `width`, `height`） |
+| `channel`      | `ChannelRef` | チャンネル参照（`id`, `name`, `url`）      |
+| `sessionId`    | `string?`    | ライブとアーカイブを紐付ける ID（後述）    |
+| `languageCode` | `string?`    | コンテンツの言語コード                     |
+| `raw`          | `unknown`    | プラットフォーム API の生レスポンス        |
 
 ## Channel
 

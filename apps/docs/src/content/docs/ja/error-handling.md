@@ -83,6 +83,17 @@ catch (error) {
       case "QUOTA_EXHAUSTED":
         // レート制限
         break;
+      case "PARSE_JSON":
+      case "PARSE_RESPONSE":
+        // レスポンスのパース失敗
+        break;
+      case "VALIDATION_INVALID_URL":
+      case "VALIDATION_INVALID_INPUT":
+        // 入力バリデーションエラー
+        break;
+      case "INTERNAL":
+        // 内部SDKエラー
+        break;
     }
   }
 }

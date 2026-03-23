@@ -86,6 +86,7 @@ const createDefinition = (config: {
   rateLimitStrategy: createTokenBucketStrategy({
     global: { requests: 100, perMs: 60_000 }, // 100 req/min
     parseHeaders,
+    platform: "example",
   }),
   tokenManager: TokenManager.static(`Bearer ${config.apiKey}`),
   matchUrl: matchExampleUrl,
@@ -93,6 +94,10 @@ const createDefinition = (config: {
   capabilities: {
     supportsBroadcasts: true,
     supportsArchiveResolution: false,
+    supportsBatchContent: false,
+    supportsBatchBroadcasts: false,
+    supportsSearch: false,
+    supportsClips: false,
     authModel: "apiKey",
     rateLimitModel: "tokenBucket",
   },
@@ -268,6 +273,7 @@ import { createTokenBucketStrategy } from "@unified-live/core";
 const strategy = createTokenBucketStrategy({
   global: { requests: 100, perMs: 60_000 },
   parseHeaders: myHeaderParser,
+  platform: "myplatform",
 });
 ```
 
@@ -403,6 +409,7 @@ export const createExamplePlugin = (config: ExamplePluginConfig): PlatformPlugin
       rateLimitStrategy: createTokenBucketStrategy({
         global: { requests: 100, perMs: 60_000 },
         parseHeaders: () => undefined,
+        platform: "example",
       }),
       tokenManager: TokenManager.static(`Bearer ${config.apiKey}`),
       matchUrl,
@@ -410,6 +417,10 @@ export const createExamplePlugin = (config: ExamplePluginConfig): PlatformPlugin
       capabilities: {
         supportsBroadcasts: true,
         supportsArchiveResolution: false,
+        supportsBatchContent: false,
+        supportsBatchBroadcasts: false,
+        supportsSearch: false,
+        supportsClips: false,
         authModel: "apiKey",
         rateLimitModel: "tokenBucket",
       },

@@ -38,7 +38,7 @@ const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXc
 
 console.log(content.title); // 動画タイトル
 console.log(content.platform); // "youtube"
-console.log(content.type); // "broadcast" または "archive"
+console.log(content.type); // "broadcast", "scheduled", "archive", または "clip"
 ```
 
 ## 動作要件

@@ -83,6 +83,17 @@ catch (error) {
       case "QUOTA_EXHAUSTED":
         // Rate limiting
         break;
+      case "PARSE_JSON":
+      case "PARSE_RESPONSE":
+        // Response parsing failures
+        break;
+      case "VALIDATION_INVALID_URL":
+      case "VALIDATION_INVALID_INPUT":
+        // Input validation errors
+        break;
+      case "INTERNAL":
+        // Internal SDK error
+        break;
     }
   }
 }

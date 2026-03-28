@@ -181,6 +181,23 @@ describe("createRestManager", () => {
     expect(calledUrl).toContain("https://api.example.com/v1/resources");
   });
 
+  it("handles path without leading slash", async () => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+    const manager = createRestManager({
+      platform: "test",
+      baseUrl: "https://api.example.com/v1",
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
+
+    await manager.request({ method: "GET", path: "resources/123" });
+
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+    expect(calledUrl).toContain("https://api.example.com/v1/resources/123");
+  });
+
   it("retries on 5xx server errors", async () => {
     strategy = createMockStrategy();
     const fetchFn = createMockFetch([

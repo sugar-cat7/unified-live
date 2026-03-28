@@ -1,6 +1,6 @@
 {
   "name": "@unified-live/twitch",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Twitch Helix API plugin for unified-live SDK — token bucket rate limiting, OAuth2 Client Credentials",
   "keywords": [
     "live-streaming",

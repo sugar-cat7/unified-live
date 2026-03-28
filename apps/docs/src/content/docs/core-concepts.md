@@ -56,7 +56,7 @@ All content types (`Broadcast`, `Archive`, `ScheduledBroadcast`, `Clip`) share t
 | `channel`      | `ChannelRef` | Channel reference with `id`, `name`, `url`        |
 | `sessionId`    | `string?`    | Links a live broadcast to its archive (see below) |
 | `languageCode` | `string?`    | Language code of the content                      |
-| `raw`          | `unknown`    | Original API response for advanced use            |
+| `raw`          | `unknown`    | Original API response — cast to the platform's native type for advanced use |
 
 ## Channel
 

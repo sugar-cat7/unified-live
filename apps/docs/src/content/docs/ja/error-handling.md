@@ -28,7 +28,7 @@ import {
 | `AuthenticationError`   | 認証情報が無効または期限切れ                | API キーを確認                              |
 | `RateLimitError`        | リトライ上限後もレート制限超過              | リクエスト頻度を下げる、`retryAfter` を確認 |
 | `NetworkError`          | ネットワーク障害（タイムアウト、DNS、接続） | 接続を確認、後でリトライ                    |
-| `ParseError`            | API レスポンスのパース失敗                  | バグとして報告                              |
+| `ParseError`            | API レスポンスのパース失敗                  | [バグとして報告](https://github.com/sugar-cat7/unified-live/issues) |
 | `ValidationError`       | 無効な入力（空の URL など）                 | 入力を修正                                  |
 | `PlatformNotFoundError` | プラットフォームのプラグインが未登録        | プラグインを登録                            |
 
@@ -61,8 +61,9 @@ try {
 すべてのエラーには型付きの `code` フィールドがあり、プログラム的なハンドリングが可能です:
 
 ```ts
-// try/catch ブロック内:
-catch (error) {
+try {
+  const content = await client.resolve(url);
+} catch (error) {
   if (error instanceof UnifiedLiveError) {
     switch (error.code) {
       case "NOT_FOUND":
@@ -104,8 +105,9 @@ catch (error) {
 すべてのエラーは `error.context` で構造化されたメタデータを持ちます:
 
 ```ts
-// try/catch ブロック内:
-catch (error) {
+try {
+  const content = await client.resolve(url);
+} catch (error) {
   if (error instanceof UnifiedLiveError) {
     console.log(error.platform);          // "youtube"（後方互換 getter）
     console.log(error.context.platform);  // "youtube"
@@ -121,8 +123,9 @@ catch (error) {
 `RateLimitError` には `retryAfter` プロパティがあります。リトライまでの待機秒数を示します。サーバーが値を提供しない場合は `undefined` です。
 
 ```ts
-// try/catch ブロック内:
-catch (error) {
+try {
+  const content = await client.resolve(url);
+} catch (error) {
   if (error instanceof RateLimitError) {
     console.log(`レート制限。リトライまで: ${error.retryAfter ?? "不明"} 秒`);
   }

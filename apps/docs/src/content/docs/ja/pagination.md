@@ -31,7 +31,9 @@ do {
 console.log(`${allArchives.length} 件のアーカイブを取得しました`);
 ```
 
-> `Page<T>` 型は `hasMore` ブール値も提供します。ループ条件には `page.cursor` を使い、UI の「もっと読む」ボタンの表示には `page.hasMore` を使用してください。
+:::tip
+`Page<T>` 型は `hasMore` ブール値も提供します。ループ条件には `page.cursor` を使い、UI の「もっと読む」ボタンの表示には `page.hasMore` を使用してください。
+:::
 
 ## ページ数を制限して取得
 
@@ -53,11 +55,17 @@ for (let i = 0; i < MAX_PAGES; i++) {
 `ArchiveListOptions` を渡して、期間・ソート順・動画タイプでフィルタリングできます（プラットフォームによりサポート状況が異なります）:
 
 ```ts
-const page = await client.listArchives("twitch", channelId, undefined, 20, {
-  period: "week",
-  sort: "views",
-  videoType: "highlight",
-});
+const page = await client.listArchives(
+  "twitch",     // プラットフォーム
+  channelId,    // チャンネル ID
+  undefined,    // カーソル（最初のページ）
+  20,           // ページサイズ
+  {             // フィルタオプション
+    period: "week",
+    sort: "views",
+    videoType: "highlight",
+  },
+);
 ```
 
 | オプション  | 値                                                                           | 説明               |

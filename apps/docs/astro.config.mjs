@@ -14,7 +14,7 @@ export default defineConfig({
       title: "unified-live",
       logo: {
         src: "./public/logo.svg",
-        alt: "unified-live logo",
+        alt: "unified-live: unified live streaming SDK",
       },
       lastUpdated: true,
       editLink: {
@@ -33,6 +33,15 @@ export default defineConfig({
         },
       ],
       head: [
+        // OG metadata
+        {
+          tag: "meta",
+          attrs: { property: "og:type", content: "website" },
+        },
+        {
+          tag: "meta",
+          attrs: { name: "twitter:card", content: "summary_large_image" },
+        },
         // OG image
         {
           tag: "meta",
@@ -84,7 +93,7 @@ export default defineConfig({
             url: "https://github.com/sugar-cat7/unified-live",
             codeRepository: "https://github.com/sugar-cat7/unified-live",
             programmingLanguage: "TypeScript",
-            runtimePlatform: "Node.js",
+            runtimePlatform: "Node.js, Deno, Bun, Cloudflare Workers",
             license: "https://opensource.org/licenses/MIT",
             author: {
               "@type": "Person",

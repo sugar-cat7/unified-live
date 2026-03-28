@@ -3,8 +3,6 @@ title: Examples
 description: "Practical code recipes for common unified-live use cases"
 ---
 
-Practical code recipes for common unified-live tasks, from basic usage to advanced patterns.
-
 ## Basic
 
 ### Get Content from a URL

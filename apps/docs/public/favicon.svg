@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="favicon-title">
+  <title id="favicon-title">unified-live</title>
   <rect width="48" height="48" rx="8" fill="#0f172a"/>
   <path d="M12 16 L24 32 L36 16" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="12" cy="16" r="3" fill="#f472b6"/>

@@ -5,7 +5,7 @@ description: "Why unified-live exists and how it solves multi-platform live stre
 
 ## The Problem
 
-Building an application that aggregates live streaming data across YouTube, Twitch, and TwitCasting means dealing with three completely different APIs — each with its own authentication scheme, rate limiting model, data format, and URL structure.
+Building an application that aggregates live streaming data across YouTube, Twitch, and TwitCasting means dealing with three completely different APIs. Each has its own authentication scheme, rate limiting model, data format, and URL structure.
 
 |                      | [YouTube Data API v3](https://developers.google.com/youtube/v3) | [Twitch Helix API](https://dev.twitch.tv/docs/api/) | [TwitCasting API v2](https://apiv2-doc.twitcasting.tv/) |
 | :------------------- | :-------------------------------------------------------------- | :-------------------------------------------------- | :------------------------------------------------------ |
@@ -68,23 +68,23 @@ console.log(tc.type); // "broadcast" | "archive"
 
 ### Feature Matrix
 
-| Feature                        | YouTube | Twitch | TwitCasting |
-| :----------------------------- | :-----: | :----: | :---------: |
-| Get content by URL             |   ✅    |   ✅   |     ✅      |
-| Get content by ID              |   ✅    |   ✅   |     ✅      |
-| List broadcasts                |   ✅    |   ✅   |     ✅      |
-| List archives (pagination)     |   ✅    |   ✅   |     ✅      |
-| Get channel info               |   ✅    |   ✅   |     ✅      |
-| Archive resolution             |   ✅    |   ✅   |     ✅      |
-| Search                         |   ✅    |   ✅   |     ✅      |
-| Clips                          |   --    |   ✅   |     --      |
-| Batch get contents             |   ✅    |   ✅   |    ✅\*     |
-| Batch get broadcasts           |  ✅\*   |   ✅   |    ✅\*     |
-| Batch get channels             |   ✅    |  ✅\*  |    ✅\*     |
-| Batch get clips                |   --    |   ✅   |     --      |
-| Cross-platform broadcasts      |   ✅    |   ✅   |     ✅      |
-| Cross-platform search          |   ✅    |   ✅   |     ✅      |
-| OpenTelemetry traces & metrics |   ✅    |   ✅   |     ✅      |
+| Feature                        | YouTube          | Twitch           | TwitCasting      |
+| :----------------------------- | :--------------: | :--------------: | :--------------: |
+| Get content by URL             | Yes              | Yes              | Yes              |
+| Get content by ID              | Yes              | Yes              | Yes              |
+| List broadcasts                | Yes              | Yes              | Yes              |
+| List archives (pagination)     | Yes              | Yes              | Yes              |
+| Get channel info               | Yes              | Yes              | Yes              |
+| Archive resolution             | Yes              | Yes              | Yes              |
+| Search                         | Yes              | Yes              | Yes              |
+| Clips                          | No               | Yes              | No               |
+| Batch get contents             | Yes              | Yes              | Yes\*            |
+| Batch get broadcasts           | Yes\*            | Yes              | Yes\*            |
+| Batch get channels             | Yes              | Yes\*            | Yes\*            |
+| Batch get clips                | No               | Yes              | No               |
+| Cross-platform broadcasts      | Yes              | Yes              | Yes              |
+| Cross-platform search          | Yes              | Yes              | Yes              |
+| OpenTelemetry traces & metrics | Yes              | Yes              | Yes              |
 
 \* Supported via automatic per-item fallback (no native batch API)
 

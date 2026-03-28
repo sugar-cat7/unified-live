@@ -3,6 +3,11 @@ title: はじめに
 description: "unified-liveのインストールと最初のAPIクエリ実行"
 ---
 
+## 動作要件
+
+- Node.js 18 以上（または `fetch` をネイティブサポートするランタイム: Deno, Bun, Cloudflare Workers）
+- プラットフォームの API 認証情報（[プラットフォームプラグイン](../platform-plugins/)を参照）
+
 ## インストール
 
 コアパッケージと必要なプラットフォームプラグインをインストールします:
@@ -23,6 +28,7 @@ import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 // 1. プラットフォームプラグインを指定してクライアントを作成
+// 末尾の `!` は非nullアサーション — 環境変数が設定済みであることを確認してください
 const client = UnifiedClient.create({
   plugins: [
     createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
@@ -40,11 +46,6 @@ console.log(content.title); // 動画タイトル
 console.log(content.platform); // "youtube"
 console.log(content.type); // "broadcast", "scheduled", "archive", または "clip"
 ```
-
-## 動作要件
-
-- Node.js 18 以上（または `fetch` をネイティブサポートするランタイム: Deno, Bun, Cloudflare Workers）
-- プラットフォームの API 認証情報（[プラットフォームプラグイン](../platform-plugins/)を参照）
 
 ## 次のステップ
 

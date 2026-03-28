@@ -56,7 +56,7 @@ if (Content.isArchive(content)) {
 | `channel`      | `ChannelRef` | チャンネル参照（`id`, `name`, `url`）      |
 | `sessionId`    | `string?`    | ライブとアーカイブを紐付ける ID（後述）    |
 | `languageCode` | `string?`    | コンテンツの言語コード                     |
-| `raw`          | `unknown`    | プラットフォーム API の生レスポンス        |
+| `raw`          | `unknown`    | プラットフォーム API の生レスポンス — 利用時はプラットフォーム固有の型にキャストしてください |
 
 ## Channel
 

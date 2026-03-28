@@ -1,6 +1,6 @@
 ---
 title: 応用
-description: "OpenTelemetry トレーシングとメトリクス"
+description: "APIコールにOpenTelemetryトレーシングとメトリクスを追加する"
 ---
 
 ## OpenTelemetry 連携
@@ -88,12 +88,20 @@ pnpm add @opentelemetry/exporter-trace-otlp-http
 ```
 
 ```ts
+import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
-// NodeSDK config 内:
-traceExporter: new OTLPTraceExporter({
-  url: "http://localhost:4318/v1/traces",
-}),
+const sdk = new NodeSDK({
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: "my-app",
+  }),
+  traceExporter: new OTLPTraceExporter({
+    url: "http://localhost:4318/v1/traces",
+  }),
+});
+sdk.start();
 ```
 
 `http://localhost:16686` を開き、サービス名 `my-app` で検索してください。

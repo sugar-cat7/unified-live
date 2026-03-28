@@ -1,6 +1,6 @@
 ---
 title: Advanced Usage
-description: "OpenTelemetry tracing and metrics"
+description: "Add OpenTelemetry tracing and metrics to your API calls"
 ---
 
 ## OpenTelemetry Integration
@@ -88,12 +88,20 @@ pnpm add @opentelemetry/exporter-trace-otlp-http
 ```
 
 ```ts
+import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
-// In NodeSDK config:
-traceExporter: new OTLPTraceExporter({
-  url: "http://localhost:4318/v1/traces",
-}),
+const sdk = new NodeSDK({
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: "my-app",
+  }),
+  traceExporter: new OTLPTraceExporter({
+    url: "http://localhost:4318/v1/traces",
+  }),
+});
+sdk.start();
 ```
 
 Open `http://localhost:16686` and search for service `my-app`.

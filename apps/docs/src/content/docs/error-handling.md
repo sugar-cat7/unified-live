@@ -21,16 +21,16 @@ import {
 } from "@unified-live/core";
 ```
 
-| Error                   | When                                       | What to Do                                   |
-| ----------------------- | ------------------------------------------ | -------------------------------------------- |
-| `NotFoundError`         | Content or channel doesn't exist           | Check the ID or URL                          |
-| `QuotaExhaustedError`   | YouTube daily quota exceeded               | Wait until quota resets                      |
-| `AuthenticationError`   | Invalid or expired credentials             | Check your API keys                          |
-| `RateLimitError`        | Rate limit exceeded after all retries      | Reduce request frequency; check `retryAfter` |
-| `NetworkError`          | Network failure (timeout, DNS, connection) | Check connectivity, retry later              |
-| `ParseError`            | Failed to parse API response               | Report as a bug                              |
-| `ValidationError`       | Invalid input (e.g., empty URL)            | Fix the input                                |
-| `PlatformNotFoundError` | No plugin registered for the platform      | Register the plugin                          |
+| Error                   | When                                       | What to Do                                                           |
+| ----------------------- | ------------------------------------------ | -------------------------------------------------------------------- |
+| `NotFoundError`         | Content or channel doesn't exist           | Check the ID or URL                                                  |
+| `QuotaExhaustedError`   | YouTube daily quota exceeded               | Wait until quota resets                                              |
+| `AuthenticationError`   | Invalid or expired credentials             | Check your API keys                                                  |
+| `RateLimitError`        | Rate limit exceeded after all retries      | Reduce request frequency; check `retryAfter`                         |
+| `NetworkError`          | Network failure (timeout, DNS, connection) | Check connectivity, retry later                                      |
+| `ParseError`            | Failed to parse API response               | [Report as a bug](https://github.com/sugar-cat7/unified-live/issues) |
+| `ValidationError`       | Invalid input (e.g., empty URL)            | Fix the input                                                        |
+| `PlatformNotFoundError` | No plugin registered for the platform      | Register the plugin                                                  |
 
 ## Basic Error Handling
 
@@ -61,8 +61,9 @@ try {
 Every error has a typed `code` field for programmatic handling:
 
 ```ts
-// Inside a try/catch block:
-catch (error) {
+try {
+  const content = await client.resolve(url);
+} catch (error) {
   if (error instanceof UnifiedLiveError) {
     switch (error.code) {
       case "NOT_FOUND":
@@ -104,14 +105,15 @@ catch (error) {
 All errors carry structured metadata via `error.context`:
 
 ```ts
-// Inside a try/catch block:
-catch (error) {
+try {
+  const content = await client.resolve(url);
+} catch (error) {
   if (error instanceof UnifiedLiveError) {
-    console.log(error.platform);          // "youtube" (backward-compat getter)
-    console.log(error.context.platform);  // "youtube"
-    console.log(error.context.path);      // "/videos" (if applicable)
-    console.log(error.context.status);    // 404 (if applicable)
-    console.log(error.cause);             // Original error (if wrapped)
+    console.log(error.platform); // "youtube" (backward-compat getter)
+    console.log(error.context.platform); // "youtube"
+    console.log(error.context.path); // "/videos" (if applicable)
+    console.log(error.context.status); // 404 (if applicable)
+    console.log(error.cause); // Original error (if wrapped)
   }
 }
 ```
@@ -121,8 +123,9 @@ catch (error) {
 `RateLimitError` includes a `retryAfter` property — the number of seconds to wait before retrying, or `undefined` if the server did not provide a value.
 
 ```ts
-// Inside a try/catch block:
-catch (error) {
+try {
+  const content = await client.resolve(url);
+} catch (error) {
   if (error instanceof RateLimitError) {
     console.log(`Rate limited. Retry after: ${error.retryAfter ?? "unknown"} seconds`);
   }
@@ -141,7 +144,7 @@ You only see an error if all retries are exhausted.
 
 ## YouTube Quota
 
-YouTube quota errors are special. When the daily quota (default 10,000 units) is exhausted, the SDK throws `QuotaExhaustedError` immediately — no retries, because the quota resets at midnight Pacific Time.
+YouTube quota errors behave differently from other rate limits. When the daily quota (default 10,000 units) is exhausted, the SDK throws `QuotaExhaustedError` immediately without retrying, because the quota resets at midnight Pacific Time.
 
 ```ts
 try {

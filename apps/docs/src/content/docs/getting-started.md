@@ -3,6 +3,11 @@ title: Getting Started
 description: "Install unified-live and run your first API query in minutes"
 ---
 
+## Requirements
+
+- Node.js 18+ (or any runtime with native `fetch`: Deno, Bun, Cloudflare Workers)
+- Platform API credentials (see [Platform Plugins](../platform-plugins/))
+
 ## Installation
 
 Install the core package and the platform plugins you need:
@@ -23,6 +28,7 @@ import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
 // 1. Create a client with platform plugins
+// The trailing `!` is a non-null assertion — make sure the env vars are set
 const client = UnifiedClient.create({
   plugins: [
     createYouTubePlugin({ apiKey: process.env.YOUTUBE_API_KEY! }),
@@ -40,11 +46,6 @@ console.log(content.title); // Video title
 console.log(content.platform); // "youtube"
 console.log(content.type); // "broadcast", "scheduled", "archive", or "clip"
 ```
-
-## Requirements
-
-- Node.js 18+ (or any runtime with native `fetch`: Deno, Bun, Cloudflare Workers)
-- Platform API credentials (see [Platform Plugins](../platform-plugins/))
 
 ## Next Steps
 

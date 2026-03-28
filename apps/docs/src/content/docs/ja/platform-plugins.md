@@ -19,7 +19,7 @@ description: "YouTube、Twitch、TwitCastingプラグインの設定"
 
 > **公式ドキュメント:** [YouTube Data API v3](https://developers.google.com/youtube/v3)
 >
-> YouTubeのクォータシステムはエンドポイント毎に異なるコスト（1〜101ユニット）を日次10,000ユニットのプールから消費します。SDKはローカルで消費を追跡し、サイレントな403エラーの前に `QuotaExhaustedError` をスローします。
+> YouTubeのクォータシステムはエンドポイント毎に異なるコスト（1〜101ユニット）を日次10,000ユニットのプールから消費します。SDKはローカルで消費を追跡し、サイレントな403エラーを防いで代わりに `QuotaExhaustedError` をスローします。
 
 ```bash
 pnpm add @unified-live/core @unified-live/youtube
@@ -130,7 +130,7 @@ SDK がアプリケーションレベルのアクセスとして Basic 認証（
 
 ## プラグインの登録
 
-**方法 A — 作成時に渡す:**
+**方法 A — 作成時に渡す（推奨）:**
 
 ```ts
 import { UnifiedClient } from "@unified-live/core";

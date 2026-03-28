@@ -154,6 +154,7 @@ const exampleListArchives = async (
   channelId: string,
   cursor?: string,
   pageSize?: number,
+  options?: ArchiveListOptions,
 ): Promise<Page<Archive>> => {
   const res = await rest.request<{ videos: ExampleVideo[]; nextCursor?: string }>({
     method: "GET",
@@ -196,11 +197,11 @@ export const createExamplePlugin = (config: {
 
 SDK は `TokenManager` を通じて3つの認証パターンをサポート:
 
-| パターン             | ユースケース                 | 例                                                  |
-| -------------------- | ---------------------------- | --------------------------------------------------- |
-| **静的**             | API キー / Basic auth        | `TokenManager.static("Bearer key123")`              |
-| **OAuth2**           | トークンのリフレッシュが必要 | カスタム `TokenManager` にリフレッシュロジック      |
-| **クエリパラメータ** | URL 中の API キー            | `tokenManager` の代わりに `transformRequest` を使用 |
+| パターン             | ユースケース                 | 例                                                    |
+| -------------------- | ---------------------------- | ----------------------------------------------------- |
+| **静的**             | API キー / Basic auth        | `TokenManager.static("Bearer key123")`                |
+| **OAuth2**           | トークンのリフレッシュが必要 | `getAuthHeader()` + `invalidate()` を実装（下記参照） |
+| **クエリパラメータ** | URL 中の API キー            | `tokenManager` の代わりに `transformRequest` を使用   |
 
 **クエリパラメータ認証**（YouTube のような場合）は `transformRequest` を使用:
 
@@ -393,6 +394,7 @@ const listArchives = async (
   channelId: string,
   cursor?: string,
   pageSize?: number,
+  options?: ArchiveListOptions,
 ): Promise<Page<Archive>> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/videos` });
   return { items: [], hasMore: false }; // res.data をマッピング

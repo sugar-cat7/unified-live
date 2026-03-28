@@ -130,7 +130,7 @@ The SDK uses Basic Authentication (`base64(clientId:clientSecret)`) for applicat
 
 ## Registering Plugins
 
-**Option A — Pass plugins at creation:**
+**Option A — Pass plugins at creation (recommended):**
 
 ```ts
 import { UnifiedClient } from "@unified-live/core";

@@ -154,6 +154,7 @@ const exampleListArchives = async (
   channelId: string,
   cursor?: string,
   pageSize?: number,
+  options?: ArchiveListOptions,
 ): Promise<Page<Archive>> => {
   const res = await rest.request<{ videos: ExampleVideo[]; nextCursor?: string }>({
     method: "GET",
@@ -196,11 +197,11 @@ export const createExamplePlugin = (config: {
 
 The SDK supports three auth patterns via `TokenManager`:
 
-| Pattern         | Use Case             | Example                                          |
-| --------------- | -------------------- | ------------------------------------------------ |
-| **Static**      | API key / Basic auth | `TokenManager.static("Bearer key123")`           |
-| **OAuth2**      | Token refresh needed | Custom `TokenManager` with refresh logic         |
-| **Query param** | API key in URL       | Use `transformRequest` instead of `tokenManager` |
+| Pattern         | Use Case             | Example                                                  |
+| --------------- | -------------------- | -------------------------------------------------------- |
+| **Static**      | API key / Basic auth | `TokenManager.static("Bearer key123")`                   |
+| **OAuth2**      | Token refresh needed | Implement `getAuthHeader()` + `invalidate()` (see below) |
+| **Query param** | API key in URL       | Use `transformRequest` instead of `tokenManager`         |
 
 For **query parameter auth** (like YouTube), use `transformRequest`:
 
@@ -393,6 +394,7 @@ const listArchives = async (
   channelId: string,
   cursor?: string,
   pageSize?: number,
+  options?: ArchiveListOptions,
 ): Promise<Page<Archive>> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/videos` });
   return { items: [], hasMore: false }; // map res.data

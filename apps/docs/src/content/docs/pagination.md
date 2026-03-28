@@ -31,7 +31,9 @@ do {
 console.log(`Fetched ${allArchives.length} archives`);
 ```
 
-> The `Page<T>` type also provides a `hasMore` boolean. Use `page.cursor` for the loop condition and `page.hasMore` to show "Load More" buttons in UIs.
+:::tip
+The `Page<T>` type also provides a `hasMore` boolean. Use `page.cursor` for the loop condition and `page.hasMore` to show "Load More" buttons in UIs.
+:::
 
 ## Fetching a Limited Number of Pages
 
@@ -53,11 +55,18 @@ for (let i = 0; i < MAX_PAGES; i++) {
 Pass `ArchiveListOptions` to filter results by period, sort order, or video type (platform support varies):
 
 ```ts
-const page = await client.listArchives("twitch", channelId, undefined, 20, {
-  period: "week",
-  sort: "views",
-  videoType: "highlight",
-});
+const page = await client.listArchives(
+  "twitch", // platform
+  channelId, // channel ID
+  undefined, // cursor (first page)
+  20, // page size
+  {
+    // filter options
+    period: "week",
+    sort: "views",
+    videoType: "highlight",
+  },
+);
 ```
 
 | Option      | Values                                                                      | Description       |

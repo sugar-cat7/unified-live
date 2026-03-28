@@ -126,77 +126,62 @@ describe("createRestManager", () => {
     expect(calledUrl).toContain("user_id=1&user_id=2&user_id=3");
   });
 
-  it("preserves baseUrl path when path starts with /", async () => {
-    strategy = createMockStrategy();
-    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
-
-    const manager = createRestManager({
+  it.each([
+    {
+      description: "preserves baseUrl path when path starts with /",
       platform: "twitch",
       baseUrl: "https://api.twitch.tv/helix",
-      rateLimitStrategy: strategy,
-      fetch: fetchFn,
-    });
-
-    await manager.request({ method: "GET", path: "/streams" });
-
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
-    expect(calledUrl).toContain("https://api.twitch.tv/helix/streams");
-  });
-
-  it("preserves multi-segment baseUrl path", async () => {
-    strategy = createMockStrategy();
-    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
-
-    const manager = createRestManager({
+      path: "/streams",
+      query: undefined as Record<string, string | string[]> | undefined,
+      expectedSubstring: "https://api.twitch.tv/helix/streams",
+    },
+    {
+      description: "preserves multi-segment baseUrl path",
       platform: "youtube",
       baseUrl: "https://www.googleapis.com/youtube/v3",
-      rateLimitStrategy: strategy,
-      fetch: fetchFn,
-    });
-
-    await manager.request({
-      method: "GET",
       path: "/search",
-      query: { part: "id", q: "test" },
-    });
-
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
-    expect(calledUrl).toContain("https://www.googleapis.com/youtube/v3/search");
-  });
-
-  it("handles baseUrl with trailing slash", async () => {
-    strategy = createMockStrategy();
-    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
-
-    const manager = createRestManager({
+      query: { part: "id", q: "test" } as Record<string, string | string[]>,
+      expectedSubstring: "https://www.googleapis.com/youtube/v3/search",
+    },
+    {
+      description: "handles baseUrl with trailing slash",
       platform: "test",
       baseUrl: "https://api.example.com/v1/",
-      rateLimitStrategy: strategy,
-      fetch: fetchFn,
-    });
-
-    await manager.request({ method: "GET", path: "/resources" });
-
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
-    expect(calledUrl).toContain("https://api.example.com/v1/resources");
-  });
-
-  it("handles path without leading slash", async () => {
-    strategy = createMockStrategy();
-    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
-
-    const manager = createRestManager({
+      path: "/resources",
+      query: undefined as Record<string, string | string[]> | undefined,
+      expectedSubstring: "https://api.example.com/v1/resources",
+    },
+    {
+      description: "handles path without leading slash",
       platform: "test",
       baseUrl: "https://api.example.com/v1",
-      rateLimitStrategy: strategy,
-      fetch: fetchFn,
-    });
+      path: "resources/123",
+      query: undefined as Record<string, string | string[]> | undefined,
+      expectedSubstring: "https://api.example.com/v1/resources/123",
+    },
+  ])(
+    "$description",
+    async ({ platform, baseUrl, path, query, expectedSubstring }) => {
+      strategy = createMockStrategy();
+      const fetchFn = createMockFetch([{ status: 200, body: {} }]);
 
-    await manager.request({ method: "GET", path: "resources/123" });
+      const manager = createRestManager({
+        platform,
+        baseUrl,
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
 
-    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
-    expect(calledUrl).toContain("https://api.example.com/v1/resources/123");
-  });
+      await manager.request({
+        method: "GET",
+        path,
+        ...(query ? { query } : {}),
+      });
+
+      const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+      expect(calledUrl).toContain(expectedSubstring);
+    },
+  );
 
   it("retries on 5xx server errors", async () => {
     strategy = createMockStrategy();

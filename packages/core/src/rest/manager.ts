@@ -152,7 +152,11 @@ export const createRestManager = (options: RestManagerOptions): RestManager => {
 
         try {
           // Hoist invariants out of the retry loop
-          const reqUrl = new URL(req.path, manager.baseUrl);
+          // Ensure baseUrl path is preserved and avoid treating req.path as an absolute URL.
+          const reqUrl = new URL(manager.baseUrl);
+          const basePath = reqUrl.pathname.endsWith("/") ? reqUrl.pathname : `${reqUrl.pathname}/`;
+          const relativePath = req.path.startsWith("/") ? req.path.slice(1) : req.path;
+          reqUrl.pathname = `${basePath}${relativePath}`;
           if (req.query) {
             for (const [key, value] of Object.entries(req.query)) {
               if (Array.isArray(value)) {

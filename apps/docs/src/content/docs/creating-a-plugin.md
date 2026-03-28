@@ -154,6 +154,7 @@ const exampleListArchives = async (
   channelId: string,
   cursor?: string,
   pageSize?: number,
+  options?: ArchiveListOptions,
 ): Promise<Page<Archive>> => {
   const res = await rest.request<{ videos: ExampleVideo[]; nextCursor?: string }>({
     method: "GET",
@@ -393,6 +394,7 @@ const listArchives = async (
   channelId: string,
   cursor?: string,
   pageSize?: number,
+  options?: ArchiveListOptions,
 ): Promise<Page<Archive>> => {
   const res = await rest.request<any>({ method: "GET", path: `/channels/${channelId}/videos` });
   return { items: [], hasMore: false }; // map res.data

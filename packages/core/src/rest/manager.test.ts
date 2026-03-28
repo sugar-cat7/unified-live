@@ -159,29 +159,26 @@ describe("createRestManager", () => {
       query: undefined as Record<string, string | string[]> | undefined,
       expectedSubstring: "https://api.example.com/v1/resources/123",
     },
-  ])(
-    "$description",
-    async ({ platform, baseUrl, path, query, expectedSubstring }) => {
-      strategy = createMockStrategy();
-      const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+  ])("$description", async ({ platform, baseUrl, path, query, expectedSubstring }) => {
+    strategy = createMockStrategy();
+    const fetchFn = createMockFetch([{ status: 200, body: {} }]);
 
-      const manager = createRestManager({
-        platform,
-        baseUrl,
-        rateLimitStrategy: strategy,
-        fetch: fetchFn,
-      });
+    const manager = createRestManager({
+      platform,
+      baseUrl,
+      rateLimitStrategy: strategy,
+      fetch: fetchFn,
+    });
 
-      await manager.request({
-        method: "GET",
-        path,
-        ...(query ? { query } : {}),
-      });
+    await manager.request({
+      method: "GET",
+      path,
+      ...(query ? { query } : {}),
+    });
 
-      const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
-      expect(calledUrl).toContain(expectedSubstring);
-    },
-  );
+    const calledUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string;
+    expect(calledUrl).toContain(expectedSubstring);
+  });
 
   it("retries on 5xx server errors", async () => {
     strategy = createMockStrategy();

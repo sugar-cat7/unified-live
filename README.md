@@ -43,11 +43,15 @@ Pass a URL and the SDK auto-detects the platform, normalizes the response, and h
 ## Quick Start
 
 ```bash
+# npm
+npm install @unified-live/core @unified-live/youtube @unified-live/twitch
+
+# pnpm
 pnpm add @unified-live/core @unified-live/youtube @unified-live/twitch
 ```
 
 ```ts
-import { UnifiedClient } from "@unified-live/core";
+import { UnifiedClient, Content } from "@unified-live/core";
 import { createYouTubePlugin } from "@unified-live/youtube";
 import { createTwitchPlugin } from "@unified-live/twitch";
 
@@ -67,6 +71,32 @@ const content = await client.resolve("https://www.youtube.com/watch?v=dQw4w9WgXc
 console.log(content.title);
 console.log(content.platform); // "youtube"
 console.log(content.type); // "broadcast", "scheduled", "archive", or "clip"
+
+// Type-safe narrowing with companion object guards
+if (Content.isBroadcast(content)) {
+  console.log(content.startedAt); // only available on Broadcast
+}
+```
+
+### Error Handling
+
+All SDK errors extend `UnifiedLiveError` with a typed `code` field:
+
+```ts
+import { UnifiedLiveError, ErrorCode } from "@unified-live/core";
+
+try {
+  const content = await client.resolve(url);
+} catch (error) {
+  if (error instanceof UnifiedLiveError) {
+    if (ErrorCode.isNetwork(error.code)) {
+      // NETWORK_TIMEOUT, NETWORK_CONNECTION, etc.
+    }
+    if (ErrorCode.isRateLimit(error.code)) {
+      // RATE_LIMIT_EXCEEDED — automatic retries already attempted
+    }
+  }
+}
 ```
 
 ## Packages

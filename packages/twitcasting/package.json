@@ -1,6 +1,6 @@
 {
   "name": "@unified-live/twitcasting",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TwitCasting API v2 plugin for unified-live SDK — token bucket rate limiting, Basic Auth",
   "keywords": [
     "live-streaming",

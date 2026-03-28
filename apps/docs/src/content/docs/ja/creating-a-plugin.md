@@ -196,11 +196,11 @@ export const createExamplePlugin = (config: {
 
 SDK は `TokenManager` を通じて3つの認証パターンをサポート:
 
-| パターン             | ユースケース                 | 例                                                  |
-| -------------------- | ---------------------------- | --------------------------------------------------- |
-| **静的**             | API キー / Basic auth        | `TokenManager.static("Bearer key123")`              |
+| パターン             | ユースケース                 | 例                                                    |
+| -------------------- | ---------------------------- | ----------------------------------------------------- |
+| **静的**             | API キー / Basic auth        | `TokenManager.static("Bearer key123")`                |
 | **OAuth2**           | トークンのリフレッシュが必要 | `getAuthHeader()` + `invalidate()` を実装（下記参照） |
-| **クエリパラメータ** | URL 中の API キー            | `tokenManager` の代わりに `transformRequest` を使用 |
+| **クエリパラメータ** | URL 中の API キー            | `tokenManager` の代わりに `transformRequest` を使用   |
 
 **クエリパラメータ認証**（YouTube のような場合）は `transformRequest` を使用:
 

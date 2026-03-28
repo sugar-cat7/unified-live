@@ -196,11 +196,11 @@ export const createExamplePlugin = (config: {
 
 The SDK supports three auth patterns via `TokenManager`:
 
-| Pattern         | Use Case             | Example                                          |
-| --------------- | -------------------- | ------------------------------------------------ |
-| **Static**      | API key / Basic auth | `TokenManager.static("Bearer key123")`           |
+| Pattern         | Use Case             | Example                                                  |
+| --------------- | -------------------- | -------------------------------------------------------- |
+| **Static**      | API key / Basic auth | `TokenManager.static("Bearer key123")`                   |
 | **OAuth2**      | Token refresh needed | Implement `getAuthHeader()` + `invalidate()` (see below) |
-| **Query param** | API key in URL       | Use `transformRequest` instead of `tokenManager` |
+| **Query param** | API key in URL       | Use `transformRequest` instead of `tokenManager`         |
 
 For **query parameter auth** (like YouTube), use `transformRequest`:
 

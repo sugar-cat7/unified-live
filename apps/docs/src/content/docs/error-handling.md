@@ -21,16 +21,16 @@ import {
 } from "@unified-live/core";
 ```
 
-| Error                   | When                                       | What to Do                                   |
-| ----------------------- | ------------------------------------------ | -------------------------------------------- |
-| `NotFoundError`         | Content or channel doesn't exist           | Check the ID or URL                          |
-| `QuotaExhaustedError`   | YouTube daily quota exceeded               | Wait until quota resets                      |
-| `AuthenticationError`   | Invalid or expired credentials             | Check your API keys                          |
-| `RateLimitError`        | Rate limit exceeded after all retries      | Reduce request frequency; check `retryAfter` |
-| `NetworkError`          | Network failure (timeout, DNS, connection) | Check connectivity, retry later              |
+| Error                   | When                                       | What to Do                                                           |
+| ----------------------- | ------------------------------------------ | -------------------------------------------------------------------- |
+| `NotFoundError`         | Content or channel doesn't exist           | Check the ID or URL                                                  |
+| `QuotaExhaustedError`   | YouTube daily quota exceeded               | Wait until quota resets                                              |
+| `AuthenticationError`   | Invalid or expired credentials             | Check your API keys                                                  |
+| `RateLimitError`        | Rate limit exceeded after all retries      | Reduce request frequency; check `retryAfter`                         |
+| `NetworkError`          | Network failure (timeout, DNS, connection) | Check connectivity, retry later                                      |
 | `ParseError`            | Failed to parse API response               | [Report as a bug](https://github.com/sugar-cat7/unified-live/issues) |
-| `ValidationError`       | Invalid input (e.g., empty URL)            | Fix the input                                |
-| `PlatformNotFoundError` | No plugin registered for the platform      | Register the plugin                          |
+| `ValidationError`       | Invalid input (e.g., empty URL)            | Fix the input                                                        |
+| `PlatformNotFoundError` | No plugin registered for the platform      | Register the plugin                                                  |
 
 ## Basic Error Handling
 
@@ -109,11 +109,11 @@ try {
   const content = await client.resolve(url);
 } catch (error) {
   if (error instanceof UnifiedLiveError) {
-    console.log(error.platform);          // "youtube" (backward-compat getter)
-    console.log(error.context.platform);  // "youtube"
-    console.log(error.context.path);      // "/videos" (if applicable)
-    console.log(error.context.status);    // 404 (if applicable)
-    console.log(error.cause);             // Original error (if wrapped)
+    console.log(error.platform); // "youtube" (backward-compat getter)
+    console.log(error.context.platform); // "youtube"
+    console.log(error.context.path); // "/videos" (if applicable)
+    console.log(error.context.status); // 404 (if applicable)
+    console.log(error.cause); // Original error (if wrapped)
   }
 }
 ```

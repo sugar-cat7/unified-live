@@ -56,11 +56,12 @@ Pass `ArchiveListOptions` to filter results by period, sort order, or video type
 
 ```ts
 const page = await client.listArchives(
-  "twitch",     // platform
-  channelId,    // channel ID
-  undefined,    // cursor (first page)
-  20,           // page size
-  {             // filter options
+  "twitch", // platform
+  channelId, // channel ID
+  undefined, // cursor (first page)
+  20, // page size
+  {
+    // filter options
     period: "week",
     sort: "views",
     videoType: "highlight",

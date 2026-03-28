@@ -68,23 +68,23 @@ console.log(tc.type); // "broadcast" | "archive"
 
 ### Feature Matrix
 
-| Feature                        | YouTube          | Twitch           | TwitCasting      |
-| :----------------------------- | :--------------: | :--------------: | :--------------: |
-| Get content by URL             | Yes              | Yes              | Yes              |
-| Get content by ID              | Yes              | Yes              | Yes              |
-| List broadcasts                | Yes              | Yes              | Yes              |
-| List archives (pagination)     | Yes              | Yes              | Yes              |
-| Get channel info               | Yes              | Yes              | Yes              |
-| Archive resolution             | Yes              | Yes              | Yes              |
-| Search                         | Yes              | Yes              | Yes              |
-| Clips                          | No               | Yes              | No               |
-| Batch get contents             | Yes              | Yes              | Yes\*            |
-| Batch get broadcasts           | Yes\*            | Yes              | Yes\*            |
-| Batch get channels             | Yes              | Yes\*            | Yes\*            |
-| Batch get clips                | No               | Yes              | No               |
-| Cross-platform broadcasts      | Yes              | Yes              | Yes              |
-| Cross-platform search          | Yes              | Yes              | Yes              |
-| OpenTelemetry traces & metrics | Yes              | Yes              | Yes              |
+| Feature                        | YouTube | Twitch | TwitCasting |
+| :----------------------------- | :-----: | :----: | :---------: |
+| Get content by URL             |   Yes   |  Yes   |     Yes     |
+| Get content by ID              |   Yes   |  Yes   |     Yes     |
+| List broadcasts                |   Yes   |  Yes   |     Yes     |
+| List archives (pagination)     |   Yes   |  Yes   |     Yes     |
+| Get channel info               |   Yes   |  Yes   |     Yes     |
+| Archive resolution             |   Yes   |  Yes   |     Yes     |
+| Search                         |   Yes   |  Yes   |     Yes     |
+| Clips                          |   No    |  Yes   |     No      |
+| Batch get contents             |   Yes   |  Yes   |    Yes\*    |
+| Batch get broadcasts           |  Yes\*  |  Yes   |    Yes\*    |
+| Batch get channels             |   Yes   | Yes\*  |    Yes\*    |
+| Batch get clips                |   No    |  Yes   |     No      |
+| Cross-platform broadcasts      |   Yes   |  Yes   |     Yes     |
+| Cross-platform search          |   Yes   |  Yes   |     Yes     |
+| OpenTelemetry traces & metrics |   Yes   |  Yes   |     Yes     |
 
 \* Supported via automatic per-item fallback (no native batch API)
 

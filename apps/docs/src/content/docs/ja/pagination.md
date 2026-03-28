@@ -56,11 +56,12 @@ for (let i = 0; i < MAX_PAGES; i++) {
 
 ```ts
 const page = await client.listArchives(
-  "twitch",     // プラットフォーム
-  channelId,    // チャンネル ID
-  undefined,    // カーソル（最初のページ）
-  20,           // ページサイズ
-  {             // フィルタオプション
+  "twitch", // プラットフォーム
+  channelId, // チャンネル ID
+  undefined, // カーソル（最初のページ）
+  20, // ページサイズ
+  {
+    // フィルタオプション
     period: "week",
     sort: "views",
     videoType: "highlight",

@@ -14,12 +14,13 @@
 ## References
 
 - User-facing documentation: `apps/docs/src/content/docs/`
-- AI agent skills: `.agent/skills/`
+- AI agent skills (maintainer-internal, currently empty): `.agent/skills/`
+- User-facing Claude Code plugin: `.claude-plugin/marketplace.json` + `plugins/unified-live/`
 
 ## Development
 
 - Implementation order is bottom-up: Types -> Infrastructure -> Plugins -> Client API.
-- Skills: `/plan-feature` (spec drafting), `/init-impl` (checklist generation).
+- Feature planning: write specs under `docs/plan/<feature>.md` by hand.
 
 ## Releasing
 
@@ -32,6 +33,7 @@
 ## Claude Code Operations
 
 - Permission policies and hooks are managed in `.claude/settings.json`.
-- Custom `/` skills are placed in `.claude/skills/` (which points to `.agent/skills/`).
+- Maintainer-side Claude Code skills belong in `.agent/skills/` (exposed via the `.claude/skills/` symlink). This directory is currently empty.
+- User-facing plugin skills (distributed via `/plugin marketplace add sugar-cat7/unified-live`) live in `plugins/unified-live/skills/`; the marketplace manifest is at `.claude-plugin/marketplace.json`.
 - `PreToolUse` hook blocks dangerous Bash operations (`git push`, `git add -A`, `git reset --hard`).
 - On code edits, a hook sets `.claude/.post_edit_check_pending`, and `./scripts/post-edit-check.sh` runs at the end of the response.

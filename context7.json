@@ -1,0 +1,30 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "unified-live",
+  "description": "A TypeScript SDK providing a unified interface for YouTube, Twitch, and TwitCasting live streaming platform APIs.",
+  "folders": [
+    "apps/docs/src/content/docs",
+    "packages/core/src",
+    "packages/youtube/src",
+    "packages/twitch/src",
+    "packages/twitcasting/src",
+    "README.md"
+  ],
+  "excludeFolders": [
+    "dist",
+    "node_modules",
+    ".agent",
+    ".claude",
+    ".claude-plugin",
+    "plugins",
+    "apps/docs/src/content/docs/ja"
+  ],
+  "rules": [
+    "Zero runtime dependencies in @unified-live/core. Plain TypeScript types, no schema libraries, no class hierarchies.",
+    "Public API throws UnifiedLiveError subclasses with typed ErrorCode. Internal code may use Result<V, E> but Result must never appear in public return types.",
+    "Content is a discriminated union on the `type` field: 'broadcast' | 'scheduled' | 'archive' | 'clip'. Use companion-object type guards like Content.isBroadcast(x) for narrowing — never `as` assertions.",
+    "Factory functions only (discordeno pattern). All functions use arrow syntax. No `function` declarations except TypeScript overload signatures.",
+    "Plugins are installed via UnifiedClient.create({ plugins: [createYouTubePlugin(...), ...] }). Each platform is its own package.",
+    "Runs on Node 18+, Deno, Bun, and Cloudflare Workers — any runtime with native fetch."
+  ]
+}

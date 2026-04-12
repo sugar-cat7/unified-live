@@ -117,6 +117,7 @@ import type {
   Broadcast,
   Page,
   Archive,
+  ArchiveListOptions,
 } from "@unified-live/core";
 
 const exampleGetContent = async (rest: RestManager, id: string): Promise<Content> => {
@@ -358,6 +359,7 @@ import {
   type Broadcast,
   type Page,
   type Archive,
+  type ArchiveListOptions,
   type ResolvedUrl,
 } from "@unified-live/core";
 

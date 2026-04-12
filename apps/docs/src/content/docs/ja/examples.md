@@ -178,6 +178,7 @@ await sdk.shutdown();
 
 ```ts
 import {
+  UnifiedClient,
   PlatformPlugin,
   type Content,
   type Channel,
@@ -195,7 +196,7 @@ const mockContent: Content = {
   tags: [],
   url: "https://example.com/video/test-1",
   thumbnail: { url: "https://example.com/thumb.jpg", width: 320, height: 180 },
-  channel: { id: "ch-1", name: "テストチャンネル", url: "https://example.com/channel/ch-1" },
+  channel: { id: "ch-1", name: "Test Channel", url: "https://example.com/channel/ch-1" },
   duration: 120,
   viewCount: 1000,
   publishedAt: new Date("2024-01-01"),

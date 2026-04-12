@@ -178,6 +178,7 @@ Create a lightweight plugin for unit tests without hitting real APIs:
 
 ```ts
 import {
+  UnifiedClient,
   PlatformPlugin,
   type Content,
   type Channel,

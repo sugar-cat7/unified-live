@@ -15,15 +15,7 @@
       "description": "AI-queryable docs and usage guidance for the unified-live TypeScript SDK (YouTube, Twitch, TwitCasting).",
       "version": "0.1.0",
       "category": "documentation",
-      "tags": [
-        "typescript",
-        "sdk",
-        "docs",
-        "live-streaming",
-        "youtube",
-        "twitch",
-        "twitcasting"
-      ]
+      "tags": ["typescript", "sdk", "docs", "live-streaming", "youtube", "twitch", "twitcasting"]
     }
   ]
 }

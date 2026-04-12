@@ -1180,27 +1180,22 @@ describe("createRestManager edge cases", () => {
         })(),
         expectedCode: "NETWORK_ABORT",
       },
-    ])(
-      "wraps $name in NetworkError with code $expectedCode",
-      async ({ error, expectedCode }) => {
-        const strategy = createMockStrategy();
-        const fetchFn = vi.fn().mockRejectedValue(error) as unknown as typeof globalThis.fetch;
+    ])("wraps $name in NetworkError with code $expectedCode", async ({ error, expectedCode }) => {
+      const strategy = createMockStrategy();
+      const fetchFn = vi.fn().mockRejectedValue(error) as unknown as typeof globalThis.fetch;
 
-        const manager = createRestManager({
-          platform: "test",
-          baseUrl: "https://api.example.com",
-          rateLimitStrategy: strategy,
-          fetch: fetchFn,
-        });
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
 
-        const err = await manager
-          .request({ method: "GET", path: "/test" })
-          .catch((e) => e);
-        expect(err).toBeInstanceOf(NetworkError);
-        expect(err.code).toBe(expectedCode);
-        expect(err.cause).toBe(error);
-      },
-    );
+      const err = await manager.request({ method: "GET", path: "/test" }).catch((e) => e);
+      expect(err).toBeInstanceOf(NetworkError);
+      expect(err.code).toBe(expectedCode);
+      expect(err.cause).toBe(error);
+    });
   });
 
   describe("empty and invalid response handling", () => {
@@ -1267,14 +1262,12 @@ describe("createRestManager edge cases", () => {
 
     it("throws ParseError on HTML error page with 200 status", async () => {
       const strategy = createMockStrategy();
-      const fetchFn = vi
-        .fn()
-        .mockResolvedValue(
-          new Response("<html><body>Internal Server Error</body></html>", {
-            status: 200,
-            headers: { "Content-Type": "text/html" },
-          }),
-        ) as unknown as typeof globalThis.fetch;
+      const fetchFn = vi.fn().mockResolvedValue(
+        new Response("<html><body>Internal Server Error</body></html>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }),
+      ) as unknown as typeof globalThis.fetch;
 
       const manager = createRestManager({
         platform: "test",
@@ -1292,9 +1285,7 @@ describe("createRestManager edge cases", () => {
       const strategy = createMockStrategy();
       const fetchFn = vi
         .fn()
-        .mockResolvedValue(
-          new Response("", { status: 200 }),
-        ) as unknown as typeof globalThis.fetch;
+        .mockResolvedValue(new Response("", { status: 200 })) as unknown as typeof globalThis.fetch;
 
       const manager = createRestManager({
         platform: "test",
@@ -1327,9 +1318,7 @@ describe("createRestManager edge cases", () => {
         retry: { maxRetries: 3, baseDelay: 1 },
       });
 
-      const err = await manager
-        .request({ method: "GET", path: "/always-fails" })
-        .catch((e) => e);
+      const err = await manager.request({ method: "GET", path: "/always-fails" }).catch((e) => e);
 
       expect(err).toBeInstanceOf(NetworkError);
       expect(err.code).toBe("NETWORK_CONNECTION");
@@ -1354,9 +1343,7 @@ describe("createRestManager edge cases", () => {
         retry: { maxRetries: 3 },
       });
 
-      const err = await manager
-        .request({ method: "GET", path: "/rate-limited" })
-        .catch((e) => e);
+      const err = await manager.request({ method: "GET", path: "/rate-limited" }).catch((e) => e);
 
       expect(err).toBeInstanceOf(RateLimitError);
     });
@@ -1375,9 +1362,7 @@ describe("createRestManager edge cases", () => {
 
       manager.handleRateLimit = vi.fn().mockResolvedValue(false);
 
-      const err = await manager
-        .request({ method: "GET", path: "/no-retry-after" })
-        .catch((e) => e);
+      const err = await manager.request({ method: "GET", path: "/no-retry-after" }).catch((e) => e);
 
       expect(err).toBeInstanceOf(RateLimitError);
       expect(err.retryAfter).toBe(1);

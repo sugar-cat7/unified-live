@@ -1133,6 +1133,323 @@ describe("RestManager.is", () => {
   });
 });
 
+describe("createRestManager edge cases", () => {
+  const createMockStrategy = (): RateLimitStrategy => ({
+    acquire: vi.fn().mockResolvedValue({
+      complete: vi.fn(),
+      release: vi.fn(),
+    } satisfies RateLimitHandle),
+    getStatus: vi.fn().mockReturnValue({
+      remaining: 100,
+      limit: 100,
+      resetsAt: new Date(),
+      queued: 0,
+    }),
+  });
+
+  describe("network error classification on fetch failure", () => {
+    it.each([
+      {
+        name: "connection refused",
+        error: new TypeError("fetch failed: connection refused"),
+        expectedCode: "NETWORK_CONNECTION",
+      },
+      {
+        name: "DNS resolution failure",
+        error: (() => {
+          const e = new Error("getaddrinfo ENOTFOUND api.example.com");
+          e.name = "Error";
+          return e;
+        })(),
+        expectedCode: "NETWORK_DNS",
+      },
+      {
+        name: "timeout error",
+        error: (() => {
+          const e = new Error("The request timed out");
+          e.name = "TimeoutError";
+          return e;
+        })(),
+        expectedCode: "NETWORK_TIMEOUT",
+      },
+      {
+        name: "abort error",
+        error: (() => {
+          const e = new DOMException("The operation was aborted", "AbortError");
+          return e;
+        })(),
+        expectedCode: "NETWORK_ABORT",
+      },
+    ])(
+      "wraps $name in NetworkError with code $expectedCode",
+      async ({ error, expectedCode }) => {
+        const strategy = createMockStrategy();
+        const fetchFn = vi.fn().mockRejectedValue(error) as unknown as typeof globalThis.fetch;
+
+        const manager = createRestManager({
+          platform: "test",
+          baseUrl: "https://api.example.com",
+          rateLimitStrategy: strategy,
+          fetch: fetchFn,
+        });
+
+        const err = await manager
+          .request({ method: "GET", path: "/test" })
+          .catch((e) => e);
+        expect(err).toBeInstanceOf(NetworkError);
+        expect(err.code).toBe(expectedCode);
+        expect(err.cause).toBe(error);
+      },
+    );
+  });
+
+  describe("empty and invalid response handling", () => {
+    it("handles empty JSON object response", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
+
+      const result = await manager.request<Record<string, never>>({
+        method: "GET",
+        path: "/empty",
+      });
+
+      expect(result.status).toBe(200);
+      expect(result.data).toEqual({});
+    });
+
+    it("handles null JSON body", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValue(
+          new Response("null", { status: 200, headers: { "Content-Type": "application/json" } }),
+        ) as unknown as typeof globalThis.fetch;
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
+
+      const result = await manager.request<null>({ method: "GET", path: "/null" });
+
+      expect(result.status).toBe(200);
+      expect(result.data).toBeNull();
+    });
+
+    it("throws ParseError on truncated JSON", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValue(
+          new Response('{"id": "abc", "name":', { status: 200 }),
+        ) as unknown as typeof globalThis.fetch;
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
+
+      const err = await manager.request({ method: "GET", path: "/truncated" }).catch((e) => e);
+      expect(err).toBeInstanceOf(ParseError);
+      expect(err.code).toBe("PARSE_JSON");
+    });
+
+    it("throws ParseError on HTML error page with 200 status", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValue(
+          new Response("<html><body>Internal Server Error</body></html>", {
+            status: 200,
+            headers: { "Content-Type": "text/html" },
+          }),
+        ) as unknown as typeof globalThis.fetch;
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
+
+      const err = await manager.request({ method: "GET", path: "/html-error" }).catch((e) => e);
+      expect(err).toBeInstanceOf(ParseError);
+      expect(err.code).toBe("PARSE_JSON");
+    });
+
+    it("throws ParseError on empty response body", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValue(
+          new Response("", { status: 200 }),
+        ) as unknown as typeof globalThis.fetch;
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
+
+      const err = await manager.request({ method: "GET", path: "/empty-body" }).catch((e) => e);
+      expect(err).toBeInstanceOf(ParseError);
+      expect(err.code).toBe("PARSE_JSON");
+    });
+  });
+
+  describe("retry exhaustion", () => {
+    it("throws NetworkError with attempt count after all 5xx retries fail", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = createMockFetch([
+        { status: 500 },
+        { status: 500 },
+        { status: 500 },
+        { status: 500 },
+      ]);
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+        retry: { maxRetries: 3, baseDelay: 1 },
+      });
+
+      const err = await manager
+        .request({ method: "GET", path: "/always-fails" })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(NetworkError);
+      expect(err.code).toBe("NETWORK_CONNECTION");
+      expect(err.message).toContain("after 4 attempts");
+      expect(fetchFn).toHaveBeenCalledTimes(4);
+    });
+
+    it("throws RateLimitError after 429 retries exhausted", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = createMockFetch([
+        { status: 429, headers: { "Retry-After": "0" } },
+        { status: 429, headers: { "Retry-After": "0" } },
+        { status: 429, headers: { "Retry-After": "0" } },
+        { status: 429, headers: { "Retry-After": "0" } },
+      ]);
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+        retry: { maxRetries: 3 },
+      });
+
+      const err = await manager
+        .request({ method: "GET", path: "/rate-limited" })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(RateLimitError);
+    });
+
+    it("throws RateLimitError on 429 without Retry-After header", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = createMockFetch([{ status: 429 }]);
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+        retry: { maxRetries: 0 },
+      });
+
+      manager.handleRateLimit = vi.fn().mockResolvedValue(false);
+
+      const err = await manager
+        .request({ method: "GET", path: "/no-retry-after" })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(RateLimitError);
+      expect(err.retryAfter).toBe(1);
+    });
+  });
+
+  describe("timeout edge cases", () => {
+    it("does not apply timeout signal when request provides its own signal", async () => {
+      const strategy = createMockStrategy();
+      const controller = new AbortController();
+      const fetchFn = createMockFetch([{ status: 200, body: {} }]);
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+        retry: { timeout: 5000 },
+      });
+
+      await manager.request({
+        method: "GET",
+        path: "/test",
+        signal: controller.signal,
+      });
+
+      const calledInit = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as RequestInit;
+      expect(calledInit.signal).toBe(controller.signal);
+    });
+
+    it("throws NetworkError with NETWORK_TIMEOUT when timeout fires during fetch", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = vi.fn(async () => {
+        const err = new Error("The request timed out");
+        err.name = "TimeoutError";
+        throw err;
+      }) as unknown as typeof globalThis.fetch;
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+        retry: { timeout: 1 },
+      });
+
+      const err = await manager.request({ method: "GET", path: "/slow" }).catch((e) => e);
+
+      expect(err).toBeInstanceOf(NetworkError);
+      expect(err.code).toBe("NETWORK_TIMEOUT");
+    });
+
+    it("408 is treated as non-retryable with NETWORK_TIMEOUT code", async () => {
+      const strategy = createMockStrategy();
+      const fetchFn = createMockFetch([{ status: 408 }]);
+
+      const manager = createRestManager({
+        platform: "test",
+        baseUrl: "https://api.example.com",
+        rateLimitStrategy: strategy,
+        fetch: fetchFn,
+      });
+
+      const err = await manager.request({ method: "GET", path: "/test" }).catch((e) => e);
+
+      expect(err).toBeInstanceOf(UnifiedLiveError);
+      expect(err.code).toBe("NETWORK_TIMEOUT");
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
 describe("createRateLimitHeaderParser", () => {
   const parser = createRateLimitHeaderParser({
     limit: "X-RateLimit-Limit",

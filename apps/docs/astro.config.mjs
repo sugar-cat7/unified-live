@@ -1,5 +1,6 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import starlightLlmsTxt from "starlight-llms-txt";
 import starlightTypeDoc, { typeDocSidebarGroup } from "starlight-typedoc";
 
 const siteUrl = "https://sugar-cat7.github.io";
@@ -136,6 +137,24 @@ export default defineConfig({
               "*",
             ],
           },
+        }),
+        starlightLlmsTxt({
+          projectName: "unified-live",
+          description:
+            "A TypeScript SDK providing a unified interface for YouTube, Twitch, and TwitCasting live streaming APIs.",
+          // Default `promote` is ['index*']; keep it and pin the canonical flow after.
+          promote: [
+            "index*",
+            "overview",
+            "getting-started",
+            "core-concepts",
+            "platform-plugins",
+            "error-handling",
+          ],
+          // `exclude` affects `llms-small.txt` only. Keep everything in
+          // llms-full.txt; trim Japanese + auto-generated API reference from
+          // the small variant so it fits constrained contexts.
+          exclude: ["ja/**", "api/**"],
         }),
       ],
       sidebar: [

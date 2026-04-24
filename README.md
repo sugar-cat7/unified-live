@@ -119,6 +119,24 @@ try {
 
 > Any runtime with native `fetch` is supported. No Node.js-specific dependencies in core.
 
+## Claude Code users
+
+If you use [Claude Code](https://claude.com/claude-code), install the
+unified-live plugin for AI-queryable docs:
+
+```bash
+/plugin marketplace add sugar-cat7/unified-live
+/plugin install unified-live@sugar-cat7
+```
+
+The plugin adds a model-invoked `/unified-live:docs` skill that fetches
+the canonical docs from `llms-full.txt` and cites them when answering
+your questions. See [PLUGIN.md](PLUGIN.md) for details.
+
+The same docs are available as plain text at
+[`llms-full.txt`](https://sugar-cat7.github.io/unified-live/llms-full.txt)
+and indexed by [Context7](https://context7.com) for other AI editors.
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

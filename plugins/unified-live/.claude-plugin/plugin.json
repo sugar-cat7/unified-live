@@ -1,0 +1,12 @@
+{
+  "name": "unified-live",
+  "description": "AI-queryable docs and usage guidance for the unified-live TypeScript SDK (YouTube, Twitch, TwitCasting).",
+  "version": "0.1.0",
+  "author": {
+    "name": "sugar-cat7",
+    "url": "https://github.com/sugar-cat7"
+  },
+  "homepage": "https://sugar-cat7.github.io/unified-live",
+  "repository": "https://github.com/sugar-cat7/unified-live",
+  "license": "MIT"
+}

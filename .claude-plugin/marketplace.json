@@ -1,0 +1,21 @@
+{
+  "name": "sugar-cat7",
+  "owner": {
+    "name": "sugar-cat7",
+    "url": "https://github.com/sugar-cat7"
+  },
+  "metadata": {
+    "description": "Plugins from sugar-cat7's OSS projects.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "unified-live",
+      "source": "./plugins/unified-live",
+      "description": "AI-queryable docs and usage guidance for the unified-live TypeScript SDK (YouTube, Twitch, TwitCasting).",
+      "version": "0.1.0",
+      "category": "documentation",
+      "tags": ["typescript", "sdk", "docs", "live-streaming", "youtube", "twitch", "twitcasting"]
+    }
+  ]
+}
